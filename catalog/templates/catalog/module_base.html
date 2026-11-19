@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ entity_name }}{% endblock %}
+{% block content %}
+<nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Danh mục và khách hàng">
+  {% if "Admin" in user_roles or "Operator" in user_roles %}
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'catalog:supplier_list' %}">Nhà cung cấp</a>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'catalog:service_list' %}">Dịch vụ</a>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'catalog:guide_list' %}">Hướng dẫn viên</a>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'catalog:vehicle_list' %}">Xe</a>
+  {% endif %}
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'catalog:tour_list' %}">Tour</a>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'catalog:departure_list' %}">Lịch khởi hành</a>
+  {% if "Admin" in user_roles or "Sales" in user_roles %}
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'customers:customer_list' %}">Khách hàng</a>
+  {% endif %}
+</nav>
+{% block module_content %}{% endblock %}
+{% endblock %}

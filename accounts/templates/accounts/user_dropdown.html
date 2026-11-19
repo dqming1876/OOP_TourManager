@@ -1,0 +1,13 @@
+<div class="dropdown">
+  <button class="btn btn-light dropdown-toggle text-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <span class="d-block fw-semibold">{{ user.get_full_name|default:user.username }}</span>
+    <span class="small text-secondary">{{ current_role }}</span>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Hồ sơ cá nhân</a></li>
+    <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}">Đổi mật khẩu</a></li>
+    {% if is_admin_role %}<li><a class="dropdown-item" href="{% url 'accounts:user_list' %}">Quản lý người dùng</a></li>{% endif %}
+    <li><hr class="dropdown-divider"></li>
+    <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="dropdown-item" type="submit">Đăng xuất</button></form></li>
+  </ul>
+</div>

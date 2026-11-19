@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập{% endblock %}
+{% block content %}
+<div class="login-shell">
+  <section class="page-card login-card p-4 p-md-5 shadow-sm" aria-labelledby="loginTitle">
+    <span class="badge text-bg-primary mb-3">tourManager</span>
+    <h1 class="h3 fw-bold" id="loginTitle">Chào mừng trở lại</h1>
+    <p class="text-secondary mb-4">Đăng nhập để truy cập hệ thống quản lý du lịch.</p>
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <form method="post" action="{% url 'accounts:login' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      <button class="btn btn-primary w-100 mt-2" type="submit">Đăng nhập</button>
+    </form>
+    <p class="small text-secondary mb-0 mt-4">Chưa có tài khoản? <a href="{% url 'accounts:register' %}">Đăng ký</a></p>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}tourManager{% endblock %} | Quản lý du lịch</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root { --sidebar-width: 246px; --navy: #10283f; }
+    body { background: #f3f6fa; color: #24364b; }
+    .app-sidebar { background: var(--navy); color: #fff; width: var(--sidebar-width) !important; }
+    .app-sidebar .nav-link { color: #c3d0df; padding: .55rem .9rem; border-radius: .5rem; }
+    .app-sidebar .nav-link:hover, .app-sidebar .nav-link.active { color: #fff; background: #244862; }
+    .nav-heading { color: #8eabc1; font-size: .7rem; letter-spacing: .12em; margin: 1.5rem .9rem .5rem; }
+    .brand { font-size: 1.35rem; font-weight: 700; color: #fff; text-decoration: none; }
+    .app-navbar { min-height: 76px; background: #fff; border-bottom: 1px solid #e0e7ef; }
+    .page-card { border: 1px solid #e0e7ef; border-radius: 1rem; background: #fff; }
+    .login-shell { min-height: 85vh; display: grid; place-items: center; }
+    .login-card { width: min(100%, 440px); }
+    @media (min-width: 992px) {
+      .app-sidebar { position: fixed; inset: 0 auto 0 0; overflow-y: auto; }
+      .app-main { margin-left: var(--sidebar-width); }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+  <aside class="offcanvas-lg offcanvas-start app-sidebar p-3" tabindex="-1" id="appSidebar" aria-labelledby="sidebarTitle">
+    <div class="d-flex align-items-center justify-content-between pb-3 border-bottom border-secondary">
+      <a class="brand" href="/" id="sidebarTitle">tourManager<span class="text-info">.</span></a>
+      <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar" aria-label="Đóng menu"></button>
+    </div>
+    <div class="small mt-3 text-white-50">CÔNG TY LỮ HÀNH</div>
+    <nav class="nav flex-column mt-3" aria-label="Menu chính">
+      {% if can_view_catalog %}
+      <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Tổng quan</a>
+      <div class="nav-heading">DANH MỤC</div>
+      <a class="nav-link {% if request.path == '/suppliers/' %}active{% endif %}" href="/suppliers/">Nhà cung cấp</a>
+      <a class="nav-link {% if request.path == '/services/' %}active{% endif %}" href="/services/">Dịch vụ</a>
+      <a class="nav-link {% if request.path == '/guides/' %}active{% endif %}" href="/guides/">Hướng dẫn viên</a>
+      <a class="nav-link {% if request.path == '/vehicles/' %}active{% endif %}" href="/vehicles/">Xe du lịch</a>
+      <a class="nav-link {% if request.path == '/tours/' %}active{% endif %}" href="/tours/">Tour du lịch</a>
+      <a class="nav-link {% if request.path == '/departures/' %}active{% endif %}" href="/departures/">Lịch khởi hành</a>
+      {% endif %}
+      {% if can_manage_customers or can_manage_bookings %}
+      <div class="nav-heading">KINH DOANH</div>
+      {% endif %}
+      {% if can_manage_customers %}
+      <a class="nav-link {% if request.path == '/customers/' %}active{% endif %}" href="/customers/">Khách hàng</a>
+      {% endif %}
+      {% if can_manage_bookings %}
+      <a class="nav-link {% if request.path == '/bookings/' %}active{% endif %}" href="/bookings/">Đặt tour</a>
+      <a class="nav-link {% if request.path == '/payments/' %}active{% endif %}" href="/payments/">Thanh toán</a>
+      {% endif %}
+      {% if can_manage_operations %}
+      <div class="nav-heading">ĐIỀU HÀNH</div>
+      <a class="nav-link {% if request.path == '/assignments/' %}active{% endif %}" href="/assignments/">Phân công HDV và xe</a>
+      <a class="nav-link {% if request.path == '/expenses/' %}active{% endif %}" href="/expenses/">Chi phí tour</a>
+      {% endif %}
+      {% if can_view_reports %}
+      <div class="nav-heading">THỐNG KÊ</div>
+      <a class="nav-link {% if request.path == '/reports/' %}active{% endif %}" href="/reports/">Báo cáo</a>
+      {% endif %}
+      {% if is_admin_role %}
+      <div class="nav-heading">HỆ THỐNG</div>
+      <a class="nav-link d-flex justify-content-between align-items-center" href="{% url 'accounts:user_list' %}">Người dùng <span class="badge text-bg-warning" aria-label="Số tài khoản chờ duyệt">{{ pending_user_count }}</span></a>
+      {% if user.is_staff %}<a class="nav-link" href="/admin/">Quản trị dữ liệu</a>{% endif %}
+      {% endif %}
+    </nav>
+  </aside>
+{% endif %}
+<div class="{% if user.is_authenticated %}app-main{% endif %}">
+  <header class="app-navbar d-flex align-items-center justify-content-between gap-3 px-3 px-md-4">
+    <div class="d-flex align-items-center gap-3">
+      {% if user.is_authenticated %}
+      <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#appSidebar" aria-controls="appSidebar" aria-label="Mở menu">☰</button>
+      {% endif %}
+      <span class="fw-semibold">Quản lý dịch vụ du lịch &amp; điều hành tour</span>
+    </div>
+    {% if user.is_authenticated %}
+    <div class="d-flex align-items-center gap-3 flex-shrink-0">
+      {% include "accounts/user_dropdown.html" %}
+    </div>
+    {% endif %}
+  </header>
+  <main class="container-fluid p-3 p-md-4">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng thông báo"></button>
+    </div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

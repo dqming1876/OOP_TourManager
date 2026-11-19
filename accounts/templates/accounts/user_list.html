@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Người dùng{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+  <div><h1 class="h3 mb-1">Người dùng</h1><p class="text-secondary mb-0">{{ paginator.count }} tài khoản phù hợp · {{ pending_user_count }} tài khoản chờ duyệt</p></div>
+  <a class="btn btn-primary" href="{% url 'accounts:user_create' %}">Thêm người dùng</a>
+</div>
+<section class="page-card p-3 p-md-4">
+  <form method="get" class="row g-3 align-items-end mb-4">
+    {% if filter_form.non_field_errors %}<div class="col-12 text-danger">{{ filter_form.non_field_errors }}</div>{% endif %}
+    {% for field in filter_form %}<div class="col-sm-6 col-lg-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="small text-danger">{{ error }}</div>{% endfor %}</div>{% endfor %}
+    <div class="col-auto"><button class="btn btn-primary" type="submit">Tìm kiếm</button></div>
+    <div class="col-auto"><a class="btn btn-outline-secondary" href="{% url 'accounts:user_list' %}">Đặt lại</a></div>
+  </form>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light"><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
+      <tbody>
+        {% for account in users %}
+        <tr{% if account.is_pending %} class="table-warning"{% endif %}>
+          <td class="fw-semibold">{{ account.username }}{% if account.pk == request.user.pk %}<div class="small text-secondary">Tài khoản của bạn</div>{% endif %}</td>
+          <td>{{ account.get_full_name|default:"—" }}</td><td>{{ account.email|default:"—" }}</td><td>{{ account.display_role }}</td>
+          <td>{% if account.is_active %}<span class="badge text-bg-success">Đang hoạt động</span>{% elif account.is_pending %}<span class="badge text-bg-warning">Chờ duyệt</span>{% else %}<span class="badge text-bg-secondary">Bị khóa</span>{% endif %}</td>
+          <td class="text-end">
+            {% if account.is_pending %}
+            <form method="post" action="{% url 'accounts:user_approve' account.pk %}" class="d-flex gap-2 mb-2 justify-content-end">
+              {% csrf_token %}
+              <select name="role" class="form-select form-select-sm" style="min-width: 140px; max-width: 180px;" required aria-label="Vai trò cho {{ account.username }}">
+                <option value="">Chọn vai trò</option>
+                {% for role in approve_form.fields.role.queryset %}<option value="{{ role.pk }}">{{ role.name }}</option>{% endfor %}
+              </select>
+              <button class="btn btn-sm btn-success text-nowrap" type="submit">Duyệt</button>
+            </form>
+            {% endif %}
+            <div class="d-flex flex-wrap justify-content-end gap-2">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'accounts:user_update' account.pk %}">Sửa</a>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:user_password_reset' account.pk %}">Đặt lại mật khẩu</a>
+              {% if account.pk != request.user.pk %}<a class="btn btn-sm btn-outline-danger" href="{% url 'accounts:user_delete' account.pk %}">Xóa / Khóa</a>{% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="text-center text-secondary py-5">Chưa có tài khoản phù hợp.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "accounts/pagination.html" %}
+</section>
+{% endblock %}

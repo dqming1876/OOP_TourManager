@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Đăng ký tài khoản{% endblock %}
+{% block content %}
+<div class="login-shell">
+  <section class="page-card login-card p-4 shadow-sm" aria-labelledby="registerTitle">
+    <span class="badge text-bg-primary mb-3">tourManager</span>
+    <h1 class="h3 fw-bold" id="registerTitle">Đăng ký tài khoản</h1>
+    <p class="text-secondary">Tài khoản cần được Admin duyệt và cấp vai trò trước khi sử dụng.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "accounts/form_fields.html" %}
+      <button class="btn btn-primary w-100" type="submit">Gửi đăng ký</button>
+    </form>
+    <p class="small mt-4 mb-0">Đã có tài khoản? <a href="{% url 'accounts:login' %}">Đăng nhập</a></p>
+  </section>
+</div>
+{% endblock %}

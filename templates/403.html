@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Không có quyền truy cập{% endblock %}
+{% block content %}
+<section class="page-card text-center p-5 mx-auto mt-4" style="max-width: 640px;">
+  <div class="display-1 fw-bold text-primary mb-3">403</div>
+  <h1 class="h3">Bạn chưa được cấp quyền</h1>
+  <p class="text-secondary">Tài khoản của bạn không có quyền sử dụng chức năng này. Vui lòng liên hệ quản trị viên để được hỗ trợ.</p>
+  <button class="btn btn-outline-primary" type="button" onclick="history.back()">Quay lại</button>
+  <a class="btn btn-primary" href="{% url 'accounts:login' %}">Đến trang đăng nhập</a>
+</section>
+{% endblock %}

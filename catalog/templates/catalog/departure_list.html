@@ -1,0 +1,11 @@
+{% extends "catalog/entity_list.html" %}
+{% block filters %}
+<form method="get" class="row g-3 align-items-end mb-4">
+  {% if filter_form.non_field_errors %}<div class="col-12"><div class="alert alert-danger mb-0">{{ filter_form.non_field_errors }}</div></div>{% endif %}
+  {% for field in filter_form %}
+  <div class="col-sm-6 col-lg-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="small text-danger mt-1">{{ error }}</div>{% endfor %}</div>
+  {% endfor %}
+  <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit">Lọc lịch khởi hành</button><a class="btn btn-outline-secondary" href="{{ list_url }}">Đặt lại</a></div>
+</form>
+<p class="small text-secondary">Khoảng ngày được tính theo ngày khởi hành. Số chỗ đã đặt không bao gồm booking đã hủy.</p>
+{% endblock %}

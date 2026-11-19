@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Tổng quan{% endblock %}
+{% block content %}
+<section class="page-card p-4 p-md-5">
+  <span class="badge text-bg-light border mb-3">Trang tổng quan</span>
+  <h1 class="h2 fw-bold">Xin chào, {{ user.get_full_name|default:user.username }}!</h1>
+  <p class="text-secondary mb-0">Chào mừng bạn đến với hệ thống quản lý dịch vụ du lịch và điều hành tour.</p>
+</section>
+{% endblock %}

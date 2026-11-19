@@ -1,0 +1,11 @@
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead><tr><th>Mã đặt tour</th><th>Khách hàng</th><th>Lịch khởi hành</th><th>Người lớn</th><th>Trẻ em</th><th>Tổng tiền (VNĐ)</th><th>Trạng thái</th></tr></thead>
+    <tbody>
+      {% for booking in bookings %}
+      <tr><td>{{ booking.code }}</td><td>{{ booking.customer.full_name }}</td><td>{{ booking.departure }}</td><td>{{ booking.num_adults }}</td><td>{{ booking.num_children }}</td><td>{{ booking.total_amount|floatformat:"0g" }}</td><td>{{ booking.get_status_display }}</td></tr>
+      {% empty %}<tr><td colspan="7" class="text-center text-secondary py-4">Chưa có booking nào.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "catalog/pagination.html" %}
