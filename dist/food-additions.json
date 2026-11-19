@@ -1,0 +1,660 @@
+{
+  "Bánh bèo Huế": {
+    "url": "/images/food-519146010dec.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-beo-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/Banh-beo-Hue-1-1200x640.jpg",
+    "title": "Bánh bèo Huế"
+  },
+  "Bánh bột lọc": {
+    "url": "/images/food-cc29fa7b4557.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-bot-loc-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/Banh-bot-loc-Nem-nuong-ngon-900x640.jpg",
+    "title": "Bánh bột lọc"
+  },
+  "Bánh coóc mò": {
+    "url": "/images/food-bc4e99273e76.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-cooc-mo-thai-nguyen-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/image3_202512151607124843.jpg",
+    "title": "Bánh coóc mò"
+  },
+  "Bánh cuốn Cao Bằng": {
+    "url": "/images/food-212856e49da4.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-cuon-2/banh-cuon-cao-bang/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/197_featured__sub3416.jpg",
+    "title": "Bánh cuốn Cao Bằng"
+  },
+  "Bánh căn": {
+    "url": "/images/food-2f7c936e87ed.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-canh-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/14_featured__sub2918.jpg",
+    "title": "Bánh căn"
+  },
+  "Bánh căn Đà Lạt": {
+    "url": "/images/food-fb488d4663b2.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-canh-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/14_featured__sub2918.jpg",
+    "title": "Bánh căn Đà Lạt"
+  },
+  "Bánh cống": {
+    "url": "/images/food-fdc94d8a8453.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-cong-can-tho-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/2023_10_24_638337646202212260_banh-cong-0-1600x640.webp",
+    "title": "Bánh cống"
+  },
+  "Bánh gai Tứ Trụ": {
+    "url": "/images/food-3e13f458175c.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-gai-2/banh-gai-tu-tru/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-gai-tu-tru-1-1600x640.jpg",
+    "title": "Bánh gai Tứ Trụ"
+  },
+  "Bánh gật gù": {
+    "url": "/images/food-cf9304b03051.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-gat-gu-tien-yen-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-gat-gu-1-1600x640.jpeg",
+    "title": "Bánh gật gù"
+  },
+  "Bánh khoái": {
+    "url": "/images/food-10a7c98e82d8.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-khoai-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/Khamphahue_banh-khoai_hue-1000x640.jpg",
+    "title": "Bánh khoái"
+  },
+  "Bánh khọt Vũng Tàu": {
+    "url": "/images/food-1c1282473e2a.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-khot-vung-tau-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-khot-vung-tau-11.jpg",
+    "title": "Bánh khọt Vũng Tàu"
+  },
+  "Bánh mì cay": {
+    "url": "/images/food-66d269c89d6b.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-mi-2/banh-mi-que-banh-mi-cay/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-mi-que-hai-phong-1-1080x640.jpg",
+    "title": "Bánh mì cay"
+  },
+  "Bánh mướt": {
+    "url": "/images/food-85e3dfd90df9.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-muot-nghe-an-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-muot-nghe-an-1-1600x640.jpg",
+    "title": "Bánh mướt"
+  },
+  "Bánh phu thê Đình Bảng": {
+    "url": "/images/food-46441d3bc00b.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-phu-the-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/2_2-2.jpg",
+    "title": "Bánh phu thê Đình Bảng"
+  },
+  "Bánh pía Sóc Trăng": {
+    "url": "/images/food-d8a012925fa4.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-pia-soc-trang-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-pia-ngon-8-1741477298.jpg",
+    "title": "Bánh pía Sóc Trăng"
+  },
+  "Bánh ram ít": {
+    "url": "/images/food-f11d9550659b.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/ram-banh-muot-ha-tinh-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/515_featured__sub8477-1600x640.webp",
+    "title": "Bánh ram ít"
+  },
+  "Bánh tráng cuốn thịt heo": {
+    "url": "/images/food-26843724deec.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-trang-2/banh-trang-cuon-thit-heo-long-an/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/9403_26.01.2021-PS-Lang-nghe-banh-trang-Nhon-Hoa-vao-mua-Tet_PHONG_PHUC-1519x640.jpg",
+    "title": "Bánh tráng cuốn thịt heo"
+  },
+  "Bánh tráng phơi sương": {
+    "url": "/images/food-1b77000df04e.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-trang-2/banh-trang-phoi-suong-da-nang/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/lang-nghe-banh-trang-trang-bang-net-dep-truyen-thong-cua-nguoi-dan-nam-bo-02-1661881528-900x640.jpg",
+    "title": "Bánh tráng phơi sương"
+  },
+  "Bánh tét Trà Cuôn": {
+    "url": "/images/food-076ffd184583.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-tet-2/banh-tet-tra-cuon/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/Banh_tet_la_cam_b215e3f467-1600x640.webp",
+    "title": "Bánh tét Trà Cuôn"
+  },
+  "Bánh tằm cay": {
+    "url": "/images/food-b19fe9933ea1.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-tam-cay-banh-tam-ga-cay-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh_tam_cay_ca_mau_1_070288ae4a-1600x640.webp",
+    "title": "Bánh tằm cay"
+  },
+  "Bánh ít lá gai": {
+    "url": "/images/food-90a24e2e3975.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-it-2/banh-it-la-gai-quang-tri/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-it-la-gai-phu-yen-2.jpg",
+    "title": "Bánh ít lá gai"
+  },
+  "Bánh đa cua": {
+    "url": "/images/food-d1ee5cc35591.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-da-2/banh-da-cua/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-da-cua-hai-phong-o-ha-noi-1_1687012182-974x640.jpg",
+    "title": "Bánh đa cua"
+  },
+  "Bánh đậu xanh Hải Dương": {
+    "url": "/images/food-b1f44319e473.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-dau-xanh-2/banh-dau-xanh-hai-duong/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/423_featured__sub8462.jpg",
+    "title": "Bánh đậu xanh Hải Dương"
+  },
+  "Bê chao Mộc Châu": {
+    "url": "/images/food-3e58827e9c29.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/be-chao-moc-chau-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/be-chao-moc-chau_1757305534-1400x640.jpg",
+    "title": "Bê chao Mộc Châu"
+  },
+  "Bò tơ Tây Ninh": {
+    "url": "/images/food-97040f58dd51.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bo-to-tay-ninh-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/bat-mi-kinh-nghiem-nhan-biet-bo-to-tay-ninh-dung-chuan-05-1661694531-1767741972.jpg",
+    "title": "Bò tơ Tây Ninh"
+  },
+  "Bún bò Huế": {
+    "url": "/images/food-9ad36f2ec6f1.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bun-bo-2/bun-bo-hue/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/bun-bo-hue-2-0933-1600x640.jpg",
+    "title": "Bún bò Huế"
+  },
+  "Bún bò cay Bạc Liêu": {
+    "url": "/images/food-18fbe08639e0.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bun-bo-2/bun-bo-cay-bac-lieu/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/236361209-157937673142026-5435-2259-3028-1630607149-1600x640.jpg",
+    "title": "Bún bò cay Bạc Liêu"
+  },
+  "Bún chả": {
+    "url": "/images/food-42e291c6b3bc.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bun-cha-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/37_featured__sub8300-1000x640.jpg",
+    "title": "Bún chả"
+  },
+  "Bún chả cá Quy Nhơn": {
+    "url": "/images/food-2a54f287b4ca.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bun-cha-2/bun-cha-ca-quy-nhon/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/321_featured__sub8448-1280x640.jpg",
+    "title": "Bún chả cá Quy Nhơn"
+  },
+  "Bún cá Châu Đốc": {
+    "url": "/images/food-9750c858bad8.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bun-ca-2/bun-ca-chau-doc/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/bun-ca-ba-sit-quan-tan-phu-7.jpg",
+    "title": "Bún cá Châu Đốc"
+  },
+  "Bún nước lèo": {
+    "url": "/images/food-f4e649714e84.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bun-nuoc-leo-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/2024_4_22_638493802727484365_bun-nuoc-leo-1-1600x640.webp",
+    "title": "Bún nước lèo"
+  },
+  "Bún sứa": {
+    "url": "/images/food-dbed9e479c03.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bun-sua-nha-trang-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/sub-6981.jpg",
+    "title": "Bún sứa"
+  },
+  "Bún thang lươn": {
+    "url": "/images/food-589077a3f3f1.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/bun-thang-2/bun-thang-luon-pho-hien/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/eAyCdbh5-bun-thang-luon-hung-yen-1200x640.jpg",
+    "title": "Bún thang lươn"
+  },
+  "Bưởi Phúc Trạch": {
+    "url": "/images/food-19c87d0b16b5.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/buoi-2/buoi-phuc-trach/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/z3715704192330_ba94aebfa64f32bdb84777b35e3dd8ef-1500x640.jpg",
+    "title": "Bưởi Phúc Trạch"
+  },
+  "Bưởi Tân Triều": {
+    "url": "/images/food-571bfd10f779.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/ga-2/ga-hap-buoi-tan-trieu/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/cach-lam-mon-ga-hap-buoi-dai-ngon-bo-duong-202201171338542238.jpg",
+    "title": "Bưởi Tân Triều"
+  },
+  "Cam sành Hàm Yên": {
+    "url": "/images/food-62e108415cec.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/cam-2/cam-sanh-ham-yen/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/cam-ham-yen-1688024999.jpg",
+    "title": "Cam sành Hàm Yên"
+  },
+  "Cao lầu Hội An": {
+    "url": "/images/food-3d814f91e492.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/cao-lau-hoi-an-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/cao-lau-hoi-an-1.jpg",
+    "title": "Cao lầu Hội An"
+  },
+  "Cháo canh": {
+    "url": "/images/food-133b033bc31b.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/chao-2/chao-canh-nghe-an/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/chao-canh-nghe-an-2.jpg",
+    "title": "Cháo canh"
+  },
+  "Cháo lươn Vinh": {
+    "url": "/images/food-f4508599cf6a.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/chao-luon-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/cach-nau-chao-luon-1_2c2cc103b2c344778e4a214722b495df-1000x640.jpg",
+    "title": "Cháo lươn Vinh"
+  },
+  "Cháo ấu tẩu": {
+    "url": "/images/food-ea90872f03a4.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/chao-2/chao-au-tau-ha-giang/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/1055_featured__sub8607.jpg",
+    "title": "Cháo ấu tẩu"
+  },
+  "Chè Tân Cương": {
+    "url": "/images/food-0d15271df77e.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/che-2/che-tan-cuong/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/chetancuong17-12-2021-1000x640.jpg",
+    "title": "Chè Tân Cương"
+  },
+  "Chả cá Lã Vọng": {
+    "url": "/images/food-c22e55019592.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/cha-ca-2/cha-ca-la-vong/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/cha-ca-la-vong-ha-noi-10.jpg",
+    "title": "Chả cá Lã Vọng"
+  },
+  "Chả mực Hạ Long": {
+    "url": "/images/food-c516d1fcfdfb.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/cha-muc-2/cha-muc-ha-long/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/2200722_1_15385009.jpg",
+    "title": "Chả mực Hạ Long"
+  },
+  "Chả tôm": {
+    "url": "/images/food-4a882b9e0d6f.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/cha-2/cha-tom-thanh-hoa/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/review-mon-cha-tom-o-thanh-hoa-1600x640.jpg",
+    "title": "Chả tôm"
+  },
+  "Chẩm chéo": {
+    "url": "/images/food-b73dd25ce024.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/cham-cheo-cham-cheo-4/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/nen-cham-cheo-barona-800x640.jpg",
+    "title": "Chẩm chéo"
+  },
+  "Cua Cà Mau": {
+    "url": "/images/food-9acdc97a3dba.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/banh-phong-cua-ca-mau-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/banh-phong-tom-ca-mau-8-1771779954-800x640.jpg",
+    "title": "Cua Cà Mau"
+  },
+  "Cá hồi Sa Pa": {
+    "url": "/images/food-c55f129a4a68.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/ca-hoi-sa-pa-lausashiminuong-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/ca-hoi-sapa-03_75146.jpg",
+    "title": "Cá hồi Sa Pa"
+  },
+  "Cơm cháy Ninh Bình": {
+    "url": "/images/food-996deac378bf.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/com-chay-ninh-binh-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/sub-6983-1200x640.jpg",
+    "title": "Cơm cháy Ninh Bình"
+  },
+  "Cơm hến": {
+    "url": "/images/food-3c9dd282c1b9.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/com-hen-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/2024_1_10_638405112573038050_com-hen_-1600x640.webp",
+    "title": "Cơm hến"
+  },
+  "Cơm lam": {
+    "url": "/images/food-4a19eab87d0b.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/com-lam-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/56_featured__sub8363-800x640.jpg",
+    "title": "Cơm lam"
+  },
+  "Cơm lam Hòa Bình": {
+    "url": "/images/food-fcbf8ede4ed8.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/com-lam-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/56_featured__sub8363-800x640.jpg",
+    "title": "Cơm lam Hòa Bình"
+  },
+  "Cơm tấm": {
+    "url": "/images/food-e470654a1203.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/com-tam-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/tam-2-1280x640.webp",
+    "title": "Cơm tấm"
+  },
+  "Cơm tấm Long Xuyên": {
+    "url": "/images/food-5e9ae1750f8b.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/com-tam-2/com-tam-long-xuyen/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/com-tam-long-xuyen-mon-an-don-gian-nhung-day-cuon-hut-01-1660584910-1398x640.jpg",
+    "title": "Cơm tấm Long Xuyên"
+  },
+  "Don Quảng Ngãi": {
+    "url": "/images/food-3a0dd9deb821.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/don-quang-ngai-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/photo-3-17204948168821345800012.jpg",
+    "title": "Don Quảng Ngãi"
+  },
+  "Dê núi Ninh Bình": {
+    "url": "/images/food-6736e733d15d.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/thit-de-nui-ninh-binh-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/photo-9-1663052196570932248707-1080x640.jpg",
+    "title": "Dê núi Ninh Bình"
+  },
+  "Dừa sáp Trà Vinh": {
+    "url": "/images/food-961fb66fd8c3.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/dua-sap-tra-vinh-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/le-hoi-dua-sap-1713240917658226993861-1600x640.jpg",
+    "title": "Dừa sáp Trà Vinh"
+  },
+  "Gà nướng Bản Đôn": {
+    "url": "/images/food-937c662e373f.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/ga-2/ga-nuong-ban-don/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/Anhbia-1200x676-6-1200x640.jpg",
+    "title": "Gà nướng Bản Đôn"
+  },
+  "Gỏi cá Biên Hòa": {
+    "url": "/images/food-c3e3a0d0e782.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/goi-ca-2/goi-ca-bien-hoa/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/1226_featured__sub8618-900x640.jpg",
+    "title": "Gỏi cá Biên Hòa"
+  },
+  "Gỏi gà măng cụt": {
+    "url": "/images/food-67e410d50a70.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/goi-nom-2/goi-ga-mang-cut-binh-duong/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/goi-ga-mang-cut-gay-sot-du-khach-un-un-do-ve-binh-duong-nem-dac-san-tru-danh-1644.jpg",
+    "title": "Gỏi gà măng cụt"
+  },
+  "Gỏi lá Kon Tum": {
+    "url": "/images/food-e4680d88cf56.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/goi-nom-2/goi-la-kon-tum/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/mon-goi-ha-hoa-hon-30-loai-la-khach-cuon-moi-tay-dac-san-o-kon-tum-685-1600x640.jpg",
+    "title": "Gỏi lá Kon Tum"
+  },
+  "Hạt dẻ Trùng Khánh": {
+    "url": "/images/food-125d85112fac.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/hat-de-trung-khanh-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/210_featured__sub8424-1200x640.jpg",
+    "title": "Hạt dẻ Trùng Khánh"
+  },
+  "Hạt điều Bình Phước": {
+    "url": "/images/food-98f88b2ff38c.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/combo-trai-cay-dong-nai-hat-dieu-binh-phuoc-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/hat-dieu-rang-muoi-binh-phuoc-500g-1-800x640.jpg",
+    "title": "Hạt điều Bình Phước"
+  },
+  "Hủ tiếu Mỹ Tho": {
+    "url": "/images/food-f50ac4e4192a.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/hu-tieu-2/hu-tieu-my-tho/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/z6508413422688_4fdced683ac22b05c781c17abe3b8bea-1417x640.jpg",
+    "title": "Hủ tiếu Mỹ Tho"
+  },
+  "Khâu nhục": {
+    "url": "/images/food-44081b2e4ceb.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/khau-nhuc-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/namkhau20240703162807.jpg",
+    "title": "Khâu nhục"
+  },
+  "Kẹo cu đơ": {
+    "url": "/images/food-4444763010f9.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/keo-2/keo-cu-do-xu-nghe/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/694_featured__sub3979-1024x640.jpg",
+    "title": "Kẹo cu đơ"
+  },
+  "Kẹo dừa Bến Tre": {
+    "url": "/images/food-2567c76df151.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/keo-2/keo-dua-ben-tre/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/ivivu-1-900x640.jpeg",
+    "title": "Kẹo dừa Bến Tre"
+  },
+  "Kẹo gương": {
+    "url": "/images/food-a72288a76df1.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/keo-2/keo-guong/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/keo-guong-1152x640.jpg",
+    "title": "Kẹo gương"
+  },
+  "Lạp xưởng Cần Đước": {
+    "url": "/images/food-bf8793ac3d8d.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/lap-xuong-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/2411740aba98d5340e085fe642dff45a30a.jpg",
+    "title": "Lạp xưởng Cần Đước"
+  },
+  "Lẩu gà lá é": {
+    "url": "/images/food-4d138c395c5c.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/lau-2/lau-ga-la-e/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/Lau-ga-la-e-Tao-Ngo-2.jpg",
+    "title": "Lẩu gà lá é"
+  },
+  "Lợn cắp nách": {
+    "url": "/images/food-ba94560aa0a3.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/lon-cap-nach-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/9-15470122238661312906743-1024x640.jpg",
+    "title": "Lợn cắp nách"
+  },
+  "Miến dong Na Rì": {
+    "url": "/images/food-d8bc6a88111f.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/mien-dong-na-ri-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/1520250920212213-1600x640.jpg",
+    "title": "Miến dong Na Rì"
+  },
+  "Mì Quảng": {
+    "url": "/images/food-24c0d49fe111.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/mi-quang-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/mi-quang-quang-nam-2.jpg",
+    "title": "Mì Quảng"
+  },
+  "Mắt cá ngừ đại dương": {
+    "url": "/images/food-07013a1b7c68.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/mat-ca-ngu-dai-duong-tiem-thuoc-bac-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/mat-ca-ngu-dai-duong-tiem-thuoc-bac.jpg",
+    "title": "Mắt cá ngừ đại dương"
+  },
+  "Mỳ Chũ": {
+    "url": "/images/food-cd35d8724430.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/my-chu-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/image-23.webp",
+    "title": "Mỳ Chũ"
+  },
+  "Nem Lai Vung": {
+    "url": "/images/food-54871158530a.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/nem-2/nem-lai-vung/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/nem-chua-mon-an-dac-san-lai-vung-nem-co-hoan-1.jpg",
+    "title": "Nem Lai Vung"
+  },
+  "Nem chua Thanh Hóa": {
+    "url": "/images/food-86a86567e6e7.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/nem-chua-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/820250517171123-960x640.jpg",
+    "title": "Nem chua Thanh Hóa"
+  },
+  "Nem nướng Ninh Hòa": {
+    "url": "/images/food-5158f00f0e04.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/nem-nuong-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/mach-ban-cach-lam-nem-nuong-bang-chao-202106181648022849.jpg",
+    "title": "Nem nướng Ninh Hòa"
+  },
+  "Nhãn lồng Hưng Yên": {
+    "url": "/images/food-a437e033c9de.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/nhan-long-hung-yen-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/nhan-1690790468.jpg",
+    "title": "Nhãn lồng Hưng Yên"
+  },
+  "Nậm pịa": {
+    "url": "/images/food-e55c323f8015.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/nam-pia-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/nam-pia-moc-chau-dac-san-doc-dao-cua-nguoi-thai-1644960986-1000x640.jpg",
+    "title": "Nậm pịa"
+  },
+  "Pa pỉnh tộp": {
+    "url": "/images/food-5835c04264d2.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/pa-pinh-top-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/pa_pinh_top_8_bcd0cfe75e.jpg",
+    "title": "Pa pỉnh tộp"
+  },
+  "Phở bò Nam Định": {
+    "url": "/images/food-850a89e02cd9.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/pho-2/pho-bo-nam-dinh/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/cach_nau_pho_bo_nam_dinh_0_1d94be153c-1600x640.webp",
+    "title": "Phở bò Nam Định"
+  },
+  "Phở chua": {
+    "url": "/images/food-8f3e3f426bc3.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/pho-2/pho-chua-bac-ha/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/5-1595335447020-1-1167-1280x640.jpg",
+    "title": "Phở chua"
+  },
+  "Phở khô Gia Lai": {
+    "url": "/images/food-2b36e41b8fe4.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/pho-2/pho-kho-gia-lai-pho-hai-to/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/den-pho-nui-pleiku-an-pho-kho-gia-lai-02-1200x640.jpg",
+    "title": "Phở khô Gia Lai"
+  },
+  "Su su Tam Đảo": {
+    "url": "/images/food-b30e5c588d68.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/su-su-tam-dao-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/NhE1BBAFng-mC3B3n-C483n-ngon-nE1BB95i-tiE1BABFng-E1BB9F-Tam-C490E1BAA3o3-1000x640.jpg",
+    "title": "Su su Tam Đảo"
+  },
+  "Sá sùng": {
+    "url": "/images/food-47c8ca5a00f4.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/sa-sung-van-don-co-to-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/sa-sung-kho-quang-ninh-6-800x640.jpg",
+    "title": "Sá sùng"
+  },
+  "Thắng cố": {
+    "url": "/images/food-6067c1d071d4.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/thang-co-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/cach-lam-thang-co-1.jpg",
+    "title": "Thắng cố"
+  },
+  "Thịt chua Thanh Sơn": {
+    "url": "/images/food-35d447b7ffe7.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/thit-chua-thanh-son-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/20250916-072819-OqpjVvil-1500x640.webp",
+    "title": "Thịt chua Thanh Sơn"
+  },
+  "Thịt trâu gác bếp": {
+    "url": "/images/food-8cab82d34334.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/thit-gac-bep-2/thit-trau-gac-bep/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/trau-gac-bep-tay-bac-du-lich-viet-2-960x640.jpg",
+    "title": "Thịt trâu gác bếp"
+  },
+  "Tương Nam Đàn": {
+    "url": "/images/food-1ae8e349b7c3.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/tuong-nam-dan-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/691_featured__sub8581.jpg",
+    "title": "Tương Nam Đàn"
+  },
+  "Vải thiều Lục Ngạn": {
+    "url": "/images/food-d58f413a4b3d.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/vai-thieu-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/kt1.jpg",
+    "title": "Vải thiều Lục Ngạn"
+  },
+  "Vịt quay 7 vị": {
+    "url": "/images/food-c3d0696b33aa.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/vit-2/vit-quay-7-vi/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/vit-quay-7-vi-1-1117-1200x640.jpg",
+    "title": "Vịt quay 7 vị"
+  },
+  "Xoài cát Hòa Lộc": {
+    "url": "/images/food-0b15a3dd1cb6.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/xoai-cat-hoa-loc-sau-rieng-vu-sua-2/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/XoC3A0i_cC3A1t_HC3B2a_LE1BB99c-1600x640.jpg",
+    "title": "Xoài cát Hòa Lộc"
+  },
+  "Xôi nếp nương": {
+    "url": "/images/food-ad59a0591882.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/xoi-2/xoi-nep-nuong-mai-chau/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/xoi-nep-nuong-1-1018-1200x640.jpg",
+    "title": "Xôi nếp nương"
+  },
+  "Xôi tím": {
+    "url": "/images/food-1aa3153b24cf.jpg",
+    "source": "GoVietnam",
+    "sourceUrl": "https://govietnam.travel/food/xoi-2/xoi-tim-lai-chau/",
+    "originalImageUrl": "https://cdn.govietnam.travel/wp-content/uploads/2026/04/xoi-tim-17035967145741911852978-1600x640.jpg",
+    "title": "Xôi tím"
+  }
+}
