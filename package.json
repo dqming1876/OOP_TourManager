@@ -4,7 +4,8 @@
   "scripts": {
     "build": "node scripts/build-cloudflare.mjs",
     "dev": "npm run build && wrangler dev",
-    "test": "npm run build && node --test test/operations.test.js"
+    "demo": "node scripts/demo.mjs",
+    "test": "npm run build && node --test test/*.test.js"
   },
   "devDependencies": {
     "wrangler": "4.92.0"

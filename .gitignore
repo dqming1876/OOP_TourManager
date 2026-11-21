@@ -3,3 +3,5 @@
 .env*
 .dev.vars*
 node_modules/
+mingo-demo*.sql
+mingo-demo*.zip
