@@ -21,6 +21,17 @@ flowchart LR
 | R06 Hủy và trả chỗ — `Booking.transition('cancel')`, `release_booking_seats` | Khách chỉ được hủy đơn chờ của chính mình. Admin hủy đơn chờ hoặc đã xác nhận khi không còn tiền đã thu. | Đơn chuyển sang hủy, trả số chỗ đúng một lần; đơn khác và lịch sử thanh toán giữ nguyên. |
 | R07 Phạm vi đọc — `bookingScope`, `TourOperations.bookings/paymentHistory` | Có phiên với một vai trò hợp lệ | Khách chỉ nhận DTO đơn của mình; admin đọc các đơn để xử lý. Lịch sử thu/hoàn nội bộ yêu cầu quyền admin. |
 
+## Ma trận phân quyền
+
+| Thao tác | Chưa đăng nhập | Khách | Quản trị viên |
+| --- | --- | --- | --- |
+| Xem danh mục | Tour đang bán | Tour đang bán | Mọi tour |
+| Quản lý tour và đợt | Chặn | Chặn | Cho phép theo R03 |
+| Đặt và xem phiếu | Chặn | Đặt và đọc phiếu của mình | Đọc phiếu để xử lý |
+| Xác nhận, thu, hoàn, đọc sổ thanh toán | Chặn | Chặn | Theo R04–R05 |
+| Hủy phiếu | Chặn | Phiếu chờ của mình | Phiếu chờ hoặc đã xác nhận, chưa thu hoặc đã hoàn |
+| Báo cáo nội bộ | Chặn | Chặn | Cho phép |
+
 ## Thử vượt giao diện
 
 `TourOperations.requireRole` kiểm danh tính do Worker đọc từ phiên. Gọi trực tiếp Service với khách để sửa tour, lập lịch, xác nhận đơn hay đọc lịch sử thu tiền đều bị từ chối với 403 trước khi chạm repository. Admin gọi hàm đặt chỗ cũng bị từ chối 403. Gọi xem đơn khi chưa có phiên trả 401. Nếu khách gửi lệnh hủy đơn chờ của người khác, câu cập nhật dùng thêm điều kiện `user_id`, nên dữ liệu không thay đổi.
