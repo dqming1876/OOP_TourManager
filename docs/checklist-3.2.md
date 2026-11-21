@@ -39,7 +39,7 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 
 | Lớp | Thực thể hoặc nguồn | Hành vi và nơi gọi |
 | --- | --- | --- |
-| `Tour` | `tours` | Ràng buộc giá, số ngày, ảnh; tạo tập `TourStop` đủ số ngày. Dùng khi `TourCatalogService.saveTour`. |
+| `Tour` | `tours` | Ràng buộc giá, số ngày, ảnh; tạo tập `TourStop` đủ số ngày. Dùng khi `TourCatalogService.save_tour`. |
 | `Destination` | `destinations` | Chuẩn hóa tên địa danh và tỉnh theo quy tắc chiều dài trước khi ghi điểm ghé. `Tour` dùng khi dựng liên kết. |
 | `TourStop` | `tour_stops` | Kiểm ngày thứ mấy và nội dung. Cung cấp ngày/điểm/hoạt động để repository ghi trong cùng batch với tour. |
 | `Departure` | `departures` | Kiểm ngày và sức chứa trước ghi. Tính chỗ còn từ sức chứa trừ chỗ đã giữ khi dựng danh mục. |
@@ -48,10 +48,10 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 | `CustomerAccount` | `accounts` | Kiểm dữ liệu cập nhật hồ sơ. `bookingScope()` trả ID chủ đơn để giới hạn phạm vi đọc. |
 | `AdministratorAccount` | Danh tính admin từ phiên và cấu hình Worker | `bookingScope()` cho phạm vi quản trị toàn bộ đơn. `toPublic()` chỉ đưa danh tính công khai ra HTTP. |
 
-`Account` là lớp cơ sở nội bộ cho hai loại tài khoản, không tính vào tám lớp cụ thể. Các enum được biểu diễn bằng hằng bất biến trong JavaScript: `BookingStatus` (pending, confirmed, cancelled), `PaymentKind` (collect, refund) và `AccountRole` (admin, customer). Trạng thái báo cáo “quá hạn/hoàn thành” là giá trị suy ra từ ngày, trạng thái và thanh toán. [Mã miền](../worker/domain) · [Repository tour](../worker/database/tour-catalog-repository.js) · [Repository đơn](../worker/database/booking-repository.js)
+`Account` là lớp cơ sở nội bộ cho hai loại tài khoản, không tính vào tám lớp cụ thể. Python kiểm tra các tập giá trị trạng thái đơn (pending, confirmed, cancelled), loại giao dịch (collect, refund) và vai trò (admin, customer). Trạng thái báo cáo “quá hạn/hoàn thành” là giá trị suy ra từ ngày, trạng thái và thanh toán. [Mã miền](../backend/domain.py) · [Repository tour](../backend/repositories.py) · [Repository đơn](../backend/repositories.py)
 
 ## Đọc ngược thuộc tính lịch sử
 
-`bookings.unit_price` được lấy từ `tours.price` ngay trong câu lệnh tạo đơn. `Booking.total` tính `(adults + children) × unitPrice` từ bản chụp trên phiếu. Ví dụ test đặt 3 người lúc giá 1.200.000 ₫, rồi sửa tour lên 5.000.000 ₫. Giá trị đơn cũ vẫn là 3.600.000 ₫. `bookings.title` cũng là bản chụp để tên hiển thị trên phiếu cũ giữ được ý nghĩa lịch sử. [Kiểm thử](../test/operations.test.js)
+`bookings.unit_price` được lấy từ `tours.price` ngay trong câu lệnh tạo đơn. `Booking.total` tính `(adults + children) × unitPrice` từ bản chụp trên phiếu. Ví dụ test đặt 3 người lúc giá 1.200.000 ₫, rồi sửa tour lên 5.000.000 ₫. Giá trị đơn cũ vẫn là 3.600.000 ₫. `bookings.title` cũng là bản chụp để tên hiển thị trên phiếu cũ giữ được ý nghĩa lịch sử. [Kiểm thử](../tests/test_operations.py)
 
 Nếu đổi quan hệ Tour–Đợt từ 1–n sang n–n thì đợt có định danh riêng và cần bảng nối có khóa `(tour_id, departure_id)`. Cần quyết định chỗ giữ dùng chung cho đợt hay theo tour. Khi đó `Departure`, khóa ngoại của `Booking`, trigger giữ/trả chỗ và truy vấn sức chứa đều cần sửa theo lựa chọn đó. Trước khi đổi, phải ánh xạ các đơn lịch sử sang khóa mới để giữ chính xác ngày và tour đã đặt.

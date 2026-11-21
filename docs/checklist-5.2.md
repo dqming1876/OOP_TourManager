@@ -1,6 +1,6 @@
 # Minh chứng 5.2 — CSDL kiểm thử, rollback, báo cáo và RBAC
 
-Chạy `npm run test:integration`. Mỗi ca dựng một SQLite trong bộ nhớ, áp toàn bộ migration và nạp fixture riêng. Adapter chạy cùng SQL, ràng buộc, trigger và Service ứng dụng. Sau mỗi ca, DB trong bộ nhớ được đóng.
+Chạy `python3 -m unittest tests.test_integration_axis5`. Phần đối chiếu trình bày chạy bằng `node --test tests/frontend/*.test.js`. Mỗi ca dựng một SQLite trong bộ nhớ, áp toàn bộ migration và nạp fixture riêng. Adapter chạy cùng SQL, ràng buộc, trigger và Service ứng dụng. Sau mỗi ca, DB trong bộ nhớ được đóng.
 
 | Ca | Rule và tầng thực thi | Kết quả đã xác minh |
 | --- | --- | --- |
@@ -11,7 +11,7 @@ Chạy `npm run test:integration`. Mỗi ca dựng một SQLite trong bộ nhớ
 
 ## IT-03 — Đối chiếu tính tay
 
-Tour báo cáo, kỳ **10–12/05/2028**. Dữ liệu cụ thể được dựng ở [bộ kiểm thử](../test/integration-axis5.test.js).
+Tour báo cáo, kỳ **10–12/05/2028**. Dữ liệu cụ thể được dựng ở [bộ kiểm thử](../tests/test_integration_axis5.py).
 
 | Ngày | Sự kiện của tour được chọn | Tính vào báo cáo |
 | --- | --- | --- |

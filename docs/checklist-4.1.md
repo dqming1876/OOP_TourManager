@@ -7,18 +7,15 @@ classDiagram
     direction TB
     class Tour {
         +id
-        -details
-        -stops
-        +details()
-        +stops()
-        -buildItinerary()
-        -validatedCover()
+        +details
+        +stops
+        +request()
     }
     class TourStop {
         +dayNumber
         +activity
         +destination
-        +toWriteRow()
+        +write_row()
     }
     class Destination {
         +province
@@ -81,21 +78,21 @@ classDiagram
     class BookingPort {
         <<interface>>
         +listBookings(ownerId)
-        +placeBooking(booking, today)
-        +updateBooking(id, rule, ownerId, today)
-        +paymentHistory(id)
+        +place_booking(booking, today)
+        +update_booking(id, rule, ownerId, today)
+        +payment_history(id)
     }
     class BookingService {
         +bookings()
-        +placeBooking(input)
-        +updateBooking(id, action)
-        +paymentHistory(id)
+        +place_booking(input)
+        +update_booking(id, action)
+        +payment_history(id)
     }
     class BookingRepository {
         +listBookings(ownerId)
-        +placeBooking(booking, today)
-        +updateBooking(id, rule, ownerId, today)
-        +paymentHistory(bookingId)
+        +place_booking(booking, today)
+        +update_booking(id, rule, ownerId, today)
+        +payment_history(bookingId)
     }
     class PaymentEvent {
         +date
@@ -120,15 +117,15 @@ Tổng cộng sơ đồ có **12 lớp chạy thật** sau khi loại interface 
 | Realization | `BookingRepository → BookingPort` | `@implements` khai báo hợp đồng cấu trúc. Điểm lắp đặt dùng cùng hợp đồng cho adapter lưu trữ và bộ nhớ. |
 | Dependency | `BookingService → Booking` | Dùng tạm `Booking.request/transition` để xử lý yêu cầu. Service không sở hữu một instance Booking dài hạn. |
 
-Lớp cơ sở `Account` chứa constructor và mã chạy dùng chung. Hợp đồng `BookingPort` được hiện thực theo cấu trúc bằng JSDoc và kiểm thử. JavaScript không có từ khóa `abstract` hay `interface` trong mã chạy.
+Lớp cơ sở `Account` chứa constructor và mã chạy dùng chung. Hợp đồng `BookingPort` được khai báo bằng `typing.Protocol` và xác minh bằng kiểm thử.
 
 ## Kiểm toán ngược ba lớp chọn ngẫu nhiên
 
 | Lớp | Đối chiếu cấu trúc và quan hệ |
 | --- | --- |
-| `Tour` | ID là trường chỉ đọc; `#details`, `#stops` là private; hai getter công khai, hai hàm kiểm tra private. `#buildItinerary` tạo `new TourStop(...)` đúng chiều composition. [tour.js](../worker/domain/tour.js) |
-| `TourStop` | Constructor nhận thứ tự, hoạt động, tỉnh và điểm. Instance đóng băng ba thuộc tính trong UML. `toWriteRow()` xuất đúng khóa ngày, điểm ghé, nội dung hoạt động. [tour.js](../worker/domain/tour.js) |
-| `BookingRepository` | Constructor nhận DB. Bốn phương thức trong port khớp chữ ký triển khai. `paymentHistory()` dựng `PaymentEvent`; `placeBooking()` lấy khóa đợt từ đối tượng Booking và kiểm khóa trong SQL. [booking-repository.js](../worker/database/booking-repository.js) |
+| `Tour` | `Tour` là dataclass bất biến. `details` là mapping chỉ đọc, `stops` là tuple. `Tour.request()` tạo các `TourStop` theo đúng thứ tự. [domain.py](../backend/domain.py) |
+| `TourStop` | Constructor nhận thứ tự, hoạt động, tỉnh và điểm. Instance đóng băng ba thuộc tính trong UML. `write_row()` xuất đúng khóa ngày, điểm ghé, nội dung hoạt động. [domain.py](../backend/domain.py) |
+| `BookingRepository` | Constructor nhận DB. Bốn phương thức trong port khớp chữ ký triển khai. `payment_history()` dựng `PaymentEvent`; `place_booking()` lấy khóa đợt từ đối tượng Booking và kiểm khóa trong SQL. [repositories.py](../backend/repositories.py) |
 
 ## Bảy bảng và phụ thuộc hàm
 
@@ -144,4 +141,4 @@ Lớp cơ sở `Account` chứa constructor và mã chạy dùng chung. Hợp đ
 
 Khóa ghép xác định thuộc tính liên kết theo toàn khóa. Tỉnh và tên địa danh đặt ở bảng địa danh; ngày/hoạt động của từng điểm ghé đặt ở bảng nối. Tên tour, liên hệ và giá trong đơn là dữ liệu lịch sử theo mã đơn. Hai danh mục đơn giản là tour và địa danh, chiếm 2/7. Các bảng còn lại phục vụ tài khoản, lịch, liên kết hoặc giao dịch. Nội dung giới thiệu tour đi trong một cột JSON; các thuộc tính nối, lịch trình và giao dịch đã tách thành bảng. `reserved` và `paid` là trạng thái vận hành cập nhật đồng bộ bằng trigger để truy vấn nhanh. [Schema](../Database)
 
-**Thử hủy Whole.** Migration 0005 thêm `ON DELETE CASCADE` từ tour đến phần lịch trình. Xóa tour chưa có đợt/lịch sử chỉ xóa điểm ghé của tour đó, địa danh chung và điểm ghé của tour khác vẫn còn. Xóa tour có đợt bị FK chặn. Hai ca kiểm thử xác minh hành vi trên SQLite tạm và bảo toàn dữ liệu khi nâng schema. [Migration 0005](../Database/0005_tour_stop_ownership.sql) · [Kiểm thử](../test/architecture.test.js)
+**Thử hủy Whole.** Migration 0005 thêm `ON DELETE CASCADE` từ tour đến phần lịch trình. Xóa tour chưa có đợt/lịch sử chỉ xóa điểm ghé của tour đó, địa danh chung và điểm ghé của tour khác vẫn còn. Xóa tour có đợt bị FK chặn. Hai ca kiểm thử xác minh hành vi trên SQLite tạm và bảo toàn dữ liệu khi nâng schema. [Migration 0005](../Database/0005_tour_stop_ownership.sql) · [Kiểm thử](../tests/test_architecture.py)

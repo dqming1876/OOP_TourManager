@@ -1,6 +1,7 @@
 {
   "name": "mingo-local",
-  "main": "worker/index.js",
+  "main": "entry.py",
+  "compatibility_flags": ["python_workers"],
   "compatibility_date": "2026-05-15",
   "workers_dev": true,
   "assets": {

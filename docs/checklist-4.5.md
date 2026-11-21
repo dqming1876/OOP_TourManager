@@ -19,10 +19,10 @@
 | `ReportPort` — chỉ `load(filter)` | ReportsService | ReportsRepository |
 | `AccountsPort` — bốn phương thức tài khoản | AccountsService | AccountsRepository |
 
-Các hợp đồng JSDoc dùng kiểu cấu trúc. Service nhận port qua constructor và instance kho được tạo ở `createWorker()`. Route nhận Service đã lắp. Clock ngày Việt Nam được truyền tại root, bộ đếm đăng nhập ở cùng vòng đời Worker do root cấp xuống AccountsService. [Port](../worker/ports.js) · [Composition Root](../worker/index.js)
+Các hợp đồng dùng kiểu cấu trúc qua `typing.Protocol`. Service nhận port qua constructor và instance kho được tạo ở `Application()`. Route nhận Service đã lắp. Clock ngày Việt Nam được truyền tại root, bộ đếm đăng nhập ở cùng vòng đời Worker do root cấp xuống AccountsService. [Port](../backend/ports.py) · [Composition Root](../entry.py)
 
 ## Thử đổi DAL
 
-Test 4.5 lắp `createWorker({ repositories, today })` với BookingPort in-memory, qua cùng đường dẫn HTTP. POST đặt 3 khách trả 201, GET đơn trả đúng mã vừa tạo. BookingService, route, DTO và lớp miền dùng nguyên code. Bản demo thật dùng repository D1 với adapter SQLite, bộ test chạy thêm cả schema và trigger. [Kiểm thử](../test/architecture.test.js)
+Test 4.5 lắp `Application(repositories=..., today=...)` với BookingPort in-memory, qua cùng đường dẫn HTTP. POST đặt 3 khách trả 201, GET đơn trả đúng mã vừa tạo. BookingService, route, DTO và lớp miền dùng nguyên code. Bản demo thật dùng repository D1 với adapter SQLite, bộ test chạy thêm cả schema và trigger. [Kiểm thử](../tests/test_architecture.py)
 
 Tách port khiến việc kiểm thử không phụ thuộc binding DB, đổi lại cần giữ hợp đồng giữa các adapter và kiểm tra riêng các tính chất như giao dịch hoặc cập nhật đồng thời ở backend thật.
