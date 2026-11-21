@@ -5,7 +5,7 @@ import { demoSql, demoCustomerPassword } from '../scripts/demo-data.mjs';
 
 test('Seed tạo 92 dòng liên thông, có đủ 3 kỳ và số liệu báo cáo khớp tính tay', async t => {
   const now = new Date();
-  const { db, env, fetch } = makeWorker({ seed: demoSql(now) });
+  const { db, env, adminPassword, fetch } = await makeWorker({ seed: demoSql(now) });
   t.after(() => db.close());
   const queries = {
     accounts: "SELECT COUNT(*) FROM accounts WHERE id LIKE 'demo-%'",
@@ -29,7 +29,7 @@ test('Seed tạo 92 dòng liên thông, có đủ 3 kỳ và số liệu báo c�
     assert.equal(response.status, 200);
     return response.headers.getSetCookie().find(c => !c.includes('Max-Age=0')).split(';')[0];
   };
-  const admin = await login(env.ADMIN_USERNAME, env.ADMIN_PASSWORD);
+  const admin = await login(env.ADMIN_USERNAME, adminPassword);
   const customer = await login('mingo_khach1', demoCustomerPassword);
   const [y,m] = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now).split('-').map(Number);
   const month = offset => new Date(Date.UTC(y, m - 1 + offset, 1)).toISOString().slice(0,7);
@@ -53,7 +53,7 @@ test('Seed tạo 92 dòng liên thông, có đủ 3 kỳ và số liệu báo c�
 });
 
 test('Phiếu thu và hoàn xuất hiện ngay trên báo cáo và chi tiết đơn', async t => {
-  const { env, db, fetch } = makeWorker({ seed: demoSql() });
+  const { env, db, adminPassword, fetch } = await makeWorker({ seed: demoSql() });
   t.after(() => db.close());
   const origin = 'http://localhost';
   async function request(path, body, cookie) {
@@ -61,7 +61,7 @@ test('Phiếu thu và hoàn xuất hiện ngay trên báo cáo và chi tiết đ
       method: 'POST', headers: { Origin: origin, Cookie: cookie || '' }, body: JSON.stringify(body),
     } : { headers: { Cookie: cookie || '' } }));
   }
-  const loggedIn = await request('auth/login', { username: env.ADMIN_USERNAME, password: env.ADMIN_PASSWORD });
+  const loggedIn = await request('auth/login', { username: env.ADMIN_USERNAME, password: adminPassword });
   const cookie = loggedIn.headers.getSetCookie().find(c => c.startsWith('dv_admin=')).split(';')[0];
   const id = 'MGDEMO023'; // Hà Nội, kỳ tương lai, đơn xác nhận chưa thu, 2 khách.
   const today = new Intl.DateTimeFormat('sv-SE', { timeZone:'Asia/Ho_Chi_Minh' }).format(new Date());

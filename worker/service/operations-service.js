@@ -1,38 +1,11 @@
-class OperationError extends Error {
-  constructor(status, message, field) {
-    super(message);
-    this.status = status;
-    this.field = field;
-  }
-}
-
-function requiredText(value, limit, label, field) {
-  if (typeof value !== 'string' || !value.trim() || value.trim().length > limit) {
-    throw new OperationError(400, label + ' không hợp lệ.', field);
-  }
-  return value.trim();
-}
-
-function integerBetween(value, min, max, label, field) {
-  if (!Number.isInteger(value) || value < min || value > max) {
-    throw new OperationError(400, label + ' phải từ ' + min + ' đến ' + max + '.', field);
-  }
-  return value;
-}
-
-function validCalendarDay(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
-    && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
-}
+import { AccessError, AppError, ConflictError, ValidationError } from '../domain/errors.js';
+import { calendarDay, integerBetween, requiredText } from '../domain/validation.js';
 
 function departureDay(value) {
-  if (!validCalendarDay(value)) {
-    throw new OperationError(400, 'Ngày khởi hành không hợp lệ.', 'day');
-  }
-  return value;
+  return calendarDay(value, 'Ngày khởi hành không hợp lệ.', 'day');
 }
 
-class TourOperations {
+export class TourOperations {
   constructor(repository, actor, today) {
     this.repository = repository;
     this.actor = actor;
@@ -40,8 +13,8 @@ class TourOperations {
   }
 
   requireRole(role) {
-    if (!this.actor) throw new OperationError(401, 'Vui lòng đăng nhập.');
-    if (this.actor.role !== role) throw new OperationError(403, 'Bạn không có quyền thực hiện thao tác này.');
+    if (!this.actor) throw new AccessError(401, 'Vui lòng đăng nhập.');
+    if (this.actor.role !== role) throw new AccessError(403, 'Bạn không có quyền thực hiện thao tác này.');
   }
 
   catalog() {
@@ -71,46 +44,46 @@ class TourOperations {
     }
     if (input.itinerary !== undefined) {
       if (!Array.isArray(input.itinerary) || input.itinerary.length !== days) {
-        throw new OperationError(400, 'Lịch trình phải có đủ nội dung mỗi ngày.');
+        throw new ValidationError('Lịch trình phải có đủ nội dung mỗi ngày.');
       }
       tour.itinerary = input.itinerary.map((day, i) => requiredText(day, 2000, 'Nội dung lịch trình', 'itinerary-' + i));
       if (input.stops !== undefined && (!Array.isArray(input.stops) || input.stops.length !== days)) {
-        throw new OperationError(400, 'Chọn điểm ghé cho từng ngày.');
+        throw new ValidationError('Chọn điểm ghé cho từng ngày.');
       }
       tour.stops = input.stops?.map((place, i) => requiredText(place, 120, 'Điểm ghé', 'stop-' + i)) ?? tour.itinerary.map(() => tour.place);
     }
     if (input.cover) {
       if (typeof input.cover !== 'string' || input.cover.length > 1_398_134
         || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(input.cover)) {
-        throw new OperationError(400, 'Ảnh phải là JPG, PNG hoặc WebP tối đa 1 MB.', 'cover');
+        throw new ValidationError('Ảnh phải là JPG, PNG hoặc WebP tối đa 1 MB.', 'cover');
       }
       tour.cover = input.cover;
     }
-    if (!await this.repository.saveTour(tourId, tour, !id)) throw new OperationError(404, 'Không tìm thấy tour.');
+    if (!await this.repository.saveTour(tourId, tour, !id)) throw new AppError(404, 'Không tìm thấy tour.');
     return { id: tourId };
   }
 
   async setVisibility(id, hidden) {
     this.requireRole('admin');
-    if (typeof hidden !== 'boolean') throw new OperationError(400, 'Trạng thái hiển thị không hợp lệ.');
-    if (!await this.repository.setVisibility(id, hidden)) throw new OperationError(404, 'Không tìm thấy tour.');
+    if (typeof hidden !== 'boolean') throw new ValidationError('Trạng thái hiển thị không hợp lệ.');
+    if (!await this.repository.setVisibility(id, hidden)) throw new AppError(404, 'Không tìm thấy tour.');
   }
 
   async saveDeparture(tourId, input) {
     this.requireRole('admin');
     const day = departureDay(input.day);
     const capacity = integerBetween(input.capacity, 1, 100, 'Sức chứa', 'capacity');
-    if (day < this.today) throw new OperationError(400, 'Không thể sửa lịch đã qua.', 'day');
+    if (day < this.today) throw new ValidationError('Không thể sửa lịch đã qua.', 'day');
     const edit = input.edit ?? false;
-    if (typeof edit !== 'boolean') throw new OperationError(400, 'Thao tác lịch không hợp lệ.');
+    if (typeof edit !== 'boolean') throw new ValidationError('Thao tác lịch không hợp lệ.');
     if (edit) {
       if (!await this.repository.changeDepartureCapacity(tourId, day, capacity)) {
-        throw new OperationError(409, 'Đợt đã bị xóa hoặc sức chứa thấp hơn số chỗ đã giữ.', 'capacity');
+        throw new ConflictError('Đợt đã bị xóa hoặc sức chứa thấp hơn số chỗ đã giữ.', 'capacity');
       }
       return;
     }
     if (!await this.repository.createDeparture(tourId, day, capacity)) {
-      throw new OperationError(409, 'Ngày này đã có đợt khởi hành hoặc tour đã bị xóa.', 'day');
+      throw new ConflictError('Ngày này đã có đợt khởi hành hoặc tour đã bị xóa.', 'day');
     }
   }
 
@@ -125,11 +98,11 @@ class TourOperations {
       children: integerBetween(input.children, 0, 99, 'Số trẻ em', 'children'),
     };
     if (!/^[0-9+ ()-]{9,16}$/.test(booking.phone) || booking.phone.replace(/\D/g, '').length < 8) {
-      throw new OperationError(400, 'Số điện thoại không hợp lệ.', 'phone');
+      throw new ValidationError('Số điện thoại không hợp lệ.', 'phone');
     }
     const id = 'MG' + crypto.randomUUID().replaceAll('-', '').toUpperCase();
     if (!await this.repository.placeBooking(id, this.actor.id, booking, this.today)) {
-      throw new OperationError(409, 'Đợt khởi hành đã đóng hoặc không còn đủ chỗ.', 'day');
+      throw new ConflictError('Đợt khởi hành đã đóng hoặc không còn đủ chỗ.', 'day');
     }
     return { id };
   }
@@ -138,19 +111,19 @@ class TourOperations {
     this.requireRole('admin');
     const day = departureDay(value);
     if (!await this.repository.removeDeparture(tourId, day)) {
-      throw new OperationError(409, 'Đợt không tồn tại hoặc đã có lịch sử đặt chỗ.');
+      throw new ConflictError('Đợt không tồn tại hoặc đã có lịch sử đặt chỗ.');
     }
   }
 
   async updateBooking(id, action) {
     if (!['confirm', 'collect', 'refund', 'cancel'].includes(action)) {
-      throw new OperationError(400, 'Thao tác đơn không hợp lệ.');
+      throw new ValidationError('Thao tác đơn không hợp lệ.');
     }
     const role = action === 'cancel' && this.actor?.role === 'customer' ? 'customer' : 'admin';
     this.requireRole(role);
     const ownerId = role === 'customer' ? this.actor.id : null;
     if (!await this.repository.updateBooking(id, action, ownerId)) {
-      throw new OperationError(409, 'Không thể thao tác với đơn này ở trạng thái hiện tại.');
+      throw new ConflictError('Không thể thao tác với đơn này ở trạng thái hiện tại.');
     }
   }
 }

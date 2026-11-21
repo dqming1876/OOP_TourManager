@@ -1,12 +1,13 @@
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import worker from '../.cloudflare/worker.js';
+import worker from '../worker/index.js';
+import { passwordHash } from '../worker/service/passwords.js';
 
-export function makeWorker({ adminPassword = randomUUID(), assets, seed } = {}) {
+export async function makeWorker({ adminPassword = randomUUID(), assets, seed } = {}) {
   const db = new DatabaseSync(':memory:', { enableForeignKeyConstraints: true });
-  for (const migration of readdirSync('drizzle').filter(name => name.endsWith('.sql')).sort()) {
-    db.exec(readFileSync('drizzle/' + migration, 'utf8'));
+  for (const migration of readdirSync('Database').filter(name => name.endsWith('.sql')).sort()) {
+    db.exec(readFileSync('Database/' + migration, 'utf8'));
   }
   if (seed) {
     db.exec('BEGIN');
@@ -19,13 +20,17 @@ export function makeWorker({ adminPassword = randomUUID(), assets, seed } = {}) 
       throw error;
     }
   }
+  const queries = [];
+  const salt = randomUUID();
   const env = {
     ADMIN_USERNAME: 'demo_admin',
-    ADMIN_PASSWORD: adminPassword,
+    ADMIN_PASSWORD_SALT: salt,
+    ADMIN_PASSWORD_HASH: await passwordHash(adminPassword, salt),
     ADMIN_SESSION_SECRET: randomUUID(),
     ASSETS: assets,
     DB: {
       prepare(sql) {
+        queries.push(sql);
         const bind = (...args) => ({
           all: () => ({ results: db.prepare(sql).all(...args) }),
           first: () => db.prepare(sql).get(...args) || null,
@@ -46,5 +51,5 @@ export function makeWorker({ adminPassword = randomUUID(), assets, seed } = {}) 
       },
     },
   };
-  return { db, env, fetch: request => worker.fetch(request, env) };
+  return { db, env, adminPassword, queries, fetch: request => worker.fetch(request, env) };
 }

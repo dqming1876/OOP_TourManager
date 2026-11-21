@@ -77,7 +77,7 @@ html{scroll-behavior:smooth}small,.source,.notice,.breadcrumb,label{font-size:14
 @media print {
   @page { margin: 13mm 12mm; }
   body:has(#report-output) { background: white; }
-  body:has(#report-output) :is(header,footer,.admin-nav,.section-head,.eyebrow,#report-filters,#admin-content > .toolbar,#admin-content > h2,#toast) { display: none !important; }
+  body:has(#report-output) :is(header,footer,.admin-nav,.section-head,.eyebrow,#frm007_bc_don_dat,#admin-content > .toolbar,#admin-content > h2,#toast) { display: none !important; }
   body:has(#report-output) :is(.wrap,.admin-shell,.table-scroll) { display: block; max-width: none; margin: 0; padding: 0; overflow: visible; }
   #report-output table { width: 100%; font-size: 10pt; }
   #report-output thead { display: table-header-group; }

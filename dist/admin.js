@@ -108,7 +108,7 @@ function showTourDetail(button, id) {
 function editTour(id) {
   const t = tours.find(tour => tour.id === id);
   modal(`<h2>${t ? 'Sửa tour' : 'Thêm tour'}</h2>
-    <form class="form catalog-form" data-validated novalidate onsubmit="submitTour(event,'${t?.id || ''}')">
+    <form id="frm001_dm_tour" class="form catalog-form" data-validated novalidate onsubmit="submitTour(event,'${t?.id || ''}')">
       <label>Tên tour<input name="title" required maxlength="120" value="${esc(t?.title)}"></label>
       <label>Tỉnh thành<select name="province" onchange="renderItinerary(this.form.elements.days.value)">${PROVINCES.map(p =>
         `<option ${t?.province === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
@@ -213,7 +213,7 @@ function showDepartureRows(id) {
   const container = $('#departure-rows');
   container.innerHTML = '';
   if (!tour) return;
-  container.innerHTML = `<h3 id="departure-form-title">Lập đợt khởi hành</h3><form class="form operation-form" data-validated novalidate onsubmit="submitDeparture(event,'${id}')">
+  container.innerHTML = `<h3 id="departure-form-title">Lập đợt khởi hành</h3><form id="frm002_nv_lich_khoi_hanh" class="form operation-form" data-validated novalidate onsubmit="submitDeparture(event,'${id}')">
     <div class="toolbar">
       <label>Ngày khởi hành<input type="date" name="day" min="${todayInVietnam()}" required></label>
       <label>Sức chứa<input type="number" name="capacity" min="1" max="100" value="24" required></label>
@@ -331,7 +331,7 @@ async function editBooking(id, payments) {
     <tbody>${history.map(row => `<tr><td>${date(row.date)}</td><td>${row.kind === 'collect' ? 'Thu tiền' : 'Hoàn tiền'}</td>
       <td class="report-number">${money(row.amount)}</td></tr>`).join('')}</tbody></table>` : '<p>Chưa có giao dịch.</p>'}
     <p>Đã thu ròng <b>${money(net)}</b> · Còn phải thu <b>${money(b.status === 'cancelled' ? 0 : b.total - net)}</b></p>
-    <form class="form operation-form" onsubmit="submitBookingAction(event,'${b.id}')">
+    <form id="${payments ? 'frm005_nv_thanh_toan' : 'frm004_nv_xu_ly_don'}" class="form operation-form" onsubmit="submitBookingAction(event,'${b.id}')">
       ${actions.map(([value, label]) => `<button type="submit" value="${value}">${label}</button>`).join('')}
       <p class="submission-error" role="alert"></p>
     </form>`);
@@ -356,7 +356,7 @@ async function submitBookingAction(event, id) {
   }
 }
 function destinationEditor(id){const p=PROVINCES.find(p=>String(p.id)===id);if(!p){$('#destination-editor').innerHTML='';return}$('#destination-editor').innerHTML=['attractions','specialties'].map(k=>`<h3>${k==='attractions'?'Địa danh':'Đặc sản'}</h3>${p[k].map((n,i)=>`<div class="destination-row"><span>${esc(n)}</span><button onclick="editDestination(${p.id},'${k}',${i})">Sửa</button><button class="outline" onclick="deleteDestination(${p.id},'${k}',${i})">Xóa</button></div>`).join('')}<button class="outline" onclick="editDestination(${p.id},'${k}',-1)">+ Thêm</button>`).join('')}
-function editDestination(id,k,i){const p=PROVINCES.find(p=>p.id===id),n=p[k][i]||'',m=IMAGE_MAP[n]||{};modal(`<h2>${i<0?'Thêm':'Sửa'} ${k==='attractions'?'địa danh':'đặc sản'}</h2><form class="form" onsubmit="saveDestination(event,${id},'${k}',${i})"><label>Tên<input name="name" required value="${esc(n)}"></label><label>Mô tả ngắn<textarea name="description" required>${esc(m.description||'')}</textarea></label><label>Địa chỉ ảnh HTTPS<input name="url" type="url" required value="${esc(m.url?.startsWith('/')?location.origin+m.url:m.url||'')}"></label><label>Nguồn ảnh<input name="source" required value="${esc(m.source||'')}"></label><button>Lưu</button></form>`)}
+function editDestination(id,k,i){const p=PROVINCES.find(p=>p.id===id),n=p[k][i]||'',m=IMAGE_MAP[n]||{};modal(`<h2>${i<0?'Thêm':'Sửa'} ${k==='attractions'?'địa danh':'đặc sản'}</h2><form id="frm009_dm_diem_den" class="form" onsubmit="saveDestination(event,${id},'${k}',${i})"><label>Tên<input name="name" required value="${esc(n)}"></label><label>Mô tả ngắn<textarea name="description" required>${esc(m.description||'')}</textarea></label><label>Địa chỉ ảnh HTTPS<input name="url" type="url" required value="${esc(m.url?.startsWith('/')?location.origin+m.url:m.url||'')}"></label><label>Nguồn ảnh<input name="source" required value="${esc(m.source||'')}"></label><button>Lưu</button></form>`)}
 function saveDestination(e,id,k,i){e.preventDefault();const f=new FormData(e.target),p=PROVINCES.find(p=>p.id===id),name=f.get('name').trim(),url=f.get('url');if(!url.startsWith('https://'))return toast('Dùng địa chỉ ảnh HTTPS.');if(p[k].some((x,j)=>x===name&&j!==i))return toast('Tên đã có trong danh sách.');if(i<0)p[k].push(name);else p[k][i]=name;IMAGE_MAP[name]={url,source:f.get('source'),description:f.get('description')};saveDestinations();$('#modal').close();destinationEditor(String(id))}
 function deleteDestination(id,k,i){const p=PROVINCES.find(p=>p.id===id);if(p[k].length<=1)return toast('Giữ ít nhất một mục cho mỗi danh sách.');if(!confirm('Xóa '+p[k][i]+' khỏi danh sách?'))return;p[k].splice(i,1);saveDestinations();destinationEditor(String(id))}
 function saveDestinations(){localStorage.setItem('mingo-destinations',JSON.stringify({provinces:PROVINCES,images:IMAGE_MAP}))}

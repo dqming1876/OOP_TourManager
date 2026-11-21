@@ -1,11 +1,12 @@
 {
+  "name": "mingo-tour-manager",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build-cloudflare.mjs",
-    "dev": "npm run build && wrangler dev",
+    "build": "node -e \"import('./worker/index.js')\"",
+    "dev": "wrangler dev",
     "demo": "node scripts/demo.mjs",
-    "test": "npm run build && node --test test/*.test.js"
+    "test": "node --test test/*.test.js"
   },
   "devDependencies": {
     "wrangler": "4.92.0"

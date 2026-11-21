@@ -11,7 +11,7 @@ let currentReport;
 let reportRequest = 0;
 
 function reportPanel() {
-  return `<h2>Báo cáo</h2><form id="report-filters" class="form" onsubmit="submitReport(event)">
+  return `<h2>Báo cáo</h2><form id="frm007_bc_don_dat" class="form" data-validated novalidate onsubmit="submitReport(event)">
     <div class="toolbar">
       <label>Báo cáo<select name="kind">${Object.entries(reportTypes).map(([key,name]) =>
         `<option value="${key}">${name}</option>`).join('')}</select></label>
@@ -21,6 +21,7 @@ function reportPanel() {
       <label>Đến ngày<input type="date" name="to"></label>
       <button type="submit">Áp dụng</button><button type="button" class="outline" onclick="resetReport()">Xóa lọc</button>
     </div>
+    <p class="submission-error" role="alert"></p>
   </form><div class="toolbar">
     <button id="report-excel" class="outline" onclick="downloadReport()" disabled>Tải Excel</button>
     <button id="report-pdf" class="outline" onclick="window.print()" disabled>In / Lưu PDF</button>
@@ -33,7 +34,7 @@ function submitReport(event) {
 }
 
 function resetReport() {
-  const form = $('#report-filters');
+  const form = $('#frm007_bc_don_dat');
   const kind = form.elements.kind.value;
   form.reset();
   form.elements.kind.value = kind;
@@ -74,7 +75,7 @@ function reportRows(kind, data) {
 }
 
 async function loadReport() {
-  const form = $('#report-filters');
+  const form = $('#frm007_bc_don_dat');
   if (!form) return;
   const request = ++reportRequest;
   const filter = Object.fromEntries(new FormData(form));
@@ -83,6 +84,10 @@ async function loadReport() {
   const excel = $('#report-excel'), pdf = $('#report-pdf');
   excel.disabled = pdf.disabled = true;
   currentReport = null;
+  output.textContent = '';
+  form.querySelector('.submission-error').textContent = '';
+  const reversed = params.from && params.to && params.from > params.to;
+  if (!validateMingoForm(form, reversed ? { to: 'Ngày kết thúc phải từ ngày bắt đầu trở đi.' } : {})) return;
   output.textContent = 'Đang tính báo cáo…';
   try {
     const data = await operationsApi('reports?' + new URLSearchParams(params));

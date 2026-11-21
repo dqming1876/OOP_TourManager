@@ -1,4 +1,3 @@
-import './build-cloudflare.mjs';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { Readable } from 'node:stream';
@@ -6,7 +5,7 @@ import { extname, resolve, sep } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { demoSql } from './demo-data.mjs';
 
-const { makeWorker } = await import('./sqlite-worker.mjs');
+import { makeWorker } from './sqlite-worker.mjs';
 const root = resolve('dist');
 const adminPassword = process.env.MINGO_DEMO_PASSWORD || randomBytes(9).toString('base64url');
 const mimeTypes = {
@@ -14,7 +13,7 @@ const mimeTypes = {
   '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png',
   '.jpeg': 'image/jpeg', '.jpg': 'image/jpeg', '.avif': 'image/avif',
 };
-const demo = makeWorker({
+const demo = await makeWorker({
   adminPassword,
   seed: demoSql(),
   assets: { async fetch(request) {

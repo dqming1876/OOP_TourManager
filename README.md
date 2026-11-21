@@ -1,24 +1,51 @@
 # mingo — Travel & Tours
 
-Mingo là hệ thống quản lý tour, lịch khởi hành, đơn và báo cáo. [Trang Cloudflare](https://mingo.doquangminh1807.workers.dev/)
+Website quản lý tour du lịch. [Bản đang chạy trên Cloudflare](https://mingo.doquangminh1807.workers.dev/)
 
-## Mở bản demo
+- `dist/` chứa giao diện và tài nguyên khách tải về. `dist/Resource/` chứa dữ liệu địa danh dùng chung.
+- `worker/api/` xử lý HTTP, `worker/service/` thực hiện nghiệp vụ, `worker/domain/` chứa quy tắc và kiểu lỗi, `worker/database/` truy cập D1.
+- `Database/` chứa migration tài khoản, tour, lịch, đơn và chỉ mục báo cáo.
+- Minh chứng [1.1–1.4](docs/checklist-1.1-1.4.md), [2.1](docs/checklist-2.1.md), [2.2](docs/checklist-2.2.md), [2.3](docs/checklist-2.3.md) và [2.4](docs/checklist-2.4.md).
 
-1. Cài sẵn Node.js 24. Mở Terminal trong thư mục mã nguồn hoặc thư mục vừa giải nén.
-2. Chạy `node scripts/demo.mjs`, rồi mở `http://127.0.0.1:4173` trên trình duyệt.
-3. Dùng `demo_admin` và mật khẩu in trong Terminal để xem khu quản trị. Dùng `mingo_khach1` và mật khẩu demo được in cùng lúc để xem phía khách. Đây là tài khoản giả trên máy cục bộ.
-4. Mở **Quản trị → Báo cáo**. Lọc **Hà Nội – Phố cổ và Hồ Gươm** theo tháng liền trước để đối chiếu số liệu trong [minh chứng 1.1–1.4](docs/checklist-1.1-1.4.md).
+## Bản demo
 
-Bản demo dựng lại SQLite trong bộ nhớ mỗi lần chạy. Đổi cổng bằng biến `MINGO_DEMO_PORT` khi cổng mặc định đang được dùng. Đóng gói với `node scripts/package-demo.mjs mingo-demo.zip` (cần lệnh `zip`).
+Chạy `npm run demo` với Node.js 24 rồi mở địa chỉ in trong Terminal. Demo tự tạo dữ liệu trên SQLite trong bộ nhớ và in thông tin hai tài khoản thử. Mở **Quản trị → Báo cáo** để đối chiếu dữ liệu trong [minh chứng 1.1–1.4](docs/checklist-1.1-1.4.md).
 
-## Kiểm thử
+Đổi cổng bằng `MINGO_DEMO_PORT`. Đóng gói bằng `node scripts/package-demo.mjs mingo-demo.zip` (cần lệnh `zip`).
 
-Chạy `node scripts/build-cloudflare.mjs && node --test test/*.test.js`. Bộ kiểm thử dùng DB tạm: phân quyền, trạng thái, tranh chỗ, hoàn tác, seed và đối chiếu ba báo cáo. Xem thêm [minh chứng mục 1.1](docs/checklist-1.1-1.4.md#11--chức-năng-và-phân-quyền).
+## Chạy cục bộ
 
-## Chạy bằng Cloudflare D1 cục bộ
+Dùng Node.js 24 và npm. Cấu hình mẫu dùng D1 cục bộ. Dùng cùng tệp cấu hình cho cả migration và khởi chạy.
 
-Chạy `npm install`, áp migration bằng `npx wrangler d1 migrations apply DB --local`. Tạo tệp `.dev.vars` với `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` riêng cho môi trường. Chạy `npm run dev`.
+```bash
+npm ci
+cp wrangler.example.jsonc wrangler.local.jsonc
+cp .dev.vars.example .dev.vars
+npx wrangler d1 migrations apply DB --local --config wrangler.local.jsonc
+```
 
-Nếu cần seed trong D1 cục bộ mới, chạy `node scripts/seed-demo.mjs mingo-demo.sql`, rồi `npx wrangler d1 execute DB --local --file mingo-demo.sql` trước khi mở ứng dụng. Bản demo tại bước trên tự nạp seed và dùng SQLite tạm.
+Đặt `ADMIN_USERNAME` trong `.dev.vars`. Tạo hash và salt từ mật khẩu thử dài ít nhất 12 ký tự. Lệnh dưới đây đọc mật khẩu từ đầu vào ẩn trong Bash.
 
-Trước khi triển khai sang Cloudflare, đặt secrets và áp các migration còn thiếu. Với DB có bảng `accounts` từ trước, kiểm tra lịch sử migration để tránh tạo lại bảng. Chỉnh sửa tour và đơn từ localStorage cũ cần chuyển riêng. Trình chỉnh sửa địa danh và đặc sản vẫn lưu tại trình duyệt.
+```bash
+read -rs admin_local_password
+printf '%s\n' "$admin_local_password" | node scripts/admin-password-hash.mjs
+unset admin_local_password
+node -e 'console.log(crypto.randomUUID() + crypto.randomUUID())'
+```
+
+Điền `ADMIN_PASSWORD_SALT` và `ADMIN_PASSWORD_HASH` từ kết quả lệnh vào `.dev.vars`, rồi lấy kết quả dòng cuối làm `ADMIN_SESSION_SECRET`.
+
+```bash
+npm run dev -- --config wrangler.local.jsonc
+npm test
+```
+
+Nhánh dùng D1, vì vậy đổi cơ sở dữ liệu bằng `d1_databases` trong tệp Wrangler. Giữ binding `DB`. Các ID khởi động ở tệp mẫu dùng cho môi trường cục bộ.
+
+Nếu cần dữ liệu mẫu trên D1 cục bộ mới, tạo seed bằng `node scripts/seed-demo.mjs mingo-demo.sql` rồi dùng `npx wrangler d1 execute DB --local --config wrangler.local.jsonc --file mingo-demo.sql`.
+
+## Triển khai
+
+Áp dụng migration còn thiếu cho D1 của môi trường đích. Nếu dự án từng tạo bảng `accounts` ngoài Wrangler, đối chiếu lịch sử migration trước khi áp dụng. Với môi trường từng dùng `ADMIN_PASSWORD`, tạo hash và salt từ mật khẩu quản trị và đặt hai giá trị làm Workers secrets **trước khi triển khai code mới**. Sau khi xác minh đăng nhập, xóa secret mật khẩu cũ. Giữ `ADMIN_SESSION_SECRET` hiện tại nếu cần duy trì các phiên hợp lệ.
+
+Tour, lịch và đơn dùng D1. Thay đổi địa danh và đặc sản từ trình chỉnh sửa riêng lưu trên trình duyệt.

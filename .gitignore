@@ -5,3 +5,6 @@
 node_modules/
 mingo-demo*.sql
 mingo-demo*.zip
+
+!.dev.vars.example
+wrangler.local.jsonc

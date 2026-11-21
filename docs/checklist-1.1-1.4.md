@@ -36,9 +36,9 @@ Sáu form nghiệp vụ gồm biên tập tour, lịch khởi hành, đặt chuy
 
 ### Cách kiểm chứng
 
-- `node scripts/build-cloudflare.mjs && node --test test/operations.test.js` với Node.js 24. Bộ kiểm thử đi qua Worker với SQLite tạm, gồm tranh chỗ, quyền hai vai trò, trạng thái, giá lịch sử và lỗi giữa lúc giữ chỗ.
+- `npm test` với Node.js 24. Bộ kiểm thử đi qua Worker với SQLite tạm, gồm tranh chỗ, quyền hai vai trò, trạng thái, giá lịch sử và lỗi giữa lúc giữ chỗ.
 - Demo qua UI trên môi trường cục bộ: admin tạo tour và đợt, khách đặt, admin mở phiếu xác nhận/thu và hoàn, admin hủy, khách thấy chỗ được trả lại. Khi khách khác mở Hành trình của tôi, đơn của khách đặt không xuất hiện.
-- Tệp triển khai D1 nằm ở `drizzle/0001_tour_operations.sql` và `drizzle/0002_initial_catalog.sql`. Dữ liệu nghiệp vụ từ localStorage của bản cũ cần được rà soát trước khi chuyển sang CSDL dùng chung.
+- Tệp triển khai D1 nằm ở `Database/0001_tour_operations.sql` và `Database/0002_initial_catalog.sql`. Dữ liệu nghiệp vụ từ localStorage của bản cũ cần được rà soát trước khi chuyển sang CSDL dùng chung.
 
 ## 1.2 — Master–Detail, bộ lọc và báo cáo
 

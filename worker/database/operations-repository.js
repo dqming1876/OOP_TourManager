@@ -1,4 +1,4 @@
-class OperationsRepository {
+export class OperationsRepository {
   constructor(db) {
     this.db = db;
   }
@@ -10,9 +10,15 @@ class OperationsRepository {
   async catalog(includeHidden) {
     const [tours, departures, stops] = await this.db.batch([
       this.prepare('SELECT * FROM tours WHERE hidden = 0 OR ? = 1 ORDER BY rowid', Number(includeHidden)),
-      this.prepare('SELECT * FROM departures ORDER BY day'),
-      this.prepare(`SELECT s.tour_id, s.activity, d.name AS place FROM tour_stops s
-        JOIN destinations d ON d.id = s.destination_id ORDER BY s.day_number`),
+      this.prepare(`
+        SELECT d.* FROM departures d JOIN tours t ON t.id = d.tour_id
+        WHERE t.hidden = 0 OR ? = 1 ORDER BY d.day
+      `, Number(includeHidden)),
+      this.prepare(`
+        SELECT s.tour_id, s.activity, d.name AS place FROM tour_stops s
+        JOIN destinations d ON d.id = s.destination_id JOIN tours t ON t.id = s.tour_id
+        WHERE t.hidden = 0 OR ? = 1 ORDER BY s.day_number
+      `, Number(includeHidden)),
     ]);
     const schedules = Map.groupBy(departures.results, row => row.tour_id);
     const itineraries = Map.groupBy(stops.results, row => row.tour_id);
@@ -115,10 +121,11 @@ class OperationsRepository {
       collect: "UPDATE bookings SET paid = 1 WHERE id = ? AND status = 'confirmed' AND paid = 0",
       refund: "UPDATE bookings SET paid = 0 WHERE id = ? AND status = 'confirmed' AND paid = 1",
       cancel: "UPDATE bookings SET status = 'cancelled' WHERE id = ? AND status <> 'cancelled' AND paid = 0",
+      customerCancel: "UPDATE bookings SET status = 'cancelled' WHERE id = ? AND user_id = ? AND status = 'pending' AND paid = 0",
     };
     const query = ownerId === null
       ? this.prepare(statements[action], id)
-      : this.prepare(statements.cancel + " AND user_id = ? AND status = 'pending'", id, ownerId);
+      : this.prepare(statements.customerCancel, id, ownerId);
     return (await query.run()).meta.changes > 0;
   }
 }

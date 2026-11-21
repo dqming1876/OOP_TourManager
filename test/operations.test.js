@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { pbkdf2Sync } from 'node:crypto';
 import { makeWorker } from './local-worker.js';
 
 const origin = 'http://localhost:4173';
@@ -10,7 +11,7 @@ const tour = {
 };
 
 async function fixture(t) {
-  const worker = makeWorker();
+  const worker = await makeWorker();
   t.after(() => worker.db.close());
   async function request(path, body, cookie) {
     const headers = { Origin: origin, ...(cookie ? { Cookie: cookie } : {}) };
@@ -28,7 +29,7 @@ async function fixture(t) {
     assert.equal((await request('auth/register', { name: username, username, password: 'fixture-only' })).status, 201);
     return login(username, 'fixture-only');
   }
-  const admin = await login(worker.env.ADMIN_USERNAME, worker.env.ADMIN_PASSWORD);
+  const admin = await login(worker.env.ADMIN_USERNAME, worker.adminPassword);
   const a = await customer('demo_a');
   const b = await customer('demo_b');
   const created = await request('ops/tours', tour, admin);
@@ -133,4 +134,102 @@ test('Validation Worker trả đúng ô lỗi trước khi ghi tour, lịch, đ�
   const saved = await request('profile', { name: 'Khách mẫu', phone: '0900000000', birthday: '2024-02-29' }, a);
   assert.equal(saved.status, 200);
   assert.equal(saved.data.user.birthday, '2024-02-29');
+});
+
+test('Lỗi giữa lúc trả chỗ giữ nguyên trạng thái đơn và sức chứa', async t => {
+  const { request, db, a, tourId } = await fixture(t);
+  const order = await request('ops/bookings', details(tourId), a);
+  assert.equal(order.status, 201);
+  db.exec(`
+    CREATE TRIGGER fixture_cancel_failure BEFORE UPDATE OF reserved ON departures
+    BEGIN SELECT RAISE(ABORT, 'fixture internal details'); END
+  `);
+  const failed = await request('ops/bookings/' + order.data.id + '/cancel', {}, a);
+  assert.equal(failed.status, 500);
+  assert.deepEqual(Object.keys(failed.data).sort(), ['error', 'requestId']);
+  assert.match(failed.data.requestId, /^[0-9a-f-]{36}$/);
+  assert.doesNotMatch(JSON.stringify(failed.data), /fixture internal details|stack/i);
+  assert.equal(db.prepare('SELECT status FROM bookings WHERE id = ?').get(order.data.id).status, 'pending');
+  assert.equal(db.prepare('SELECT reserved FROM departures WHERE tour_id = ? AND day = ?').get(tourId, future).reserved, 3);
+});
+
+test('Tài khoản giữ hash có salt, đăng nhập quản trị bằng hash cấu hình', async t => {
+  const { request, db, env, adminPassword, a } = await fixture(t);
+  const accounts = db.prepare('SELECT password_hash, salt FROM accounts ORDER BY username').all();
+  assert.equal(accounts.length, 2);
+  for (const account of accounts) assert.match(account.password_hash, /^[a-f0-9]{64}$/);
+  assert.notEqual(accounts[0].salt, accounts[1].salt);
+  assert.notEqual(accounts[0].password_hash, accounts[1].password_hash);
+  const info = await request('auth/me', undefined, a);
+  assert.equal(info.data.user.role, 'customer');
+  assert.equal('password_hash' in info.data.user, false);
+  assert.equal('salt' in info.data.user, false);
+  assert.equal((await request('auth/login', { username: env.ADMIN_USERNAME, password: 'incorrect-fixture' })).status, 401);
+  assert.equal((await request('admin/login', { username: env.ADMIN_USERNAME, password: adminPassword })).status, 200);
+  const legacyAdmin = env.ADMIN_PASSWORD_HASH;
+  delete env.ADMIN_PASSWORD_HASH;
+  assert.equal((await request('auth/login', { username: env.ADMIN_USERNAME, password: adminPassword })).status, 503);
+  env.ADMIN_PASSWORD_HASH = legacyAdmin;
+
+  const oldHash = pbkdf2Sync('old-fixture-password', 'old-fixture-salt', 100000, 32, 'sha256').toString('hex');
+  db.prepare('INSERT INTO accounts (id, username, name, password_hash, salt) VALUES (?, ?, ?, ?, ?)')
+    .run('old-id', 'old_account', 'Khách cũ', oldHash, 'old-fixture-salt');
+  assert.equal((await request('auth/login', { username: 'old_account', password: 'old-fixture-password' })).status, 200);
+  const badBody = await request('auth/login', null);
+  assert.equal(badBody.status, 400);
+});
+
+test('Báo cáo lọc 120 đơn theo ngày và tour bằng ba truy vấn cố định', async t => {
+  const { request, db, admin, a, tourId, queries } = await fixture(t);
+  const ownerId = db.prepare('SELECT id FROM accounts WHERE username = ?').get('demo_a').id;
+  const days = [14, 15].map(offset => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10));
+  const insertDay = db.prepare('INSERT INTO departures (tour_id, day, capacity) VALUES (?, ?, ?)');
+  const insertOrder = db.prepare(`
+    INSERT INTO bookings (id, user_id, tour_id, day, title, name, phone, adults, children, unit_price, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, 1200000, ?)
+  `);
+  for (const [offset, day] of days.entries()) {
+    insertDay.run(tourId, day, 60);
+    for (let index = 0; index < 60; index++) {
+      insertOrder.run('bench-' + offset + '-' + index, ownerId, tourId, day, 'Tour', 'Khách mẫu',
+        '0900000000', offset ? 'confirmed' : 'pending');
+    }
+  }
+  assert.equal((await request('ops/reports', undefined, a)).status, 403);
+  assert.equal((await request('ops/reports?from=2028-02-30', undefined, admin)).status, 400);
+  const start = queries.length;
+  const report = await request('ops/reports', undefined, admin);
+  assert.equal(report.data.bookings.reduce((total, row) => total + row.orders, 0), 120);
+  const prepared = queries.slice(start);
+  assert.equal(prepared.length, 3);
+  const bookingPlan = db.prepare('EXPLAIN QUERY PLAN ' + prepared[1]).all(future, future, ...days, '', '');
+  assert.ok(bookingPlan.some(step => step.detail.includes('bookings_report_by_day')));
+  const day = days[1];
+  const durations = [];
+  for (let run = 0; run < 30; run++) {
+    const begin = performance.now();
+    const filtered = await request('ops/reports?from=' + day + '&to=' + day + '&tour=' + tourId, undefined, admin);
+    durations.push(performance.now() - begin);
+    assert.deepEqual(filtered.data.bookings, [{ month: day.slice(0, 7), state: 'confirmed', orders: 60, guests: 60 }]);
+    assert.equal(filtered.data.capacity[0].available, 0);
+  }
+  durations.sort((first, second) => first - second);
+  const p95 = durations[Math.ceil(durations.length * 0.95) - 1];
+  t.diagnostic('120 đơn, 30 lượt lọc tại Worker/SQLite cục bộ, P95 = ' + p95.toFixed(2) + ' ms (không gồm mạng/UI).');
+});
+
+test('Rollback phiếu thu nếu lỗi khi ghi sổ thanh toán', async t => {
+  const { request, db, a, admin, tourId } = await fixture(t);
+  const order = await request('ops/bookings', details(tourId), a);
+  assert.equal(order.status, 201);
+  const path = 'ops/bookings/' + order.data.id;
+  assert.equal((await request(path + '/confirm', {}, admin)).status, 200);
+  db.exec(`
+    CREATE TRIGGER fixture_payment_failure BEFORE INSERT ON payment_events
+    BEGIN SELECT RAISE(ABORT, 'fixture payment failure'); END
+  `);
+  const result = await request(path + '/collect', {}, admin);
+  assert.equal(result.status, 500);
+  assert.equal(db.prepare('SELECT paid FROM bookings WHERE id = ?').get(order.data.id).paid, 0);
+  assert.deepEqual((await request(path + '/payments', undefined, admin)).data.payments, []);
 });

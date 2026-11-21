@@ -1,4 +1,4 @@
-class ReportsRepository {
+export class ReportsRepository {
   constructor(repository) {
     this.repository = repository;
   }
@@ -35,21 +35,5 @@ class ReportsRepository {
       `, ...range),
     ]);
     return { cash: cash.results, bookings: bookings.results, capacity: capacity.results };
-  }
-}
-
-class ReportsService {
-  constructor(operations, repository) {
-    this.operations = operations;
-    this.repository = repository;
-  }
-
-  async load(params) {
-    this.operations.requireRole('admin');
-    const from = params.get('from') ? departureDay(params.get('from')) : '0001-01-01';
-    const to = params.get('to') ? departureDay(params.get('to')) : '9999-12-31';
-    const tourId = params.get('tour') || '';
-    if (from > to || tourId.length > 70) throw new OperationError(400, 'Bộ lọc báo cáo không hợp lệ.');
-    return this.repository.load({ from, to, tourId, today: this.operations.today });
   }
 }

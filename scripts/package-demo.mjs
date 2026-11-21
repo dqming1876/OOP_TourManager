@@ -13,8 +13,8 @@ if (existsSync(output)) {
   process.exit(2);
 }
 const result = spawnSync('zip', [
-  '-q', '-r', output, 'dist', 'drizzle', 'worker', 'scripts', 'test', 'docs',
-  'package.json', 'README.md', 'wrangler.jsonc', '.gitignore',
+  '-q', '-r', output, 'dist', 'Database', 'worker', 'scripts', 'test', 'docs',
+  'package.json', 'package-lock.json', 'README.md', 'wrangler.jsonc', 'wrangler.example.jsonc', '.dev.vars.example', '.gitignore',
   '-x', 'dist/server/*', '*/.DS_Store',
 ], { stdio: 'inherit' });
 if (result.error || result.status !== 0) {

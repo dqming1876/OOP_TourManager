@@ -1,7 +1,7 @@
 {
   "name": "mingo",
   "account_id": "a4d4ba32c45359ddb8a6665bdb702450",
-  "main": ".cloudflare/worker.js",
+  "main": "worker/index.js",
   "compatibility_date": "2026-11-14",
   "workers_dev": true,
   "assets": {
@@ -13,7 +13,7 @@
     "binding": "DB",
     "database_name": "mingo",
     "database_id": "b378e40e-886d-4f71-aeee-58a16e306718",
-    "migrations_dir": "drizzle"
+    "migrations_dir": "Database"
   }],
   "observability": {
     "enabled": true,
