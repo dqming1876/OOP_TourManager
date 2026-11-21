@@ -8,13 +8,18 @@ class OperationsRepository {
   }
 
   async catalog(includeHidden) {
-    const [tours, departures] = await this.db.batch([
+    const [tours, departures, stops] = await this.db.batch([
       this.prepare('SELECT * FROM tours WHERE hidden = 0 OR ? = 1 ORDER BY rowid', Number(includeHidden)),
       this.prepare('SELECT * FROM departures ORDER BY day'),
+      this.prepare(`SELECT s.tour_id, s.activity, d.name AS place FROM tour_stops s
+        JOIN destinations d ON d.id = s.destination_id ORDER BY s.day_number`),
     ]);
     const schedules = Map.groupBy(departures.results, row => row.tour_id);
+    const itineraries = Map.groupBy(stops.results, row => row.tour_id);
     return tours.results.map(({ id, price, hidden, content }) => ({
       ...JSON.parse(content), id, price, hidden: Boolean(hidden),
+      itinerary: (itineraries.get(id) || []).map(({ activity }) => activity),
+      stops: (itineraries.get(id) || []).map(({ place }) => place),
       departures: (schedules.get(id) || []).map(row => ({
         day: row.day, capacity: row.capacity, remaining: row.capacity - row.reserved,
       })),
@@ -35,11 +40,31 @@ class OperationsRepository {
   }
 
   async saveTour(id, tour, create) {
-    const { price, ...content } = tour;
-    const query = create
+    const { price, itinerary, stops, ...content } = tour;
+    if (!create && !await this.prepare('SELECT id FROM tours WHERE id = ?', id).first()) return false;
+    const writeTour = create
       ? this.prepare('INSERT INTO tours (price, content, id) VALUES (?, ?, ?)', price, JSON.stringify(content), id)
       : this.prepare('UPDATE tours SET price = ?, content = ? WHERE id = ?', price, JSON.stringify(content), id);
-    return (await query.run()).meta.changes === 1;
+    if (!itinerary) return (await writeTour.run()).meta.changes === 1;
+    const details = JSON.stringify(itinerary.map((activity, index) => ({ place: stops[index], activity })));
+    const destinations = this.prepare(`
+      INSERT OR IGNORE INTO destinations (province,name)
+      SELECT ?, json_extract(value,'$.place') FROM json_each(?)
+    `, content.province, details);
+    const rows = this.prepare(`
+      INSERT INTO tour_stops (tour_id,day_number,destination_id,activity)
+      SELECT ?,CAST(j.key AS INTEGER)+1,d.id,json_extract(j.value,'$.activity')
+      FROM json_each(?) j JOIN destinations d ON d.province = ? AND d.name = json_extract(j.value,'$.place')
+    `, id, details, content.province);
+    await this.db.batch([writeTour, destinations, this.prepare('DELETE FROM tour_stops WHERE tour_id = ?', id), rows]);
+    return true;
+  }
+
+  async paymentHistory(bookingId) {
+    const { results } = await this.prepare(`
+      SELECT recorded_on AS date, kind, amount FROM payment_events WHERE booking_id = ? ORDER BY id
+    `, bookingId).all();
+    return results;
   }
 
   async setVisibility(id, hidden) {

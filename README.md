@@ -1,16 +1,24 @@
 # mingo — Travel & Tours
 
-Mã nguồn website quản lý tour du lịch. [Bản đang chạy trên Cloudflare](https://mingo.doquangminh1807.workers.dev/)
+Mingo là hệ thống quản lý tour, lịch khởi hành, đơn và báo cáo. [Trang Cloudflare](https://mingo.doquangminh1807.workers.dev/)
 
-- `dist/` chứa giao diện và ảnh.
-- `worker/` xử lý tài khoản, phân quyền và nghiệp vụ tour.
-- `drizzle/` chứa migration D1 dành cho tài khoản, tour, lịch và đơn.
-- [Minh chứng mục 1.1](docs/checklist-1.1.md) ghi phạm vi, use case và cách kiểm chứng.
+## Mở bản demo
 
-## Chạy cục bộ
+1. Cài sẵn Node.js 24. Mở Terminal trong thư mục mã nguồn hoặc thư mục vừa giải nén.
+2. Chạy `node scripts/demo.mjs`, rồi mở `http://127.0.0.1:4173` trên trình duyệt.
+3. Dùng `demo_admin` và mật khẩu in trong Terminal để xem khu quản trị. Dùng `mingo_khach1` và mật khẩu demo được in cùng lúc để xem phía khách. Đây là tài khoản giả trên máy cục bộ.
+4. Mở **Quản trị → Báo cáo**. Lọc **Hà Nội – Phố cổ và Hồ Gươm** theo tháng liền trước để đối chiếu số liệu trong [minh chứng 1.2–1.4](docs/checklist-1.2-1.4.md).
 
-Cài Node.js 24 và npm. Chạy `npm install`, rồi `npx wrangler d1 migrations apply DB --local`. Tạo tệp `.dev.vars` với ba biến `ADMIN_USERNAME`, `ADMIN_PASSWORD` và `ADMIN_SESSION_SECRET`. Dùng mật khẩu riêng cho bản thử và tạo khóa phiên ngẫu nhiên dài. Chạy `npm run dev`, mở địa chỉ Wrangler in ra và đăng ký một tài khoản khách. Bản thử dùng dữ liệu D1 cục bộ.
+Bản demo dựng lại SQLite trong bộ nhớ mỗi lần chạy. Đổi cổng bằng biến `MINGO_DEMO_PORT` khi cổng mặc định đang được dùng. Đóng gói với `node scripts/package-demo.mjs mingo-demo.zip` (cần lệnh `zip`).
 
-Chạy `npm test` để kiểm tra Worker với SQLite tạm. Có thể chạy trực tiếp bằng `node scripts/build-cloudflare.mjs && node --test test/operations.test.js`.
+## Kiểm thử
 
-Khi triển khai sang một Worker, cấu hình D1 và secrets của môi trường đó. Áp dụng migration còn thiếu trước khi triển khai mã mới. Với cơ sở dữ liệu đã có bảng `accounts` từ trước, kiểm tra lịch sử migration trước khi áp dụng để tránh chạy lại migration tạo bảng. Tour, lịch và đơn cần D1. Các đơn và chỉnh sửa tour từng lưu trong trình duyệt của bản cũ không được nhập tự động. Danh mục địa danh/đặc sản của trình chỉnh sửa riêng vẫn lưu trên trình duyệt.
+Chạy `node scripts/build-cloudflare.mjs && node --test test/*.test.js`. Bộ kiểm thử dùng DB tạm: phân quyền, trạng thái, tranh chỗ, hoàn tác, seed và đối chiếu ba báo cáo. Xem thêm [minh chứng mục 1.1](docs/checklist-1.1.md).
+
+## Chạy bằng Cloudflare D1 cục bộ
+
+Chạy `npm install`, áp migration bằng `npx wrangler d1 migrations apply DB --local`. Tạo tệp `.dev.vars` với `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` riêng cho môi trường. Chạy `npm run dev`.
+
+Nếu cần seed trong D1 cục bộ mới, chạy `node scripts/seed-demo.mjs mingo-demo.sql`, rồi `npx wrangler d1 execute DB --local --file mingo-demo.sql` trước khi mở ứng dụng. Bản demo tại bước trên tự nạp seed và dùng SQLite tạm.
+
+Trước khi triển khai sang Cloudflare, đặt secrets và áp các migration còn thiếu. Với DB có bảng `accounts` từ trước, kiểm tra lịch sử migration để tránh tạo lại bảng. Chỉnh sửa tour và đơn từ localStorage cũ cần chuyển riêng. Trình chỉnh sửa địa danh và đặc sản vẫn lưu tại trình duyệt.

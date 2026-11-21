@@ -7,11 +7,19 @@ async function operationsRoute(request, env, path) {
     }
     const actor = await currentAccount(request, env);
     const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date());
-    const service = new TourOperations(new OperationsRepository(env.DB), actor, today);
+    const repository = new OperationsRepository(env.DB);
+    const service = new TourOperations(repository, actor, today);
     const [, resource, id, action] = path.replace('/api/ops', '').split('/');
     if (method === 'GET' && !id) {
       if (resource === 'tours') return json({ tours: await service.catalog() });
       if (resource === 'bookings') return json({ bookings: await service.bookings() });
+    }
+    if (method === 'GET' && resource === 'reports' && !id) {
+      return json(await new ReportsService(service, new ReportsRepository(repository)).load(new URL(request.url).searchParams));
+    }
+    if (method === 'GET' && resource === 'bookings' && id && action === 'payments') {
+      service.requireRole('admin');
+      return json({ payments: await repository.paymentHistory(id) });
     }
     if (method === 'POST') {
       service.requireRole(resource === 'bookings' && (!id || (action === 'cancel' && actor?.role === 'customer'))
