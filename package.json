@@ -3,13 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node -e \"import('./worker/index.js')\"",
+    "build": "python3 -m compileall -q backend entry.py scripts tests",
     "dev": "wrangler dev",
-    "demo": "node scripts/demo.mjs",
-    "test": "node --test test/*.test.js",
-    "test:unit": "node --test test/unit-axis5.test.js",
-    "test:integration": "node --test test/integration-axis5.test.js",
-    "test:mutation": "node scripts/verify-axis5.mjs"
+    "demo": "python3 -m scripts.demo",
+    "test": "python3 -m unittest discover && node --test tests/frontend/*.test.js",
+    "test:unit": "python3 -m unittest tests.test_unit_axis5",
+    "test:integration": "python3 -m unittest tests.test_integration_axis5",
+    "test:mutation": "python3 -m scripts.verify_axis5"
   },
   "devDependencies": {
     "wrangler": "4.92.0"

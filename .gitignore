@@ -8,3 +8,7 @@ mingo-demo*.zip
 
 !.dev.vars.example
 wrangler.local.jsonc
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/

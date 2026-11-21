@@ -18,14 +18,14 @@
 
 | UC | Nhánh | Người dùng | Form hoặc màn hình | Điểm xử lý |
 | --- | --- | --- | --- | --- |
-| UC01 Quản lý tour | 1 | Admin | Quản lý tour → biên tập tour | `TourCatalogService.saveTour/setVisibility` |
-| UC02 Quản lý lịch | 2 | Admin | Lịch khởi hành → chọn tour và lưu đợt | `TourCatalogService.saveDeparture/removeDeparture` |
-| UC03 Đặt tour và giữ chỗ | 3 | Khách | Chi tiết tour → form đặt chuyến đi | `BookingService.placeBooking` |
+| UC01 Quản lý tour | 1 | Admin | Quản lý tour → biên tập tour | `TourCatalogService.save_tour/setVisibility` |
+| UC02 Quản lý lịch | 2 | Admin | Lịch khởi hành → chọn tour và lưu đợt | `TourCatalogService.save_departure/removeDeparture` |
+| UC03 Đặt tour và giữ chỗ | 3 | Khách | Chi tiết tour → form đặt chuyến đi | `BookingService.place_booking` |
 | UC04 Xem đơn của mình | 3 | Khách | Hành trình của tôi | `BookingService.bookings` |
-| UC05 Xác nhận đơn | 3 | Admin | Xử lý đơn → phiếu xử lý đơn | `BookingService.updateBooking('confirm')` |
-| UC06 Hủy đơn và trả chỗ | 3 | Khách với đơn chờ của mình, hoặc Admin với đơn chưa thu tiền | Hành trình của tôi hoặc phiếu xử lý đơn | `BookingService.updateBooking('cancel')` |
-| UC07 Ghi nhận thu hoặc hoàn | 4 | Admin | Thu tiền / hoàn tiền → phiếu thanh toán | `BookingService.updateBooking('collect'/'refund')` |
-| UC08 Cập nhật hồ sơ | 5 | Khách | Thông tin cá nhân | `accountsRoute('/api/profile')` |
+| UC05 Xác nhận đơn | 3 | Admin | Xử lý đơn → phiếu xử lý đơn | `BookingService.update_booking('confirm')` |
+| UC06 Hủy đơn và trả chỗ | 3 | Khách với đơn chờ của mình, hoặc Admin với đơn chưa thu tiền | Hành trình của tôi hoặc phiếu xử lý đơn | `BookingService.update_booking('cancel')` |
+| UC07 Ghi nhận thu hoặc hoàn | 4 | Admin | Thu tiền / hoàn tiền → phiếu thanh toán | `BookingService.update_booking('collect'/'refund')` |
+| UC08 Cập nhật hồ sơ | 5 | Khách | Thông tin cá nhân | `accounts_route('/api/profile')` |
 
 Sáu form nghiệp vụ gồm biên tập tour, lịch khởi hành, đặt chuyến đi, xử lý đơn, thanh toán và thông tin cá nhân. Trong đó, biên tập tour và hồ sơ có thể tính là form đơn giản, chiếm 2/6. Khách chưa đăng nhập có thể xem tour đang mở bán. Vai trò lấy từ phiên phía Worker. Khách chỉ đọc đơn của mình. Admin đọc toàn bộ đơn để xử lý và không thể đặt tour bằng tài khoản admin.
 
@@ -36,7 +36,7 @@ Sáu form nghiệp vụ gồm biên tập tour, lịch khởi hành, đặt chuy
 
 ### Cách kiểm chứng
 
-- `npm test` với Node.js 24. Bộ kiểm thử đi qua Worker với SQLite tạm, gồm tranh chỗ, quyền hai vai trò, trạng thái, giá lịch sử và lỗi giữa lúc giữ chỗ.
+- `npm test` với Python 3.12. Bộ kiểm thử đi qua Worker với SQLite tạm, gồm tranh chỗ, quyền hai vai trò, trạng thái, giá lịch sử và lỗi giữa lúc giữ chỗ.
 - Demo qua UI trên môi trường cục bộ: admin tạo tour và đợt, khách đặt, admin mở phiếu xác nhận/thu và hoàn, admin hủy, khách thấy chỗ được trả lại. Khi khách khác mở Hành trình của tôi, đơn của khách đặt không xuất hiện.
 - Tệp triển khai D1 nằm ở `Database/0001_tour_operations.sql` và `Database/0002_initial_catalog.sql`. Dữ liệu nghiệp vụ từ localStorage của bản cũ cần được rà soát trước khi chuyển sang CSDL dùng chung.
 
@@ -50,7 +50,7 @@ Dòng tiền lọc theo ngày ghi nhận. Hai báo cáo còn lại lọc theo ng
 
 ## 1.3 — Seed, quan hệ và số đối chiếu
 
-`scripts/demo-data.mjs` tạo bộ mẫu liên thông từ khóa ngoại thật. `node scripts/demo.mjs` nạp tự động vào SQLite tạm. Dùng `node scripts/seed-demo.mjs mingo-demo.sql` để tạo SQL cho D1 cục bộ mới. Mỗi bộ seed có 236 dòng nghiệp vụ ngoài danh mục khởi tạo trong migration 0002.
+`scripts/demo_data.py` tạo bộ mẫu liên thông từ khóa ngoại thật. `python3 -m scripts.demo` nạp tự động vào SQLite tạm. Dùng `python3 -m scripts.seed_demo mingo-demo.sql` để tạo SQL cho D1 cục bộ mới. Mỗi bộ seed có 236 dòng nghiệp vụ ngoài danh mục khởi tạo trong migration 0002.
 
 | Bảng | Số dòng mẫu |
 | --- | ---: |
@@ -70,10 +70,10 @@ Mỗi tour có đợt ở ba tháng đã qua, tháng hiện tại và hai tháng
 
 Khi lọc tour Hà Nội ở tháng thứ ba trước tháng hiện tại, có 10 đơn gồm 27 khách. Hai đơn hủy gồm ba khách nên còn 24 khách giữ chỗ trên 30 chỗ. Thu 12 lượt khách và hoàn một lượt khách, tương ứng **14.400.000 ₫ thu**, **1.200.000 ₫ hoàn** và **13.200.000 ₫ thu ròng**.
 
-`test/reports-seed.test.js` so sánh các con số này với API, kiểm tra khóa ngoại, quyền xem báo cáo và thay đổi báo cáo ngay sau ghi thu/hoàn.
+`tests/test_operations.py` so sánh các con số này với API, kiểm tra khóa ngoại, quyền xem báo cáo và thay đổi báo cáo ngay sau ghi thu/hoàn.
 
 ## 1.4 — Bàn giao và kiểm tra
 
 - Xem [README](../README.md) để chạy bản demo, đăng nhập, tạo lại dữ liệu mẫu và chạy kiểm thử.
-- `node scripts/package-demo.mjs mingo-demo.zip` đóng gói nguồn và tài nguyên. Giải nén rồi chạy `node scripts/demo.mjs` bằng Node.js 24. Máy chấm cần sẵn Node.js 24 và trình duyệt. Bản demo dùng dữ liệu tạm, dựng lại mỗi khi khởi động.
+- `python3 -m scripts.package_demo mingo-demo.zip` đóng gói nguồn và tài nguyên. Giải nén rồi chạy `python3 -m scripts.demo` bằng Python 3.12. Máy chấm cần sẵn Python 3.12 và trình duyệt. Bản demo dùng dữ liệu tạm, dựng lại mỗi khi khởi động.
 - Dùng bộ slide và video demo đi kèm để trình bày luồng. Lịch sử Git được giữ nguyên. Tiêu chí ≥12 commit có nội dung qua ≥3 tuần cần đánh giá theo lịch sử làm việc thực tế.

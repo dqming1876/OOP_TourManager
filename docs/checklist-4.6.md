@@ -3,7 +3,7 @@
 | Mẫu GoF | Vấn đề và vai trò | Cách chọn lúc chạy |
 | --- | --- | --- |
 | **Strategy — Behavioral** | Báo cáo có ba công thức và cấu trúc bảng. `ReportPresenter` là Context; hợp đồng của Strategy là `title` và `summarize(data)`. `CashReport`, `BookingReport`, `CapacityReport` là Concrete Strategies. | Người dùng chọn loại báo cáo. `loadReport` chuyển mã vào Presenter, Presenter ủy quyền chiến lược đã đăng ký. Bảng, XLSX và phần in đọc chung kết quả. [Code](../dist/report-strategies.js) |
-| **Object Adapter — Structural** | Repository cần giao diện D1 `prepare().bind()`, `first/all/run` và `batch`. `DatabaseSync` của Node dùng cách trả kết quả khác. Target là tập phương thức D1 cần dùng; Adaptee là `DatabaseSync`; `SqliteD1Adapter` bọc Adaptee, đổi hình dạng kết quả và thực thi batch trong BEGIN/COMMIT hoặc ROLLBACK. | Worker nhận binding D1 ở môi trường Cloudflare. Root demo/test cấp adapter SQLite. Các repository gọi cùng Target và tự chạy trên backend đang được lắp. [Adapter](../scripts/sqlite-d1-adapter.mjs) · [Lắp ráp](../scripts/sqlite-worker.mjs) |
+| **Object Adapter — Structural** | Repository dùng port `Database` gồm `first/all/execute/batch`. `D1Database` chuyển kiểu dữ liệu qua FFI và giữ batch D1. `SQLiteDatabase` bọc `sqlite3`, trả cùng hình dạng dữ liệu và thực thi batch trong BEGIN/COMMIT hoặc ROLLBACK. | Worker nhận binding D1 ở môi trường Cloudflare. Root demo/test cấp adapter SQLite. Các repository gọi cùng Target và tự chạy trên backend đang được lắp. [D1Database](../entry.py) · [SQLiteDatabase](../scripts/sqlite_worker.py) |
 
 ## Bài mở rộng tại chỗ
 
@@ -24,7 +24,7 @@ class RefundOnlyReport {
 }
 ```
 
-Test 4.6 lắp registry mở rộng và gọi cả báo cáo gốc và biến thể mới. Dữ liệu mẫu thu 1.200.000 ₫ và hoàn 500.000 ₫. Chiến lược thu/hoàn tính 700.000 ₫ thu ròng; biến thể chỉ hoàn trả 500.000 ₫. Bản ứng dụng hiện dùng ba loại báo cáo ban đầu; lớp mới nằm trong bài thực hành kiểm thử. Có thể gõ lại biến thể khi live coding với giảng viên. [Kiểm thử](../test/architecture.test.js)
+Test 4.6 lắp registry mở rộng và gọi cả báo cáo gốc và biến thể mới. Dữ liệu mẫu thu 1.200.000 ₫ và hoàn 500.000 ₫. Chiến lược thu/hoàn tính 700.000 ₫ thu ròng; biến thể chỉ hoàn trả 500.000 ₫. Bản ứng dụng hiện dùng ba loại báo cáo ban đầu; lớp mới nằm trong bài thực hành kiểm thử. Có thể gõ lại biến thể khi live coding với giảng viên. [Kiểm thử](../tests/frontend/reports.test.js)
 
 ## Đánh đổi
 
