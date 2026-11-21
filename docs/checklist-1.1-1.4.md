@@ -18,13 +18,13 @@
 
 | UC | Nhánh | Người dùng | Form hoặc màn hình | Điểm xử lý |
 | --- | --- | --- | --- | --- |
-| UC01 Quản lý tour | 1 | Admin | Quản lý tour → biên tập tour | `TourOperations.saveTour/setVisibility` |
-| UC02 Quản lý lịch | 2 | Admin | Lịch khởi hành → chọn tour và lưu đợt | `TourOperations.saveDeparture/removeDeparture` |
-| UC03 Đặt tour và giữ chỗ | 3 | Khách | Chi tiết tour → form đặt chuyến đi | `TourOperations.placeBooking` |
-| UC04 Xem đơn của mình | 3 | Khách | Hành trình của tôi | `TourOperations.bookings` |
-| UC05 Xác nhận đơn | 3 | Admin | Xử lý đơn → phiếu xử lý đơn | `TourOperations.updateBooking('confirm')` |
-| UC06 Hủy đơn và trả chỗ | 3 | Khách với đơn chờ của mình, hoặc Admin với đơn chưa thu tiền | Hành trình của tôi hoặc phiếu xử lý đơn | `TourOperations.updateBooking('cancel')` |
-| UC07 Ghi nhận thu hoặc hoàn | 4 | Admin | Thu tiền / hoàn tiền → phiếu thanh toán | `TourOperations.updateBooking('collect'/'refund')` |
+| UC01 Quản lý tour | 1 | Admin | Quản lý tour → biên tập tour | `TourCatalogService.saveTour/setVisibility` |
+| UC02 Quản lý lịch | 2 | Admin | Lịch khởi hành → chọn tour và lưu đợt | `TourCatalogService.saveDeparture/removeDeparture` |
+| UC03 Đặt tour và giữ chỗ | 3 | Khách | Chi tiết tour → form đặt chuyến đi | `BookingService.placeBooking` |
+| UC04 Xem đơn của mình | 3 | Khách | Hành trình của tôi | `BookingService.bookings` |
+| UC05 Xác nhận đơn | 3 | Admin | Xử lý đơn → phiếu xử lý đơn | `BookingService.updateBooking('confirm')` |
+| UC06 Hủy đơn và trả chỗ | 3 | Khách với đơn chờ của mình, hoặc Admin với đơn chưa thu tiền | Hành trình của tôi hoặc phiếu xử lý đơn | `BookingService.updateBooking('cancel')` |
+| UC07 Ghi nhận thu hoặc hoàn | 4 | Admin | Thu tiền / hoàn tiền → phiếu thanh toán | `BookingService.updateBooking('collect'/'refund')` |
 | UC08 Cập nhật hồ sơ | 5 | Khách | Thông tin cá nhân | `accountsRoute('/api/profile')` |
 
 Sáu form nghiệp vụ gồm biên tập tour, lịch khởi hành, đặt chuyến đi, xử lý đơn, thanh toán và thông tin cá nhân. Trong đó, biên tập tour và hồ sơ có thể tính là form đơn giản, chiếm 2/6. Khách chưa đăng nhập có thể xem tour đang mở bán. Vai trò lấy từ phiên phía Worker. Khách chỉ đọc đơn của mình. Admin đọc toàn bộ đơn để xử lý và không thể đặt tour bằng tài khoản admin.

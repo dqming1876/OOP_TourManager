@@ -34,6 +34,7 @@ class Account {
     return { id: this.id, name: this.name, username: this.username, role: this.role };
   }
 
+  /** @returns {string|null} Customer ID for own bookings, or null for all bookings. */
   bookingScope() {
     return this.id;
   }
@@ -42,7 +43,8 @@ class Account {
 export class CustomerAccount extends Account {
   constructor({ id, name, username, email, phone, address, birthday }) {
     super(id, name, username, AccountRole.CUSTOMER);
-    this.profile = { email, phone, address, birthday };
+    this.profile = Object.freeze({ email, phone, address, birthday });
+    Object.freeze(this);
   }
 
   validateUpdate(input) {
@@ -57,6 +59,7 @@ export class CustomerAccount extends Account {
 export class AdministratorAccount extends Account {
   constructor(username) {
     super('admin', 'Quản trị viên', username, AccountRole.ADMIN);
+    Object.freeze(this);
   }
 
   bookingScope() {

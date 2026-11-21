@@ -3,9 +3,10 @@
 Website quản lý tour du lịch. [Bản đang chạy trên Cloudflare](https://mingo.doquangminh1807.workers.dev/)
 
 - `dist/` chứa giao diện và tài nguyên khách tải về. `dist/Resource/` chứa dữ liệu địa danh dùng chung.
-- `worker/api/` xử lý HTTP, `worker/service/` thực hiện nghiệp vụ, `worker/domain/` chứa quy tắc và kiểu lỗi, `worker/database/` truy cập D1.
+- `worker/api/` xử lý HTTP, `worker/service/` thực hiện nghiệp vụ, `worker/domain/` chứa quy tắc và kiểu lỗi, `worker/database/` truy cập D1 và `worker/dto/` giữ hình dạng dữ liệu gửi ra HTTP.
 - `Database/` chứa migration tài khoản, tour, lịch, đơn và chỉ mục báo cáo.
-- Minh chứng [1.1–1.4](docs/checklist-1.1-1.4.md), [2.1](docs/checklist-2.1.md), [2.2](docs/checklist-2.2.md), [2.3](docs/checklist-2.3.md), [2.4](docs/checklist-2.4.md), [3.1](docs/checklist-3.1.md), [3.2](docs/checklist-3.2.md) và [3.3](docs/checklist-3.3.md).
+- Minh chứng [1.1–1.4](docs/checklist-1.1-1.4.md), [2.1](docs/checklist-2.1.md), [2.2](docs/checklist-2.2.md), [2.3](docs/checklist-2.3.md), [2.4](docs/checklist-2.4.md), [3.1](docs/checklist-3.1.md), [3.2](docs/checklist-3.2.md), [3.3](docs/checklist-3.3.md).
+- Trục 4 gồm [UML và CSDL](docs/checklist-4.1.md), [Sequence/State và debugger](docs/checklist-4.2.md), [phân tầng](docs/checklist-4.3.md), [bất biến/LSP](docs/checklist-4.4.md), [SOLID](docs/checklist-4.5.md) và [GoF/OCP](docs/checklist-4.6.md).
 
 ## Bản demo
 

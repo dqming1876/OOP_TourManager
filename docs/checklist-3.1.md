@@ -18,15 +18,15 @@ Cấp 1 là **F1 Mingo**. Bảng ghi đủ năm nhánh cấp 2, gồm ba nhánh 
 
 | Cấp 2 | Nút lá cấp 3 | UC và vai trò | Menu → Form hoặc màn hình | Hàm xử lý |
 | --- | --- | --- | --- | --- |
-| F1.1 Danh mục (chung) | F1.1.1 Tra cứu tour | UC09 khách, admin | Lữ trình → `frm010_dm_tra_cuu_tour` | `TourOperations.catalog`, sau đó `filterTours` lọc dữ liệu đã tải |
+| F1.1 Danh mục (chung) | F1.1.1 Tra cứu tour | UC09 khách, admin | Lữ trình → `frm010_dm_tra_cuu_tour` | `TourCatalogService.catalog`, sau đó `filterTours` lọc dữ liệu đã tải |
 | F1.1 Danh mục (chung) | F1.1.2 Quản lý tour | UC01 admin | Quản trị → Quản lý tour → `frm001_dm_tour` | `submitTour` → `saveTour`. Nút Ẩn/Hiện trong màn hình danh mục gọi `setVisibility`. |
 | F1.2 Tài khoản (chung) | F1.2.1 Đăng nhập | UC10 khách, admin | Đăng nhập → `frm000_dang_nhap` | `login` → `accountsRoute` → `loginAccount` |
 | F1.2 Tài khoản (chung) | F1.2.2 Đăng ký | UC11 khách | Đăng nhập → Tạo tài khoản → `frm008_dang_ky` | `registerAccount` ở UI và Worker |
 | F1.2 Tài khoản (chung) | F1.2.3 Cập nhật liên hệ | UC08 khách | Tài khoản → `frm006_nv_ho_so` | `saveProfile` → `saveCustomerProfile` |
 | F1.3 Báo cáo (chung) | F1.3.1 Lọc/xuất báo cáo | UC12 admin | Quản trị → Báo cáo → `frm007_bc_don_dat` | `loadReport` → `ReportsService.load`; xuất tệp từ kết quả đang xem |
 | F1.4 Lịch khởi hành (riêng) | F1.4.1 Quản lý đợt | UC02 admin | Quản trị → Lịch khởi hành → `frm002_nv_lich_khoi_hanh` | `submitDeparture` → `saveDeparture`; nút Xóa gọi `removeDeparture` |
-| F1.5 Đơn tour và thanh toán (riêng) | F1.5.1 Đặt giữ chỗ | UC03 khách | Chi tiết tour → `frm003_nv_dat_tour` | `placeOrder` → `TourOperations.placeBooking` |
-| F1.5 Đơn tour và thanh toán (riêng) | F1.5.2 Xem/hủy đơn của mình | UC04, UC06 khách | Hành trình của tôi → `frm011_nv_don_cua_toi` / `bookingDetail` | `TourOperations.bookings`; `performBookingAction` → `updateBooking` |
+| F1.5 Đơn tour và thanh toán (riêng) | F1.5.1 Đặt giữ chỗ | UC03 khách | Chi tiết tour → `frm003_nv_dat_tour` | `placeOrder` → `BookingService.placeBooking` |
+| F1.5 Đơn tour và thanh toán (riêng) | F1.5.2 Xem/hủy đơn của mình | UC04, UC06 khách | Hành trình của tôi → `frm011_nv_don_cua_toi` / `bookingDetail` | `BookingService.bookings`; `performBookingAction` → `updateBooking` |
 | F1.5 Đơn tour và thanh toán (riêng) | F1.5.3 Xử lý phiếu | UC05, UC06 admin | Quản trị → Xử lý đơn → `frm004_nv_xu_ly_don` | `editBooking` / `submitBookingAction` → `paymentHistory` / `updateBooking` |
 | F1.5 Đơn tour và thanh toán (riêng) | F1.5.4 Thu/hoàn | UC07 admin | Quản trị → Thu tiền / hoàn tiền → `frm005_nv_thanh_toan` | `submitBookingAction` → `updateBooking` → trigger ghi `payment_events` |
 
@@ -45,4 +45,4 @@ Mã giao diện: [app.js](../dist/app.js), [admin.js](../dist/admin.js), [operat
 
 ## Ví dụ đổi bước quy trình
 
-F1.5.3 nay kiểm tra ngày khởi hành trước khi xác nhận. Phiếu chờ quá ngày đi hiện “Quá hạn xác nhận” và chỉ còn luồng hủy trả chỗ. Điều kiện thực thi ở [Booking.transition](../worker/domain/booking.js) và câu cập nhật của [OperationsRepository](../worker/database/operations-repository.js), nên request trực tiếp trả 409. [Kiểm thử](../test/operations.test.js) xác nhận từ chối ở cả API và Service. Nếu thêm bước duyệt có trạng thái lưu riêng, cần đổi DTO/ô trạng thái của `frm004`, luật chuyển của `Booking`, CHECK và migration trước khi cập nhật báo cáo.
+F1.5.3 nay kiểm tra ngày khởi hành trước khi xác nhận. Phiếu chờ quá ngày đi hiện “Quá hạn xác nhận” và chỉ còn luồng hủy trả chỗ. Điều kiện thực thi ở [Booking.transition](../worker/domain/booking.js) và câu cập nhật của [BookingRepository](../worker/database/booking-repository.js), nên request trực tiếp trả 409. [Kiểm thử](../test/operations.test.js) xác nhận từ chối ở cả API và Service. Nếu thêm bước duyệt có trạng thái lưu riêng, cần đổi DTO/ô trạng thái của `frm004`, luật chuyển của `Booking`, CHECK và migration trước khi cập nhật báo cáo.

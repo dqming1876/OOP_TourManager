@@ -5,14 +5,16 @@ export class Destination {
   constructor(province, name, field = 'place') {
     this.province = requiredText(province, 80, 'Tỉnh thành', 'province');
     this.name = requiredText(name, 120, 'Điểm đến', field);
+    Object.freeze(this);
   }
 }
 
 export class TourStop {
-  constructor(dayNumber, activity, destination) {
+  constructor(dayNumber, activity, province, place) {
     this.dayNumber = integerBetween(dayNumber, 1, 30, 'Thứ tự ngày', 'days');
     this.activity = requiredText(activity, 2000, 'Nội dung lịch trình', 'itinerary-' + (dayNumber - 1));
-    this.destination = destination;
+    this.destination = new Destination(province, place, 'stop-' + (dayNumber - 1));
+    Object.freeze(this);
   }
 
   toWriteRow() {
@@ -21,10 +23,13 @@ export class TourStop {
 }
 
 export class Tour {
+  #details;
+  #stops;
+
   constructor(id, input) {
     const destination = new Destination(input.province, input.place);
     this.id = id;
-    this.details = {
+    const details = {
       title: requiredText(input.title, 120, 'Tên tour', 'title'),
       province: destination.province,
       place: destination.name,
@@ -33,13 +38,24 @@ export class Tour {
       days: integerBetween(input.days, 1, 30, 'Số ngày', 'days'),
     };
     for (const field of ['category', 'pickup', 'includes', 'excludes', 'coverSource']) {
-      if (input[field]) this.details[field] = requiredText(input[field], 2000, field, field);
+      if (input[field]) details[field] = requiredText(input[field], 2000, field, field);
     }
-    this.stops = this.buildItinerary(input, destination);
-    if (input.cover) this.details.cover = this.validatedCover(input.cover);
+    if (input.cover) details.cover = this.#validatedCover(input.cover);
+    this.#details = Object.freeze(details);
+    const stops = this.#buildItinerary(input, destination);
+    this.#stops = stops ? Object.freeze(stops) : null;
+    Object.freeze(this);
   }
 
-  buildItinerary({ itinerary, stops }, destination) {
+  get details() {
+    return this.#details;
+  }
+
+  get stops() {
+    return this.#stops;
+  }
+
+  #buildItinerary({ itinerary, stops }, destination) {
     if (itinerary === undefined) return null;
     if (!Array.isArray(itinerary) || itinerary.length !== this.details.days) {
       throw new ValidationError('Lịch trình phải có đủ nội dung mỗi ngày.');
@@ -48,14 +64,12 @@ export class Tour {
       throw new ValidationError('Chọn điểm ghé cho từng ngày.');
     }
     return itinerary.map((activity, index) => {
-      const stop = stops
-        ? new Destination(destination.province, stops[index], 'stop-' + index)
-        : destination;
-      return new TourStop(index + 1, activity, stop);
+      const place = stops ? stops[index] : destination.name;
+      return new TourStop(index + 1, activity, destination.province, place);
     });
   }
 
-  validatedCover(cover) {
+  #validatedCover(cover) {
     if (typeof cover !== 'string' || cover.length > 1_398_134
       || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(cover)) {
       throw new ValidationError('Ảnh phải là JPG, PNG hoặc WebP tối đa 1 MB.', 'cover');

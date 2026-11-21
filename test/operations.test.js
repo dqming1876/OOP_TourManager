@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import { pbkdf2Sync } from 'node:crypto';
 import { makeWorker } from './local-worker.js';
 import { AdministratorAccount, CustomerAccount } from '../worker/domain/account.js';
-import { OperationsRepository } from '../worker/database/operations-repository.js';
-import { TourOperations } from '../worker/service/operations-service.js';
+import { BookingRepository } from '../worker/database/booking-repository.js';
+import { AccessPolicy } from '../worker/service/access-policy.js';
+import { BookingService } from '../worker/service/booking-service.js';
+import { TourCatalogService } from '../worker/service/tour-catalog-service.js';
 
 const origin = 'http://localhost:4173';
 const future = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
@@ -241,14 +243,16 @@ test('Trục 3: Service chặn sai vai trò trước khi đọc hoặc ghi vào 
   const denied = error => error.status === 403;
   const guest = new CustomerAccount({ id: 'customer-a', name: 'A', username: 'customer_a' });
   const today = '2026-11-21';
-  const asGuest = new TourOperations(null, guest, today);
-  const asAdmin = new TourOperations(null, new AdministratorAccount('admin'), today);
-  await assert.rejects(() => asGuest.saveTour(null, tour), denied);
-  await assert.rejects(() => asGuest.saveDeparture('tour', { day: future, capacity: 3 }), denied);
-  await assert.rejects(() => asGuest.updateBooking('order', 'confirm'), denied);
-  assert.throws(() => asGuest.paymentHistory('order'), denied);
+  const guestAccess = new AccessPolicy(guest);
+  const guestBookings = new BookingService(null, guestAccess, today);
+  const guestCatalog = new TourCatalogService(null, guestAccess, today);
+  const asAdmin = new BookingService(null, new AccessPolicy(new AdministratorAccount('admin')), today);
+  await assert.rejects(() => guestCatalog.saveTour(null, tour), denied);
+  await assert.rejects(() => guestCatalog.saveDeparture('tour', { day: future, capacity: 3 }), denied);
+  await assert.rejects(() => guestBookings.updateBooking('order', 'confirm'), denied);
+  assert.throws(() => guestBookings.paymentHistory('order'), denied);
   await assert.rejects(() => asAdmin.placeBooking(details('tour')), denied);
-  const anonymous = new TourOperations(null, null, today);
+  const anonymous = new BookingService(null, new AccessPolicy(null), today);
   assert.throws(() => anonymous.bookings(), { status: 401 });
 });
 
@@ -257,8 +261,8 @@ test('Trục 3: Phiếu quá hạn bị từ chối xác nhận tại Service v�
   const created = await request('ops/bookings', details(tourId), a);
   assert.equal(created.status, 201);
   const order = created.data.id;
-  const adminService = new TourOperations(new OperationsRepository(env.DB),
-    new AdministratorAccount('demo_admin'), '9999-12-31');
+  const adminService = new BookingService(new BookingRepository(env.DB),
+    new AccessPolicy(new AdministratorAccount('demo_admin')), '9999-12-31');
   await assert.rejects(() => adminService.updateBooking(order, 'confirm'), { status: 409 });
   assert.equal(db.prepare('SELECT status FROM bookings WHERE id = ?').get(order).status, 'pending');
 

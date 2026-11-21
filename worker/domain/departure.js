@@ -6,7 +6,8 @@ export class Departure {
     this.tourId = tourId;
     this.day = Departure.validateDay(day);
     this.capacity = integerBetween(capacity, 1, 100, 'Sức chứa', 'capacity');
-    this.reserved = reserved;
+    this.reserved = integerBetween(reserved, 0, this.capacity, 'Số chỗ đang giữ', 'reserved');
+    Object.freeze(this);
   }
 
   static validateDay(day) {

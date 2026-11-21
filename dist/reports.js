@@ -1,19 +1,10 @@
-const reportTypes = {
-  cash: 'Thu, hoàn và doanh thu ròng',
-  bookings: 'Tình hình đặt tour',
-  capacity: 'Sức chứa và tỷ lệ lấp đầy',
-};
-const reportState = {
-  pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', cancelled: 'Đã hủy',
-  expired: 'Quá hạn xác nhận', completed: 'Đã hoàn thành',
-};
 let currentReport;
 let reportRequest = 0;
 
 function reportPanel() {
   return `<h2>Báo cáo</h2><form id="frm007_bc_don_dat" class="form" data-validated novalidate onsubmit="submitReport(event)">
     <div class="toolbar">
-      <label>Báo cáo<select name="kind">${Object.entries(reportTypes).map(([key,name]) =>
+      <label>Báo cáo<select name="kind">${reportPresenter.options().map(([key,name]) =>
         `<option value="${key}">${name}</option>`).join('')}</select></label>
       <label>Tour<select name="tour"><option value="">Tất cả tour</option>${tours.map(t =>
         `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('')}</select></label>
@@ -41,39 +32,6 @@ function resetReport() {
   loadReport();
 }
 
-function reportRows(kind, data) {
-  const sum = (items, key) => items.reduce((total, row) => total + row[key], 0);
-  if (kind === 'cash') {
-    const group = data.cash;
-    const collected = sum(group, 'collected'), refunded = sum(group, 'refunded');
-    return {
-      headers: ['Tháng', 'Thu (VND)', 'Hoàn (VND)', 'Thu ròng (VND)'],
-      rows: group.map(r => [r.month, r.collected, r.refunded, r.collected - r.refunded]),
-      total: ['Tổng cộng', collected, refunded, collected - refunded],
-      chart: group,
-      note: 'Kỳ lọc tính theo ngày ghi nhận tiền. Thu ròng bằng tổng thu trừ tổng hoàn.',
-    };
-  }
-  if (kind === 'bookings') {
-    const group = data.bookings;
-    return {
-      headers: ['Tháng khởi hành', 'Trạng thái', 'Số đơn', 'Số khách'],
-      rows: group.map(r => [r.month, reportState[r.state], r.orders, r.guests]),
-      total: ['Tổng cộng', 'Mọi trạng thái', sum(group, 'orders'), sum(group, 'guests')],
-      note: 'Số liệu gồm cả đơn hủy và quá hạn. Kỳ lọc tính theo ngày khởi hành.',
-    };
-  }
-  const group = data.capacity;
-  const capacity = sum(group, 'capacity'), reserved = sum(group, 'reserved');
-  const rate = (used, max) => (max ? (100 * used / max).toFixed(1) : '0.0').replace('.', ',') + '%';
-  return {
-    headers: ['Ngày khởi hành', 'Tour', 'Sức chứa', 'Đã giữ', 'Còn trống', 'Tỷ lệ'],
-    rows: group.map(r => [date(r.day), r.tour, r.capacity, r.reserved, r.available, rate(r.reserved, r.capacity)]),
-    total: ['Tổng cộng', '', capacity, reserved, capacity - reserved, rate(reserved, capacity)],
-    note: 'Tỷ lệ tổng dùng tổng chỗ giữ chia tổng sức chứa. Đơn đã hủy không giữ chỗ.',
-  };
-}
-
 async function loadReport() {
   const form = $('#frm007_bc_don_dat');
   if (!form) return;
@@ -92,11 +50,11 @@ async function loadReport() {
   try {
     const data = await operationsApi('reports?' + new URLSearchParams(params));
     if (request !== reportRequest || !output.isConnected) return;
-    const body = reportRows(kind, data);
+    const body = reportPresenter.present(kind, data);
     const printedOn = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date());
     const range = [params.from && 'từ ' + date(params.from), params.to && 'đến ' + date(params.to)].filter(Boolean).join(' ');
     const scope = (tours.find(t => t.id === params.tour)?.title || 'Tất cả tour') + ' · ' + (range || 'Mọi kỳ');
-    currentReport = { kind, title: reportTypes[kind], scope, printedOn, ...body };
+    currentReport = { ...body, kind, scope, printedOn };
     output.innerHTML = reportMarkup(currentReport);
     excel.disabled = pdf.disabled = false;
   } catch (error) {

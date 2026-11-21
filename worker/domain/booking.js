@@ -1,5 +1,5 @@
 import { Departure } from './departure.js';
-import { ValidationError } from './errors.js';
+import { ConflictError, ValidationError } from './errors.js';
 import { integerBetween, requiredText } from './validation.js';
 
 export const BookingStatus = Object.freeze({
@@ -22,7 +22,15 @@ export class Booking {
     id, userId, tourId, day, title, name, phone, adults, children,
     unitPrice, status = PENDING, paid = false,
   }) {
-    Object.assign(this, { id, userId, tourId, day, title, name, phone, adults, children, unitPrice, status, paid });
+    if (!Object.values(BookingStatus).includes(status) || typeof paid !== 'boolean' || (paid && status !== CONFIRMED)) {
+      throw new ValidationError('Trạng thái đơn và thanh toán không tương thích.');
+    }
+    this.adults = integerBetween(adults, 1, Number.MAX_SAFE_INTEGER, 'Số người lớn', 'adults');
+    this.children = integerBetween(children, 0, Number.MAX_SAFE_INTEGER, 'Số trẻ em', 'children');
+    this.unitPrice = unitPrice === undefined ? undefined
+      : integerBetween(unitPrice, 1, Number.MAX_SAFE_INTEGER, 'Giá chốt', 'unitPrice');
+    Object.assign(this, { id, userId, tourId, day, title, name, phone, status, paid });
+    Object.freeze(this);
   }
 
   static request(id, userId, input) {
@@ -43,7 +51,7 @@ export class Booking {
   static transition(action, ownBookingOnly) {
     if (!Object.hasOwn(transitions, action)) throw new ValidationError('Thao tác đơn không hợp lệ.');
     const rule = transitions[action];
-    if (action === 'cancel' && ownBookingOnly) return { ...rule, alsoFrom: PENDING };
+    if (action === 'cancel' && ownBookingOnly) return Object.freeze({ ...rule, alsoFrom: PENDING });
     return rule;
   }
 
@@ -52,6 +60,7 @@ export class Booking {
   }
 
   get total() {
+    if (this.unitPrice === undefined) throw new ConflictError('Đơn chưa có giá chốt.');
     return this.people * this.unitPrice;
   }
 }

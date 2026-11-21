@@ -4,7 +4,7 @@
 | --- | --- |
 | Ngoại lệ có kiểu | [errors.js](../worker/domain/errors.js) định nghĩa `AppError`, `ValidationError`, `AccessError` và `ConflictError`. [index.js](../worker/index.js) chuyển lỗi qua [http.js](../worker/api/http.js). Lỗi dự kiến giữ HTTP status và trường nhập. Lỗi bất ngờ trả HTTP 500, thông báo chung và mã yêu cầu. |
 | Mật khẩu lưu dạng hash | [passwords.js](../worker/service/passwords.js) dùng PBKDF2-HMAC-SHA256 và salt riêng. Bảng `accounts` lưu `password_hash` và `salt`. Admin dùng `ADMIN_PASSWORD_HASH` và `ADMIN_PASSWORD_SALT` từ Workers secrets hoặc cấu hình thử. Test đăng nhập được với hash khách hiện có. |
-| Tham số SQL | [accounts-repository.js](../worker/database/accounts-repository.js) và [operations-repository.js](../worker/database/operations-repository.js) truyền dữ liệu qua placeholder `?` và `.bind()`. Chuyển trạng thái chọn trong tập câu SQL cố định. |
+| Tham số SQL | [accounts-repository.js](../worker/database/accounts-repository.js) và [tour-catalog-repository.js](../worker/database/tour-catalog-repository.js) và [booking-repository.js](../worker/database/booking-repository.js) truyền dữ liệu qua placeholder `?` và `.bind()`. Chuyển trạng thái chọn trong tập câu SQL cố định. |
 | Ghi đa bảng, rollback | [Trigger D1](../Database/0001_tour_operations.sql) cập nhật `departures.reserved` cùng câu lệnh ghi hoặc hủy `bookings`. Test trên SQLite tạm chủ động gây lỗi khi cập nhật chỗ. Ca tạo đơn giữ 0 đơn và 0 chỗ giữ. Ca hủy giữ đơn ở `pending` và giữ nguyên 3 chỗ. Ca ghi phiếu thu giữ `paid = 0` và không tạo bút toán khi trigger thanh toán lỗi. |
 
 ## Cách kiểm chứng

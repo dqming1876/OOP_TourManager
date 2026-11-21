@@ -39,7 +39,7 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 
 | Lớp | Thực thể hoặc nguồn | Hành vi và nơi gọi |
 | --- | --- | --- |
-| `Tour` | `tours` | Ràng buộc giá, số ngày, ảnh; tạo tập `TourStop` đủ số ngày. Dùng khi `TourOperations.saveTour`. |
+| `Tour` | `tours` | Ràng buộc giá, số ngày, ảnh; tạo tập `TourStop` đủ số ngày. Dùng khi `TourCatalogService.saveTour`. |
 | `Destination` | `destinations` | Chuẩn hóa tên địa danh và tỉnh theo quy tắc chiều dài trước khi ghi điểm ghé. `Tour` dùng khi dựng liên kết. |
 | `TourStop` | `tour_stops` | Kiểm ngày thứ mấy và nội dung. Cung cấp ngày/điểm/hoạt động để repository ghi trong cùng batch với tour. |
 | `Departure` | `departures` | Kiểm ngày và sức chứa trước ghi. Tính chỗ còn từ sức chứa trừ chỗ đã giữ khi dựng danh mục. |
@@ -48,7 +48,7 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 | `CustomerAccount` | `accounts` | Kiểm dữ liệu cập nhật hồ sơ. `bookingScope()` trả ID chủ đơn để giới hạn phạm vi đọc. |
 | `AdministratorAccount` | Danh tính admin từ phiên và cấu hình Worker | `bookingScope()` cho phạm vi quản trị toàn bộ đơn. `toPublic()` chỉ đưa danh tính công khai ra HTTP. |
 
-`Account` là lớp cơ sở nội bộ cho hai loại tài khoản, không tính vào tám lớp cụ thể. Các enum được biểu diễn bằng hằng bất biến trong JavaScript: `BookingStatus` (pending, confirmed, cancelled), `PaymentKind` (collect, refund) và `AccountRole` (admin, customer). Trạng thái báo cáo “quá hạn/hoàn thành” là giá trị suy ra từ ngày, trạng thái và thanh toán. [Mã miền](../worker/domain) · [Repository](../worker/database/operations-repository.js)
+`Account` là lớp cơ sở nội bộ cho hai loại tài khoản, không tính vào tám lớp cụ thể. Các enum được biểu diễn bằng hằng bất biến trong JavaScript: `BookingStatus` (pending, confirmed, cancelled), `PaymentKind` (collect, refund) và `AccountRole` (admin, customer). Trạng thái báo cáo “quá hạn/hoàn thành” là giá trị suy ra từ ngày, trạng thái và thanh toán. [Mã miền](../worker/domain) · [Repository tour](../worker/database/tour-catalog-repository.js) · [Repository đơn](../worker/database/booking-repository.js)
 
 ## Đọc ngược thuộc tính lịch sử
 

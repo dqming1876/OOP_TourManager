@@ -1,7 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import worker from '../worker/index.js';
+import { createWorker } from '../worker/index.js';
+import { SqliteD1Adapter } from './sqlite-d1-adapter.mjs';
 import { passwordHash } from '../worker/service/passwords.js';
 
 export async function makeWorker({ adminPassword = randomUUID(), assets, seed } = {}) {
@@ -28,28 +29,8 @@ export async function makeWorker({ adminPassword = randomUUID(), assets, seed } 
     ADMIN_PASSWORD_HASH: await passwordHash(adminPassword, salt),
     ADMIN_SESSION_SECRET: randomUUID(),
     ASSETS: assets,
-    DB: {
-      prepare(sql) {
-        queries.push(sql);
-        const bind = (...args) => ({
-          all: () => ({ results: db.prepare(sql).all(...args) }),
-          first: () => db.prepare(sql).get(...args) || null,
-          run: () => ({ meta: db.prepare(sql).run(...args) }),
-        });
-        return { bind, ...bind() };
-      },
-      batch(statements) {
-        db.exec('BEGIN');
-        try {
-          const results = statements.map(statement => statement.all());
-          db.exec('COMMIT');
-          return results;
-        } catch (error) {
-          db.exec('ROLLBACK');
-          throw error;
-        }
-      },
-    },
+    DB: new SqliteD1Adapter(db, queries),
   };
+  const worker = createWorker();
   return { db, env, adminPassword, queries, fetch: request => worker.fetch(request, env) };
 }

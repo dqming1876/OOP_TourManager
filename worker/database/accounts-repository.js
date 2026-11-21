@@ -1,3 +1,4 @@
+/** @implements {import('../ports.js').AccountsPort} */
 export class AccountsRepository {
   constructor(db) {
     this.db = db;

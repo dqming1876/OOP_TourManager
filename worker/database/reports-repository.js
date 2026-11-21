@@ -1,11 +1,12 @@
+/** @implements {import('../ports.js').ReportPort} */
 export class ReportsRepository {
-  constructor(repository) {
-    this.repository = repository;
+  constructor(db) {
+    this.db = db;
   }
 
   async load({ from, to, tourId, today }) {
-    const { db } = this.repository;
-    const query = (sql, ...args) => this.repository.prepare(sql, ...args);
+    const { db } = this;
+    const query = (sql, ...args) => db.prepare(sql).bind(...args);
     const range = [from, to, tourId, tourId];
     const [cash, bookings, capacity] = await db.batch([
       query(`
