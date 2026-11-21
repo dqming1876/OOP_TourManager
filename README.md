@@ -7,13 +7,13 @@ Mingo là hệ thống quản lý tour, lịch khởi hành, đơn và báo cáo
 1. Cài sẵn Node.js 24. Mở Terminal trong thư mục mã nguồn hoặc thư mục vừa giải nén.
 2. Chạy `node scripts/demo.mjs`, rồi mở `http://127.0.0.1:4173` trên trình duyệt.
 3. Dùng `demo_admin` và mật khẩu in trong Terminal để xem khu quản trị. Dùng `mingo_khach1` và mật khẩu demo được in cùng lúc để xem phía khách. Đây là tài khoản giả trên máy cục bộ.
-4. Mở **Quản trị → Báo cáo**. Lọc **Hà Nội – Phố cổ và Hồ Gươm** theo tháng liền trước để đối chiếu số liệu trong [minh chứng 1.2–1.4](docs/checklist-1.2-1.4.md).
+4. Mở **Quản trị → Báo cáo**. Lọc **Hà Nội – Phố cổ và Hồ Gươm** theo tháng liền trước để đối chiếu số liệu trong [minh chứng 1.1–1.4](docs/checklist-1.1-1.4.md).
 
 Bản demo dựng lại SQLite trong bộ nhớ mỗi lần chạy. Đổi cổng bằng biến `MINGO_DEMO_PORT` khi cổng mặc định đang được dùng. Đóng gói với `node scripts/package-demo.mjs mingo-demo.zip` (cần lệnh `zip`).
 
 ## Kiểm thử
 
-Chạy `node scripts/build-cloudflare.mjs && node --test test/*.test.js`. Bộ kiểm thử dùng DB tạm: phân quyền, trạng thái, tranh chỗ, hoàn tác, seed và đối chiếu ba báo cáo. Xem thêm [minh chứng mục 1.1](docs/checklist-1.1.md).
+Chạy `node scripts/build-cloudflare.mjs && node --test test/*.test.js`. Bộ kiểm thử dùng DB tạm: phân quyền, trạng thái, tranh chỗ, hoàn tác, seed và đối chiếu ba báo cáo. Xem thêm [minh chứng mục 1.1](docs/checklist-1.1-1.4.md#11--chức-năng-và-phân-quyền).
 
 ## Chạy bằng Cloudflare D1 cục bộ
 
