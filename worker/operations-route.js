@@ -37,7 +37,7 @@ async function operationsRoute(request, env, path) {
     }
     return json({ error: 'Không tìm thấy chức năng.' }, 404);
   } catch (error) {
-    if (error instanceof OperationError) return json({ error: error.message }, error.status);
+    if (error instanceof OperationError) return json({ error: error.message, field: error.field }, error.status);
     console.error('Tour operations failed', error.message);
     return json({ error: 'Không thể xử lý yêu cầu lúc này.' }, 500);
   }

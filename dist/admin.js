@@ -72,21 +72,40 @@ function tourManagement() {
   const rows = tours.map(t => {
     const status = t.hidden ? 'Đã ẩn' : 'Đang bán';
     return `<tr data-status="${status}"><td>${esc(t.title)}<br><small>${esc(t.province)} · ${status}</small></td>
-      <td>${money(t.price)}</td><td>${t.departures.length}</td><td>
+      <td class="number">${money(t.price)}</td><td class="number">${wholeNumber(t.departures.length)}</td><td>
+      <button type="button" class="outline" aria-controls="tour-detail" aria-expanded="false" onclick="showTourDetail(this,'${t.id}')">Chi tiết</button>
       <button onclick="editTour('${t.id}')">Sửa</button>
       <button class="outline" onclick="setTourVisibility('${t.id}',${!t.hidden})">${t.hidden ? 'Hiện lại' : 'Ẩn'}</button>
       </td></tr>`;
   });
-  return `<div class="section-head"><h2>Quản lý tour</h2><button onclick="editTour()">+ Thêm tour</button></div>
+  return `<div class="section-head"><h2>Danh mục tour</h2><button onclick="editTour()">+ Thêm tour</button></div>
     ${adminFilters('Tìm tên tour hoặc tỉnh', ['Đang bán', 'Đã ẩn'])}
-    <div class="table-scroll"><table><thead><tr><th>Tour</th><th>Giá / khách</th><th>Đợt</th><th>Thao tác</th></tr></thead>
-    <tbody>${rows.join('')}</tbody></table></div>`;
+    <div class="table-scroll"><table><thead><tr><th>Tour</th><th class="number">Giá / khách</th><th class="number">Đợt</th><th>Thao tác</th></tr></thead>
+    <tbody>${rows.join('')}</tbody></table></div>
+    <section class="catalog-detail" id="tour-detail" aria-labelledby="tour-detail-heading" hidden></section>`;
+}
+
+function showTourDetail(button, id) {
+  const tour = tours.find(item => item.id === id);
+  if (!tour) return;
+  const panel = $('#tour-detail');
+  const wasExpanded = button.getAttribute('aria-expanded') === 'true';
+  document.querySelectorAll('[aria-controls="tour-detail"]').forEach(control => control.setAttribute('aria-expanded', 'false'));
+  panel.hidden = wasExpanded;
+  if (wasExpanded) return;
+  button.setAttribute('aria-expanded', 'true');
+  panel.innerHTML = `<h3 id="tour-detail-heading" tabindex="-1">${esc(tour.title)}</h3>
+    <dl><dt>Điểm đến</dt><dd>${esc(tour.place)} · ${esc(tour.province)}</dd>
+    <dt>Thời lượng</dt><dd>${wholeNumber(tour.days)} ngày</dd>
+    <dt>Giá mỗi khách</dt><dd class="number">${money(tour.price)}</dd></dl>
+    <p>${esc(tour.desc)}</p><button type="button" class="outline" onclick="editTour('${tour.id}')">Sửa tour</button>`;
+  $('#tour-detail-heading').focus();
 }
 
 function editTour(id) {
   const t = tours.find(tour => tour.id === id);
   modal(`<h2>${t ? 'Sửa tour' : 'Thêm tour'}</h2>
-    <form class="form" onsubmit="submitTour(event,'${t?.id || ''}')">
+    <form class="form catalog-form" data-validated novalidate onsubmit="submitTour(event,'${t?.id || ''}')">
       <label>Tên tour<input name="title" required maxlength="120" value="${esc(t?.title)}"></label>
       <label>Tỉnh thành<select name="province">${PROVINCES.map(p =>
         `<option ${t?.province === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
@@ -95,13 +114,13 @@ function editTour(id) {
       <label>Mô tả<textarea name="desc" required maxlength="4000">${esc(t?.desc)}</textarea></label>
       <label>Loại hình<select name="category">${['Biển đảo','Núi & thiên nhiên','Văn hóa & khám phá'].map(c =>
         `<option ${tourType(t || {}) === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
-      <label>Ảnh tour (tối đa 1 MB)<input type="file" id="cover-upload" accept="image/jpeg,image/png,image/webp"></label>
-      <label>Nguồn ảnh<input name="coverSource" value="${esc(t?.coverSource)}"></label>
-      <label>Điểm đón<input name="pickup" value="${esc(t?.pickup)}"></label>
-      <label>Bao gồm<textarea name="includes">${esc(t?.includes)}</textarea></label>
-      <label>Không bao gồm<textarea name="excludes">${esc(t?.excludes)}</textarea></label>
+      <label>Ảnh tour (tối đa 1 MB)<input type="file" id="cover-upload" name="cover" accept="image/jpeg,image/png,image/webp"></label>
+      <label>Nguồn ảnh<input name="coverSource" maxlength="2000" value="${esc(t?.coverSource)}"></label>
+      <label>Điểm đón<input name="pickup" maxlength="2000" value="${esc(t?.pickup)}"></label>
+      <label>Bao gồm<textarea name="includes" maxlength="2000">${esc(t?.includes)}</textarea></label>
+      <label>Không bao gồm<textarea name="excludes" maxlength="2000">${esc(t?.excludes)}</textarea></label>
       <fieldset><legend>Lịch trình từng ngày</legend><div id="itinerary-editor"></div></fieldset>
-      <button type="submit">Lưu tour</button>
+      <p class="submission-error" role="alert"></p><button type="submit">Lưu tour</button>
     </form>`);
   renderItinerary(t?.days || 3, t?.itinerary);
 }
@@ -109,13 +128,15 @@ function editTour(id) {
 function renderItinerary(count, saved) {
   const values = saved || Array.from(document.querySelectorAll('[data-day]'), field => field.value);
   $('#itinerary-editor').innerHTML = Array.from({ length: Math.min(30, Math.max(0, Number(count))) },
-    (_, i) => `<label>Ngày ${i + 1}<textarea data-day required maxlength="2000">${esc(values[i] ??
+    (_, i) => `<label>Ngày ${i + 1}<textarea name="itinerary-${i}" data-day required maxlength="2000">${esc(values[i] ??
       'Tham quan, nghỉ ngơi và trải nghiệm địa phương.')}</textarea></label>`).join('');
 }
 
 async function submitTour(event, id) {
   event.preventDefault();
   const form = event.currentTarget;
+  form.querySelector('.submission-error').textContent = '';
+  if (!validateMingoForm(form)) return;
   const fields = Object.fromEntries(new FormData(form));
   const existing = tours.find(t => t.id === id);
   const file = $('#cover-upload').files[0];
@@ -124,25 +145,26 @@ async function submitTour(event, id) {
   try {
     let cover = existing?.cover;
     if (file) {
-      if (file.size > 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        throw new Error('Chọn ảnh JPG, PNG hoặc WebP tối đa 1 MB.');
-      }
       cover = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('Không đọc được ảnh.'));
+        reader.onerror = () => reject({ message: 'Không đọc được ảnh.', field: 'cover' });
         reader.readAsDataURL(file);
       });
     }
     fields.price = Number(fields.price);
     fields.days = Number(fields.days);
     fields.place = existing?.province === fields.province ? existing.place : province(fields.province).attractions[0];
-    fields.itinerary = Array.from(form.querySelectorAll('[data-day]'), field => field.value);
+    delete fields.cover;
+    fields.itinerary = Array.from(form.querySelectorAll('[data-day]'), field => {
+      delete fields[field.name];
+      return field.value;
+    });
     await operationsApi(id ? 'tours/' + id : 'tours', { ...fields, cover });
     $('#modal').close();
     await reloadAdmin('Đã lưu tour.');
   } catch (error) {
-    toast(error.message);
+    showSubmissionError(form, error);
   } finally {
     button.disabled = false;
   }
@@ -176,36 +198,61 @@ function showDepartureRows(id) {
   const container = $('#departure-rows');
   container.innerHTML = '';
   if (!tour) return;
-  container.innerHTML = `<form class="form" onsubmit="submitDeparture(event,'${id}')">
+  container.innerHTML = `<h3 id="departure-form-title">Lập đợt khởi hành</h3><form class="form operation-form" data-validated novalidate onsubmit="submitDeparture(event,'${id}')">
     <div class="toolbar">
-      <label>Ngày khởi hành<input type="date" name="day" required></label>
+      <label>Ngày khởi hành<input type="date" name="day" min="${todayInVietnam()}" required></label>
       <label>Sức chứa<input type="number" name="capacity" min="1" max="100" value="24" required></label>
       <button type="submit">Lưu đợt</button>
+      <button type="button" class="outline" onclick="resetDepartureForm()" hidden>Hủy sửa</button>
     </div>
-    </form><div class="table-scroll"><table><thead><tr><th>Ngày đi</th><th>Sức chứa</th><th>Còn trống</th><th>Thao tác</th></tr></thead>
-    <tbody>${tour.departures.map(d => `<tr><td>${date(d.day)}</td><td>${d.capacity}</td><td>${d.remaining}</td>
+    <p class="submission-error" role="alert"></p></form><div class="table-scroll"><table><thead><tr><th>Ngày đi</th><th class="number">Sức chứa</th><th class="number">Còn trống</th><th>Thao tác</th></tr></thead>
+    <tbody>${tour.departures.map(d => `<tr><td>${date(d.day)}</td><td class="number">${wholeNumber(d.capacity)}</td><td class="number">${wholeNumber(d.remaining)}</td>
       <td><button class="outline" onclick="editDeparture('${d.day}', ${d.capacity})">Sửa</button>
       <button class="outline" onclick="removeDeparture('${id}','${d.day}')">Xóa</button></td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function editDeparture(day, capacity) {
   const form = $('#departure-rows form');
+  resetDepartureForm();
+  form.dataset.edit = 'true';
+  $('#departure-form-title').textContent = 'Đổi sức chứa đợt ' + date(day);
+  form.querySelector('[type=submit]').textContent = 'Lưu sức chứa';
+  form.querySelector('[type=button]').hidden = false;
+  form.elements.day.readOnly = true;
   form.elements.day.value = day;
   form.elements.capacity.value = capacity;
   form.elements.capacity.focus();
 }
 
+function resetDepartureForm() {
+  const form = $('#departure-rows form');
+  delete form.dataset.edit;
+  form.reset();
+  form.elements.day.readOnly = false;
+  for (const field of [form.elements.day, form.elements.capacity]) showFieldError(field);
+  form.querySelector('.submission-error').textContent = '';
+  $('#departure-form-title').textContent = 'Lập đợt khởi hành';
+  form.querySelector('[type=submit]').textContent = 'Lưu đợt';
+  form.querySelector('[type=button]').hidden = true;
+}
+
 async function submitDeparture(event, id) {
   event.preventDefault();
   const form = event.currentTarget;
+  form.querySelector('.submission-error').textContent = '';
+  const day = form.elements.day.value;
+  const edit = form.dataset.edit === 'true';
+  const departures = tours.find(tour => tour.id === id)?.departures || [];
+  const duplicate = !edit && departures.some(departure => departure.day === day);
+  if (!validateMingoForm(form, duplicate ? { day: 'Ngày này đã có đợt. Dùng nút Sửa trong danh sách.' } : {})) return;
   const submit = form.querySelector('[type=submit]');
   submit.disabled = true;
   try {
-    await operationsApi('tours/' + id + '/departures', { day: form.elements.day.value, capacity: Number(form.elements.capacity.value) });
+    await operationsApi('tours/' + id + '/departures', { day, capacity: Number(form.elements.capacity.value), edit });
     await refreshSchedule(id);
     toast('Đã lưu đợt khởi hành.');
   } catch (error) {
-    toast(error.message);
+    showSubmissionError(form, error);
   } finally {
     submit.disabled = false;
   }
@@ -236,11 +283,11 @@ function bookingManagement(payments) {
   const rows = items.map(b => `<tr data-status="${statusFor(b)}">
     <td>${esc(b.id)}<br>${esc(b.name)}<br><small>${esc(b.phone)}</small></td>
     <td>${esc(b.title)}<br><small>${date(b.date)} · ${b.people} khách</small></td>
-    <td>${money(b.total)}</td><td>${statusFor(b)}</td>
+    <td class="number">${money(b.total)}</td><td>${statusFor(b)}</td>
     <td><button class="outline" onclick="editBooking('${b.id}',${payments})">Mở phiếu</button></td></tr>`).join('');
   return `<h2>${payments ? 'Thu tiền và hoàn tiền' : 'Xử lý đơn đặt tour'}</h2>
     ${items.length ? `${adminFilters('Tìm tên khách, số điện thoại, mã đơn', options)}
-    <div class="table-scroll"><table><thead><tr><th>Mã / khách</th><th>Chuyến đi</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+    <div class="table-scroll"><table><thead><tr><th>Mã / khách</th><th>Chuyến đi</th><th class="number">Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
     <tbody>${rows}</tbody></table></div>` : '<p class="empty">Chưa có đơn để xử lý.</p>'}`;
 }
 
@@ -253,13 +300,16 @@ function editBooking(id, payments) {
   modal(`<h2>${payments ? 'Phiếu thanh toán' : 'Phiếu xử lý đơn'}</h2>
     <p>${esc(b.id)} · ${esc(b.title)}</p><p>${esc(b.name)} · ${date(b.date)} · ${b.people} khách</p>
     <p>${statusName[b.status]} · <strong>${money(b.total)}</strong></p>
-    <form class="form" onsubmit="submitBookingAction(event,'${b.id}')">
+    <form class="form operation-form" onsubmit="submitBookingAction(event,'${b.id}')">
       ${actions.map(([value, label]) => `<button type="submit" value="${value}">${label}</button>`).join('')}
+      <p class="submission-error" role="alert"></p>
     </form>`);
 }
 
 async function submitBookingAction(event, id) {
   event.preventDefault();
+  const form = event.currentTarget;
+  form.querySelector('.submission-error').textContent = '';
   const button = event.submitter;
   if (!button) return;
   if (button.value === 'cancel' && !confirm('Hủy đơn và trả lại chỗ?')) return;
@@ -269,7 +319,7 @@ async function submitBookingAction(event, id) {
     $('#modal').close();
     await reloadAdmin('Đã cập nhật đơn.');
   } catch (error) {
-    toast(error.message);
+    showSubmissionError(form, error);
   } finally {
     button.disabled = false;
   }

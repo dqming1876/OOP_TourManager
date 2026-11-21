@@ -1,28 +1,33 @@
 class OperationError extends Error {
-  constructor(status, message) {
+  constructor(status, message, field) {
     super(message);
     this.status = status;
+    this.field = field;
   }
 }
 
-function requiredText(value, limit, label) {
+function requiredText(value, limit, label, field) {
   if (typeof value !== 'string' || !value.trim() || value.trim().length > limit) {
-    throw new OperationError(400, label + ' không hợp lệ.');
+    throw new OperationError(400, label + ' không hợp lệ.', field);
   }
   return value.trim();
 }
 
-function integerBetween(value, min, max, label) {
+function integerBetween(value, min, max, label, field) {
   if (!Number.isInteger(value) || value < min || value > max) {
-    throw new OperationError(400, label + ' phải từ ' + min + ' đến ' + max + '.');
+    throw new OperationError(400, label + ' phải từ ' + min + ' đến ' + max + '.', field);
   }
   return value;
 }
 
+function validCalendarDay(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+}
+
 function departureDay(value) {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)
-    || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0, 10) !== value) {
-    throw new OperationError(400, 'Ngày khởi hành không hợp lệ.');
+  if (!validCalendarDay(value)) {
+    throw new OperationError(400, 'Ngày khởi hành không hợp lệ.', 'day');
   }
   return value;
 }
@@ -52,28 +57,28 @@ class TourOperations {
   async saveTour(id, input) {
     this.requireRole('admin');
     const tourId = id || crypto.randomUUID();
-    const days = integerBetween(input.days, 1, 30, 'Số ngày');
+    const days = integerBetween(input.days, 1, 30, 'Số ngày', 'days');
     const tour = {
-      title: requiredText(input.title, 120, 'Tên tour'),
-      province: requiredText(input.province, 80, 'Tỉnh thành'),
-      place: requiredText(input.place, 120, 'Điểm đến'),
-      price: integerBetween(input.price, 1, 1_000_000_000, 'Giá tour'),
-      desc: requiredText(input.desc, 4000, 'Mô tả'),
+      title: requiredText(input.title, 120, 'Tên tour', 'title'),
+      province: requiredText(input.province, 80, 'Tỉnh thành', 'province'),
+      place: requiredText(input.place, 120, 'Điểm đến', 'place'),
+      price: integerBetween(input.price, 1, 1_000_000_000, 'Giá tour', 'price'),
+      desc: requiredText(input.desc, 4000, 'Mô tả', 'desc'),
       days,
     };
     for (const field of ['category', 'pickup', 'includes', 'excludes', 'coverSource']) {
-      if (input[field]) tour[field] = requiredText(input[field], 2000, field);
+      if (input[field]) tour[field] = requiredText(input[field], 2000, field, field);
     }
     if (input.itinerary !== undefined) {
       if (!Array.isArray(input.itinerary) || input.itinerary.length !== days) {
         throw new OperationError(400, 'Lịch trình phải có đủ nội dung mỗi ngày.');
       }
-      tour.itinerary = input.itinerary.map(day => requiredText(day, 2000, 'Nội dung lịch trình'));
+      tour.itinerary = input.itinerary.map((day, i) => requiredText(day, 2000, 'Nội dung lịch trình', 'itinerary-' + i));
     }
     if (input.cover) {
       if (typeof input.cover !== 'string' || input.cover.length > 1_398_134
         || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(input.cover)) {
-        throw new OperationError(400, 'Ảnh phải là JPG, PNG hoặc WebP tối đa 1 MB.');
+        throw new OperationError(400, 'Ảnh phải là JPG, PNG hoặc WebP tối đa 1 MB.', 'cover');
       }
       tour.cover = input.cover;
     }
@@ -90,29 +95,37 @@ class TourOperations {
   async saveDeparture(tourId, input) {
     this.requireRole('admin');
     const day = departureDay(input.day);
-    const capacity = integerBetween(input.capacity, 1, 100, 'Sức chứa');
-    if (day < this.today) throw new OperationError(400, 'Không thể sửa lịch đã qua.');
-    if (!await this.repository.saveDeparture(tourId, day, capacity)) {
-      throw new OperationError(409, 'Tour không tồn tại hoặc sức chứa thấp hơn số chỗ đã giữ.');
+    const capacity = integerBetween(input.capacity, 1, 100, 'Sức chứa', 'capacity');
+    if (day < this.today) throw new OperationError(400, 'Không thể sửa lịch đã qua.', 'day');
+    const edit = input.edit ?? false;
+    if (typeof edit !== 'boolean') throw new OperationError(400, 'Thao tác lịch không hợp lệ.');
+    if (edit) {
+      if (!await this.repository.changeDepartureCapacity(tourId, day, capacity)) {
+        throw new OperationError(409, 'Đợt đã bị xóa hoặc sức chứa thấp hơn số chỗ đã giữ.', 'capacity');
+      }
+      return;
+    }
+    if (!await this.repository.createDeparture(tourId, day, capacity)) {
+      throw new OperationError(409, 'Ngày này đã có đợt khởi hành hoặc tour đã bị xóa.', 'day');
     }
   }
 
   async placeBooking(input) {
     this.requireRole('customer');
     const booking = {
-      tourId: requiredText(input.tourId, 70, 'Tour'),
+      tourId: requiredText(input.tourId, 70, 'Tour', 'tourId'),
       day: departureDay(input.day),
-      name: requiredText(input.name, 80, 'Tên người đại diện'),
-      phone: requiredText(input.phone, 16, 'Số điện thoại'),
-      adults: integerBetween(input.adults, 1, 100, 'Số người lớn'),
-      children: integerBetween(input.children, 0, 99, 'Số trẻ em'),
+      name: requiredText(input.name, 80, 'Tên người đại diện', 'name'),
+      phone: requiredText(input.phone, 16, 'Số điện thoại', 'phone'),
+      adults: integerBetween(input.adults, 1, 100, 'Số người lớn', 'adults'),
+      children: integerBetween(input.children, 0, 99, 'Số trẻ em', 'children'),
     };
     if (!/^[0-9+ ()-]{9,16}$/.test(booking.phone) || booking.phone.replace(/\D/g, '').length < 8) {
-      throw new OperationError(400, 'Số điện thoại không hợp lệ.');
+      throw new OperationError(400, 'Số điện thoại không hợp lệ.', 'phone');
     }
     const id = 'MG' + crypto.randomUUID().replaceAll('-', '').toUpperCase();
     if (!await this.repository.placeBooking(id, this.actor.id, booking, this.today)) {
-      throw new OperationError(409, 'Đợt khởi hành đã đóng hoặc không còn đủ chỗ.');
+      throw new OperationError(409, 'Đợt khởi hành đã đóng hoặc không còn đủ chỗ.', 'day');
     }
     return { id };
   }

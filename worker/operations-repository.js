@@ -47,13 +47,20 @@ class OperationsRepository {
     return result.meta.changes === 1;
   }
 
-  async saveDeparture(tourId, day, capacity) {
+  async createDeparture(tourId, day, capacity) {
     const result = await this.prepare(`
       INSERT INTO departures (tour_id, day, capacity)
       SELECT id, ?, ? FROM tours WHERE id = ?
-      ON CONFLICT(tour_id, day) DO UPDATE SET capacity = excluded.capacity
-      WHERE excluded.capacity >= departures.reserved
+      ON CONFLICT(tour_id, day) DO NOTHING
     `, day, capacity, tourId).run();
+    return result.meta.changes === 1;
+  }
+
+  async changeDepartureCapacity(tourId, day, capacity) {
+    const result = await this.prepare(`
+      UPDATE departures SET capacity = ?
+      WHERE tour_id = ? AND day = ? AND reserved <= ?
+    `, capacity, tourId, day, capacity).run();
     return result.meta.changes === 1;
   }
 

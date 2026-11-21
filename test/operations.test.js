@@ -55,7 +55,7 @@ test('Giữ chỗ và trả chỗ: khách độc lập thấy cùng sức chứa
   assert.equal((await request('ops/bookings', undefined, admin)).data.bookings[0].total, 3600000);
   const available = async () => (await request('ops/tours')).data.tours.find(tour => tour.id === tourId).departures[0].remaining;
   assert.equal(await available(), 0);
-  assert.equal((await request(schedule, { day: future, capacity: 2 }, admin)).status, 409);
+  assert.equal((await request(schedule, { day: future, capacity: 2, edit: true }, admin)).status, 409);
   assert.equal((await request('ops/bookings/' + id + '/cancel', {}, other)).status, 409);
   assert.equal(await available(), 0);
   assert.equal((await request('ops/bookings/' + id + '/cancel', {}, owner)).status, 200);
@@ -101,4 +101,36 @@ test('Lỗi khi cập nhật sức chứa khiến việc tạo đơn được ho
   assert.equal((await request('ops/bookings', details(tourId), a)).status, 500);
   assert.equal(db.prepare('SELECT count(*) AS count FROM bookings').get().count, 0);
   assert.equal(db.prepare('SELECT reserved FROM departures WHERE tour_id = ? AND day = ?').get(tourId, future).reserved, 0);
+});
+
+test('Validation Worker trả đúng ô lỗi trước khi ghi tour, lịch, đơn và hồ sơ', async t => {
+  const { request, admin, a, tourId, schedule } = await fixture(t);
+  const cases = [
+    ['ops/tours', { ...tour, title: '  ' }, admin, 'title'],
+    ['ops/tours/' + tourId, { ...tour, price: 1.5 }, admin, 'price'],
+    ['ops/tours', { ...tour, itinerary: ['Ngày 1', ' '] }, admin, 'itinerary-1'],
+    [schedule, { day: '2000-01-01', capacity: 3 }, admin, 'day'],
+    [schedule, { day: future, capacity: 101 }, admin, 'capacity'],
+    ['ops/bookings', { ...details(tourId), adults: 0 }, a, 'adults'],
+    ['ops/bookings', { ...details(tourId), phone: '12345678xx' }, a, 'phone'],
+    ['profile', { name: 'Khách mẫu', birthday: '2024-02-30' }, a, 'birthday'],
+    ['profile', { name: 'Khách mẫu', phone: 'abc' }, a, 'phone'],
+  ];
+  for (const [path, body, cookie, field] of cases) {
+    const { status, data } = await request(path, body, cookie);
+    assert.equal(status, 400, path + ' ' + field);
+    assert.equal(data.field, field, path);
+  }
+  const duplicate = await request(schedule, { day: future, capacity: 12 }, admin);
+  assert.equal(duplicate.status, 409);
+  assert.equal(duplicate.data.field, 'day');
+  const available = async () => (await request('ops/tours')).data.tours.find(t => t.id === tourId).departures[0].remaining;
+  assert.equal(await available(), 3);
+  assert.equal((await request(schedule, { day: future, capacity: 4, edit: true }, admin)).status, 200);
+  assert.equal(await available(), 4);
+  assert.equal((await request('ops/bookings', { ...details(tourId), adults: 5 }, a)).data.field, 'day');
+  assert.equal((await request('ops/bookings', undefined, a)).data.bookings.length, 0);
+  const saved = await request('profile', { name: 'Khách mẫu', phone: '0900000000', birthday: '2024-02-29' }, a);
+  assert.equal(saved.status, 200);
+  assert.equal(saved.data.user.birthday, '2024-02-29');
 });

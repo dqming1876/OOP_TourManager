@@ -6,7 +6,11 @@ async function operationsApi(path, body) {
   };
   const response = await fetch('/api/ops/' + path, options);
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'Không thể thực hiện thao tác.');
+  if (!response.ok) {
+    const error = new Error(result.error || 'Không thể thực hiện thao tác.');
+    error.field = result.field;
+    throw error;
+  }
   return result;
 }
 
@@ -45,17 +49,25 @@ async function placeOrder(event, tourId) {
   if (!user) return account();
   if (user.role !== 'customer') return toast('Vui lòng dùng tài khoản khách hàng để đặt tour.');
   const form = event.currentTarget;
+  form.querySelector('.submission-error').textContent = '';
   const fields = new FormData(form);
+  const day = fields.get('day');
+  const adults = Number(fields.get('adults'));
+  const children = Number(fields.get('children'));
+  const available = remaining(tours.find(tour => tour.id === tourId), day);
+  const capacityError = day && adults + children > available ? {
+    day: 'Đợt này còn ' + available + ' chỗ. Chọn đợt khác hoặc giảm số khách.',
+  } : {};
+  if (!validateMingoForm(form, capacityError)) return;
   const button = form.querySelector('button[type="submit"]');
   button.disabled = true;
   let receipt;
   try {
     receipt = await operationsApi('bookings', {
-      tourId, day: $('#departure').value, adults: Number($('#people').value),
-      children: Number($('#children').value), name: fields.get('name'), phone: fields.get('phone'),
+      tourId, day, adults, children, name: fields.get('name'), phone: fields.get('phone'),
     });
   } catch (error) {
-    toast(error.message);
+    showSubmissionError(form, error);
     return;
   } finally {
     button.disabled = false;

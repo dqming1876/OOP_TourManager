@@ -31,3 +31,36 @@ html{scroll-behavior:smooth}small,.source,.notice,.breadcrumb,label{font-size:14
 .stepper{display:flex;align-items:center;gap:8px}.stepper button{width:40px;min-width:40px;padding:8px}.stepper input{min-width:0;text-align:center}.tour-card[hidden]{display:none!important}#more-tours{display:block;margin:30px auto}.tour-gallery button:focus-visible{outline:3px solid #d9912b}
 
 .source{display:none!important}.tour-type{display:inline-block;background:#e5ebdf;color:#214c3c;border-radius:20px;padding:4px 10px;font-size:13px;margin-top:12px}.date-entry,.destination-row{display:flex;align-items:center;gap:12px;margin:12px 0}.destination-row span{flex:1}fieldset{border:1px solid #cbd2c6;padding:18px;border-radius:8px}fieldset label{margin:12px 0}tr[hidden]{display:none}footer{flex-wrap:wrap}
+/* Shared presentation for catalog and transaction forms. */
+.number, form[data-validated] input[type="number"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.field-error, .submission-error {
+  display: block;
+  margin: 4px 0 0;
+  color: #a12c25;
+  font-size: .875rem;
+  font-weight: 500;
+}
+
+.field-error:empty, .submission-error:empty { display: none; }
+[aria-invalid="true"] { border-color: #a12c25; }
+.booking-panel .guest-field label { margin-bottom: 4px; }
+.booking-panel .stepper button { margin-top: 0; }
+
+.catalog-detail {
+  margin-top: 16px;
+  padding: 20px;
+  background: white;
+  border: 1px solid var(--line);
+}
+
+.catalog-detail dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 20px; }
+.catalog-detail dt { font-weight: 600; }
+.catalog-detail dd { margin: 0; }
+.catalog-detail dd.number { justify-self: start; }
+.operation-form .toolbar { align-items: start; margin-bottom: 0; }
+.operation-form .toolbar button { width: auto; align-self: start; margin-top: 35px; }
