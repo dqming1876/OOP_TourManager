@@ -6,7 +6,10 @@
     "build": "node -e \"import('./worker/index.js')\"",
     "dev": "wrangler dev",
     "demo": "node scripts/demo.mjs",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "test:unit": "node --test test/unit-axis5.test.js",
+    "test:integration": "node --test test/integration-axis5.test.js",
+    "test:mutation": "node scripts/verify-axis5.mjs"
   },
   "devDependencies": {
     "wrangler": "4.92.0"

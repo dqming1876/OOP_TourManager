@@ -46,7 +46,7 @@ Sáu form nghiệp vụ gồm biên tập tour, lịch khởi hành, đặt chuy
 - **Xử lý đơn / Thu tiền → Mở phiếu** nạp lịch sử thu và hoàn của đúng đơn. Phiếu hiển thị số khách, giá lịch sử, thu ròng và phần còn phải thu. Ghi thu hoặc hoàn tạo sự kiện trong cùng giao dịch với cập nhật đơn.
 - **Báo cáo** có dòng tiền theo tháng, tình hình đặt tour theo trạng thái và sức chứa từng đợt. Có biểu đồ dòng tiền, ngày bắt đầu/kết thúc, lọc theo tour và nút xóa lọc. Chọn **Tải Excel** để lưu XLSX hoặc **In / Lưu PDF** và chọn **Lưu dưới dạng PDF** trong hộp thoại trình duyệt. Hai bản xuất dùng cùng dữ liệu với bảng đang xem.
 
-Dòng tiền lọc theo ngày ghi nhận. Hai báo cáo còn lại lọc theo ngày khởi hành. Đơn quá hạn là đơn còn chờ xác nhận sau ngày đi. Đơn hoàn thành là đơn đã xác nhận, đã thu và đã qua ngày đi. Đơn hủy được đếm theo trạng thái, nhưng không giữ chỗ. Nếu áp migration vào dữ liệu 1.1 đã có thu tiền, số dư mở đầu mang ngày migration vì dữ liệu cũ không ghi ngày thu.
+Dòng tiền lọc theo ngày ghi nhận. Hai báo cáo còn lại lọc theo ngày khởi hành. Đơn quá hạn là đơn còn chờ xác nhận sau ngày đi. Đơn hoàn thành là đơn đã xác nhận, đã thu và đã qua ngày đi. Đơn hủy hiện thành dòng trạng thái riêng để đối chiếu. Dòng tổng không cộng đơn hủy, và đơn hủy không giữ chỗ. Nếu áp migration vào dữ liệu 1.1 đã có thu tiền, số dư mở đầu mang ngày migration vì dữ liệu cũ không ghi ngày thu.
 
 ## 1.3 — Seed, quan hệ và số đối chiếu
 
@@ -65,7 +65,7 @@ Dòng tiền lọc theo ngày ghi nhận. Hai báo cáo còn lại lọc theo ng
 Mỗi tour có đợt ở hai tháng đã qua và một tháng sau. Ví dụ, lọc **Hà Nội – Phố cổ và Hồ Gươm** trong tháng liền trước:
 
 - Giá 1.200.000 ₫/khách. Thu hai khách ở đơn hoàn thành và một khách ở đơn hủy có hoàn tiền. Tổng thu 3.600.000 ₫, hoàn 1.200.000 ₫, thu ròng 2.400.000 ₫.
-- Có bốn đơn, bảy khách gồm hai khách hoàn thành, một khách hủy, hai khách quá hạn và hai khách xác nhận chưa thu.
+- Bảng chi tiết có bốn đơn, bảy khách gồm hai khách hoàn thành, một khách hủy, hai khách quá hạn và hai khách xác nhận chưa thu. Dòng tổng không gồm đơn hủy là ba đơn, sáu khách.
 - Có tám chỗ, sáu chỗ đã giữ và hai chỗ trống. Tháng sau cùng tour chỉ còn một chỗ.
 
 `test/reports-seed.test.js` so sánh các con số này với API, kiểm tra khóa ngoại, quyền xem báo cáo và thay đổi báo cáo ngay sau ghi thu/hoàn.

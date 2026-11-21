@@ -7,6 +7,7 @@ Website quản lý tour du lịch. [Bản đang chạy trên Cloudflare](https:/
 - `Database/` chứa migration tài khoản, tour, lịch, đơn và chỉ mục báo cáo.
 - Minh chứng [1.1–1.4](docs/checklist-1.1-1.4.md), [2.1](docs/checklist-2.1.md), [2.2](docs/checklist-2.2.md), [2.3](docs/checklist-2.3.md), [2.4](docs/checklist-2.4.md), [3.1](docs/checklist-3.1.md), [3.2](docs/checklist-3.2.md), [3.3](docs/checklist-3.3.md).
 - Trục 4 gồm [UML và CSDL](docs/checklist-4.1.md), [Sequence/State và debugger](docs/checklist-4.2.md), [phân tầng](docs/checklist-4.3.md), [bất biến/LSP](docs/checklist-4.4.md), [SOLID](docs/checklist-4.5.md) và [GoF/OCP](docs/checklist-4.6.md).
+- Trục 5 gồm [Unit và truy vết](docs/checklist-5.1.md), [Integration](docs/checklist-5.2.md) và [tiêm lỗi/hồi quy](docs/checklist-5.3.md).
 
 ## Bản demo
 

@@ -28,11 +28,12 @@ class BookingReport {
   get title() { return 'Tình hình đặt tour'; }
 
   summarize({ bookings }) {
+    const counted = bookings.filter(row => row.state !== 'cancelled');
     return {
       headers: ['Tháng khởi hành', 'Trạng thái', 'Số đơn', 'Số khách'],
       rows: bookings.map(row => [row.month, reportState[row.state], row.orders, row.guests]),
-      total: ['Tổng cộng', 'Mọi trạng thái', sumReportRows(bookings, 'orders'), sumReportRows(bookings, 'guests')],
-      note: 'Số liệu gồm cả đơn hủy và quá hạn. Kỳ lọc tính theo ngày khởi hành.',
+      total: ['Tổng cộng', 'Không gồm đơn hủy', sumReportRows(counted, 'orders'), sumReportRows(counted, 'guests')],
+      note: 'Kỳ lọc tính theo ngày khởi hành. Đơn hủy hiển thị riêng để đối chiếu và không cộng vào tổng.',
     };
   }
 }
