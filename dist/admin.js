@@ -5,6 +5,7 @@ const adminTabs = {
   bookings: 'Xử lý đơn',
   payments: 'Thu tiền / hoàn tiền',
   destinations: 'Điểm đến',
+  reports: 'Báo cáo',
 };
 
 function admin() {
@@ -21,9 +22,11 @@ function admin() {
 function showAdminTab(tab) {
   adminTab = tab;
   $('#app').innerHTML = admin();
+  if (tab === 'reports') loadReport();
 }
 
 function adminContent() {
+  if (adminTab === 'reports') return reportPanel();
   if (adminTab === 'tours') return tourManagement();
   if (adminTab === 'departures') return departureManagement();
   if (adminTab === 'bookings') return bookingManagement(false);
@@ -88,7 +91,7 @@ function editTour(id) {
   modal(`<h2>${t ? 'Sửa tour' : 'Thêm tour'}</h2>
     <form class="form" onsubmit="submitTour(event,'${t?.id || ''}')">
       <label>Tên tour<input name="title" required maxlength="120" value="${esc(t?.title)}"></label>
-      <label>Tỉnh thành<select name="province">${PROVINCES.map(p =>
+      <label>Tỉnh thành<select name="province" onchange="renderItinerary(this.form.elements.days.value)">${PROVINCES.map(p =>
         `<option ${t?.province === p.name ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
       <label>Giá mỗi khách<input name="price" type="number" min="1" max="1000000000" value="${t?.price || 2000000}" required></label>
       <label>Số ngày<input name="days" type="number" min="1" max="30" value="${t?.days || 3}" oninput="renderItinerary(this.value)" required></label>
@@ -100,17 +103,25 @@ function editTour(id) {
       <label>Điểm đón<input name="pickup" value="${esc(t?.pickup)}"></label>
       <label>Bao gồm<textarea name="includes">${esc(t?.includes)}</textarea></label>
       <label>Không bao gồm<textarea name="excludes">${esc(t?.excludes)}</textarea></label>
-      <fieldset><legend>Lịch trình từng ngày</legend><div id="itinerary-editor"></div></fieldset>
+      <fieldset><legend>Lịch trình từng ngày</legend><p id="stop-count" aria-live="polite"></p><div id="itinerary-editor"></div></fieldset>
       <button type="submit">Lưu tour</button>
     </form>`);
-  renderItinerary(t?.days || 3, t?.itinerary);
+  renderItinerary(t?.days || 3, t?.itinerary, t?.stops);
 }
 
-function renderItinerary(count, saved) {
+function renderItinerary(count, saved, savedStops) {
   const values = saved || Array.from(document.querySelectorAll('[data-day]'), field => field.value);
-  $('#itinerary-editor').innerHTML = Array.from({ length: Math.min(30, Math.max(0, Number(count))) },
-    (_, i) => `<label>Ngày ${i + 1}<textarea data-day required maxlength="2000">${esc(values[i] ??
-      'Tham quan, nghỉ ngơi và trải nghiệm địa phương.')}</textarea></label>`).join('');
+  const stops = savedStops || Array.from(document.querySelectorAll('[data-stop]'), field => field.value);
+  const names = province($('#modal form').elements.province.value).attractions;
+  const length = Math.min(30, Math.max(0, Number(count)));
+  $('#stop-count').textContent = 'Lịch trình gồm ' + length + ' ngày.';
+  $('#itinerary-editor').innerHTML = Array.from({ length }, (_, i) => {
+    const options = [...new Set([...names, ...(savedStops && stops[i] ? [stops[i]] : [])])];
+    return `<div class="itinerary-row"><label>Điểm ghé ngày ${i + 1}<select data-stop required>${options.map(place =>
+      `<option ${place === stops[i] ? 'selected' : ''}>${esc(place)}</option>`).join('')}</select></label>
+      <label>Hoạt động ngày ${i + 1}<textarea data-day required maxlength="2000">${esc(values[i] ??
+        'Tham quan, nghỉ ngơi và trải nghiệm địa phương.')}</textarea></label></div>`;
+  }).join('');
 }
 
 async function submitTour(event, id) {
@@ -138,6 +149,7 @@ async function submitTour(event, id) {
     fields.days = Number(fields.days);
     fields.place = existing?.province === fields.province ? existing.place : province(fields.province).attractions[0];
     fields.itinerary = Array.from(form.querySelectorAll('[data-day]'), field => field.value);
+    fields.stops = Array.from(form.querySelectorAll('[data-stop]'), field => field.value);
     await operationsApi(id ? 'tours/' + id : 'tours', { ...fields, cover });
     $('#modal').close();
     await reloadAdmin('Đã lưu tour.');
@@ -244,15 +256,31 @@ function bookingManagement(payments) {
     <tbody>${rows}</tbody></table></div>` : '<p class="empty">Chưa có đơn để xử lý.</p>'}`;
 }
 
-function editBooking(id, payments) {
+async function editBooking(id, payments) {
   const b = bookings.find(order => order.id === id);
   if (!b) return;
+  let history;
+  try {
+    const result = await operationsApi('bookings/' + b.id + '/payments');
+    history = result.payments;
+  } catch (error) {
+    toast(error.message);
+    return;
+  }
+  if (!location.hash.startsWith('#admin')) return;
+  const net = history.reduce((total, row) => total + (row.kind === 'collect' ? row.amount : -row.amount), 0);
   const actions = payments ? [[b.paid ? 'refund' : 'collect', b.paid ? 'Ghi nhận hoàn tiền' : 'Ghi nhận đã thu']]
     : [...(b.status === 'pending' ? [['confirm', 'Xác nhận đơn']] : []),
        ...(b.status !== 'cancelled' && !b.paid ? [['cancel', 'Hủy và trả chỗ']] : [])];
   modal(`<h2>${payments ? 'Phiếu thanh toán' : 'Phiếu xử lý đơn'}</h2>
     <p>${esc(b.id)} · ${esc(b.title)}</p><p>${esc(b.name)} · ${date(b.date)} · ${b.people} khách</p>
     <p>${statusName[b.status]} · <strong>${money(b.total)}</strong></p>
+    <p>${b.adults} người lớn · ${b.children} trẻ em · ${money(b.unitPrice)}/khách</p>
+    <h3>Lịch sử thu và hoàn</h3>
+    ${history.length ? `<table><thead><tr><th>Ngày ghi nhận</th><th>Thao tác</th><th>Số tiền</th></tr></thead>
+    <tbody>${history.map(row => `<tr><td>${date(row.date)}</td><td>${row.kind === 'collect' ? 'Thu tiền' : 'Hoàn tiền'}</td>
+      <td class="report-number">${money(row.amount)}</td></tr>`).join('')}</tbody></table>` : '<p>Chưa có giao dịch.</p>'}
+    <p>Đã thu ròng <b>${money(net)}</b> · Còn phải thu <b>${money(b.status === 'cancelled' ? 0 : b.total - net)}</b></p>
     <form class="form" onsubmit="submitBookingAction(event,'${b.id}')">
       ${actions.map(([value, label]) => `<button type="submit" value="${value}">${label}</button>`).join('')}
     </form>`);

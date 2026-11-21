@@ -31,3 +31,23 @@ html{scroll-behavior:smooth}small,.source,.notice,.breadcrumb,label{font-size:14
 .stepper{display:flex;align-items:center;gap:8px}.stepper button{width:40px;min-width:40px;padding:8px}.stepper input{min-width:0;text-align:center}.tour-card[hidden]{display:none!important}#more-tours{display:block;margin:30px auto}.tour-gallery button:focus-visible{outline:3px solid #d9912b}
 
 .source{display:none!important}.tour-type{display:inline-block;background:#e5ebdf;color:#214c3c;border-radius:20px;padding:4px 10px;font-size:13px;margin-top:12px}.date-entry,.destination-row{display:flex;align-items:center;gap:12px;margin:12px 0}.destination-row span{flex:1}fieldset{border:1px solid #cbd2c6;padding:18px;border-radius:8px}fieldset label{margin:12px 0}tr[hidden]{display:none}footer{flex-wrap:wrap}
+.report-number { text-align: right; font-variant-numeric: tabular-nums; }
+#report-output tfoot { font-weight: 700; }
+.report-chart { margin: 1.5rem 0; max-width: 650px; }
+.report-chart figcaption { font-weight: 700; }
+.chart-month { display: grid; grid-template-columns: 6rem minmax(0,1fr); gap: .5rem; margin-bottom: .65rem; }
+.chart-bar, .chart-key { background: #347156; color: white; print-color-adjust: exact; }
+.chart-bar { height: .55rem; }
+.chart-key { padding: .15em .5em; }
+.chart-bar.refunded, .chart-key.refunded { background: #9c4d27; }
+.itinerary-row { display: grid; gap: .5rem; border-bottom: 1px solid #ddd; margin-bottom: 1rem; padding-bottom: 1rem; }
+@media print {
+  @page { margin: 13mm 12mm; }
+  body:has(#report-output) { background: white; }
+  body:has(#report-output) :is(header,footer,.admin-nav,.section-head,.eyebrow,#report-filters,#admin-content > .toolbar,#admin-content > h2,#toast) { display: none !important; }
+  body:has(#report-output) :is(.wrap,.admin-shell,.table-scroll) { display: block; max-width: none; margin: 0; padding: 0; overflow: visible; }
+  #report-output table { width: 100%; font-size: 10pt; }
+  #report-output thead { display: table-header-group; }
+  #report-output tr { break-inside: avoid; }
+  .chart-bar { -webkit-print-color-adjust: exact; }
+}

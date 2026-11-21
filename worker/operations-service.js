@@ -69,6 +69,10 @@ class TourOperations {
         throw new OperationError(400, 'Lịch trình phải có đủ nội dung mỗi ngày.');
       }
       tour.itinerary = input.itinerary.map(day => requiredText(day, 2000, 'Nội dung lịch trình'));
+      if (input.stops !== undefined && (!Array.isArray(input.stops) || input.stops.length !== days)) {
+        throw new OperationError(400, 'Chọn điểm ghé cho từng ngày.');
+      }
+      tour.stops = input.stops?.map(place => requiredText(place, 120, 'Điểm ghé')) ?? tour.itinerary.map(() => tour.place);
     }
     if (input.cover) {
       if (typeof input.cover !== 'string' || input.cover.length > 1_398_134
