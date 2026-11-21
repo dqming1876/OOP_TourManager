@@ -1,3 +1,7 @@
+import { Booking } from '../domain/booking.js';
+import { Departure } from '../domain/departure.js';
+import { PaymentEvent } from '../domain/payment-event.js';
+
 export class OperationsRepository {
   constructor(db) {
     this.db = db;
@@ -26,9 +30,10 @@ export class OperationsRepository {
       ...JSON.parse(content), id, price, hidden: Boolean(hidden),
       itinerary: (itineraries.get(id) || []).map(({ activity }) => activity),
       stops: (itineraries.get(id) || []).map(({ place }) => place),
-      departures: (schedules.get(id) || []).map(row => ({
-        day: row.day, capacity: row.capacity, remaining: row.capacity - row.reserved,
-      })),
+      departures: (schedules.get(id) || []).map(row => {
+        const departure = new Departure(id, row.day, row.capacity, row.reserved);
+        return { day: departure.day, capacity: departure.capacity, remaining: departure.remaining };
+      }),
     }));
   }
 
@@ -37,29 +42,32 @@ export class OperationsRepository {
       ? this.prepare('SELECT * FROM bookings ORDER BY created_at DESC, rowid DESC')
       : this.prepare('SELECT * FROM bookings WHERE user_id = ? ORDER BY created_at DESC, rowid DESC', userId);
     const { results } = await query.all();
-    return results.map(row => ({
-      id: row.id, userId: row.user_id, tourId: row.tour_id, date: row.day,
-      title: row.title, name: row.name, phone: row.phone, adults: row.adults, children: row.children,
-      people: row.adults + row.children, unitPrice: row.unit_price,
-      total: (row.adults + row.children) * row.unit_price, status: row.status, paid: Boolean(row.paid),
-    }));
+    return results.map(row => {
+      const booking = new Booking({
+        id: row.id, userId: row.user_id, tourId: row.tour_id, day: row.day,
+        title: row.title, name: row.name, phone: row.phone, adults: row.adults, children: row.children,
+        unitPrice: row.unit_price, status: row.status, paid: Boolean(row.paid),
+      });
+      const { day: date, ...fields } = booking;
+      return { ...fields, date, people: booking.people, total: booking.total };
+    });
   }
 
-  async saveTour(id, tour, create) {
-    const { price, itinerary, stops, ...content } = tour;
+  async saveTour(tour, create) {
+    const { id, details: { price, ...content }, stops } = tour;
     if (!create && !await this.prepare('SELECT id FROM tours WHERE id = ?', id).first()) return false;
     const writeTour = create
       ? this.prepare('INSERT INTO tours (price, content, id) VALUES (?, ?, ?)', price, JSON.stringify(content), id)
       : this.prepare('UPDATE tours SET price = ?, content = ? WHERE id = ?', price, JSON.stringify(content), id);
-    if (!itinerary) return (await writeTour.run()).meta.changes === 1;
-    const details = JSON.stringify(itinerary.map((activity, index) => ({ place: stops[index], activity })));
+    if (!stops) return (await writeTour.run()).meta.changes === 1;
+    const details = JSON.stringify(stops.map(stop => stop.toWriteRow()));
     const destinations = this.prepare(`
       INSERT OR IGNORE INTO destinations (province,name)
       SELECT ?, json_extract(value,'$.place') FROM json_each(?)
     `, content.province, details);
     const rows = this.prepare(`
       INSERT INTO tour_stops (tour_id,day_number,destination_id,activity)
-      SELECT ?,CAST(j.key AS INTEGER)+1,d.id,json_extract(j.value,'$.activity')
+      SELECT ?,json_extract(j.value,'$.dayNumber'),d.id,json_extract(j.value,'$.activity')
       FROM json_each(?) j JOIN destinations d ON d.province = ? AND d.name = json_extract(j.value,'$.place')
     `, id, details, content.province);
     await this.db.batch([writeTour, destinations, this.prepare('DELETE FROM tour_stops WHERE tour_id = ?', id), rows]);
@@ -70,7 +78,10 @@ export class OperationsRepository {
     const { results } = await this.prepare(`
       SELECT recorded_on AS date, kind, amount FROM payment_events WHERE booking_id = ? ORDER BY id
     `, bookingId).all();
-    return results;
+    return results.map(row => {
+      const entry = new PaymentEvent(row);
+      return { ...entry, signedAmount: entry.signedAmount };
+    });
   }
 
   async setVisibility(id, hidden) {
@@ -78,7 +89,7 @@ export class OperationsRepository {
     return result.meta.changes === 1;
   }
 
-  async createDeparture(tourId, day, capacity) {
+  async createDeparture({ tourId, day, capacity }) {
     const result = await this.prepare(`
       INSERT INTO departures (tour_id, day, capacity)
       SELECT id, ?, ? FROM tours WHERE id = ?
@@ -87,7 +98,7 @@ export class OperationsRepository {
     return result.meta.changes === 1;
   }
 
-  async changeDepartureCapacity(tourId, day, capacity) {
+  async changeDepartureCapacity({ tourId, day, capacity }) {
     const result = await this.prepare(`
       UPDATE departures SET capacity = ?
       WHERE tour_id = ? AND day = ? AND reserved <= ?
@@ -103,29 +114,28 @@ export class OperationsRepository {
     return result.meta.changes === 1;
   }
 
-  async placeBooking(id, userId, booking, today) {
-    const { tourId, day, name, phone, adults, children } = booking;
+  async placeBooking(booking, today) {
+    const { id, userId, tourId, day, name, phone, adults, children, people } = booking;
     const result = await this.prepare(`
       INSERT INTO bookings (id,user_id,tour_id,day,title,name,phone,adults,children,unit_price)
       SELECT ?,?,t.id,d.day,json_extract(t.content,'$.title'),?,?,?,?,t.price
       FROM departures d JOIN tours t ON t.id = d.tour_id
       WHERE t.id = ? AND d.day = ? AND d.day >= ? AND t.hidden = 0
         AND d.capacity - d.reserved >= ?
-    `, id, userId, name, phone, adults, children, tourId, day, today, adults + children).run();
+    `, id, userId, name, phone, adults, children, tourId, day, today, people).run();
     return result.meta.changes > 0;
   }
 
-  async updateBooking(id, action, ownerId) {
-    const statements = {
-      confirm: "UPDATE bookings SET status = 'confirmed' WHERE id = ? AND status = 'pending'",
-      collect: "UPDATE bookings SET paid = 1 WHERE id = ? AND status = 'confirmed' AND paid = 0",
-      refund: "UPDATE bookings SET paid = 0 WHERE id = ? AND status = 'confirmed' AND paid = 1",
-      cancel: "UPDATE bookings SET status = 'cancelled' WHERE id = ? AND status <> 'cancelled' AND paid = 0",
-      customerCancel: "UPDATE bookings SET status = 'cancelled' WHERE id = ? AND user_id = ? AND status = 'pending' AND paid = 0",
-    };
-    const query = ownerId === null
-      ? this.prepare(statements[action], id)
-      : this.prepare(statements.customerCancel, id, ownerId);
-    return (await query.run()).meta.changes > 0;
+  async updateBooking(id, rule, ownerId, today) {
+    // Recheck the transition against the current row in the same statement that
+    // invokes the seat and payment triggers. No read-then-write window.
+    const result = await this.prepare(`
+      UPDATE bookings SET status = ?, paid = ?
+      WHERE id = ? AND status IN (?, ?) AND paid = ?
+        AND (? IS NULL OR user_id = ?)
+        AND (? = 0 OR day >= ?)
+    `, rule.to, Number(rule.nextPaid), id, rule.from, rule.alsoFrom ?? rule.from, Number(rule.paid),
+    ownerId, ownerId, Number(Boolean(rule.checkDay)), today).run();
+    return result.meta.changes === 1;
   }
 }

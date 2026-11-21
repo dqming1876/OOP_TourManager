@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pbkdf2Sync } from 'node:crypto';
 import { makeWorker } from './local-worker.js';
+import { AdministratorAccount, CustomerAccount } from '../worker/domain/account.js';
+import { OperationsRepository } from '../worker/database/operations-repository.js';
+import { TourOperations } from '../worker/service/operations-service.js';
 
 const origin = 'http://localhost:4173';
 const future = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
@@ -232,4 +235,59 @@ test('Rollback phiếu thu nếu lỗi khi ghi sổ thanh toán', async t => {
   assert.equal(result.status, 500);
   assert.equal(db.prepare('SELECT paid FROM bookings WHERE id = ?').get(order.data.id).paid, 0);
   assert.deepEqual((await request(path + '/payments', undefined, admin)).data.payments, []);
+});
+
+test('Trục 3: Service chặn sai vai trò trước khi đọc hoặc ghi vào repository', async () => {
+  const denied = error => error.status === 403;
+  const guest = new CustomerAccount({ id: 'customer-a', name: 'A', username: 'customer_a' });
+  const today = '2026-11-21';
+  const asGuest = new TourOperations(null, guest, today);
+  const asAdmin = new TourOperations(null, new AdministratorAccount('admin'), today);
+  await assert.rejects(() => asGuest.saveTour(null, tour), denied);
+  await assert.rejects(() => asGuest.saveDeparture('tour', { day: future, capacity: 3 }), denied);
+  await assert.rejects(() => asGuest.updateBooking('order', 'confirm'), denied);
+  assert.throws(() => asGuest.paymentHistory('order'), denied);
+  await assert.rejects(() => asAdmin.placeBooking(details('tour')), denied);
+  const anonymous = new TourOperations(null, null, today);
+  assert.throws(() => anonymous.bookings(), { status: 401 });
+});
+
+test('Trục 3: Phiếu quá hạn bị từ chối xác nhận tại Service và HTTP', async t => {
+  const { request, db, env, admin, a, tourId } = await fixture(t);
+  const created = await request('ops/bookings', details(tourId), a);
+  assert.equal(created.status, 201);
+  const order = created.data.id;
+  const adminService = new TourOperations(new OperationsRepository(env.DB),
+    new AdministratorAccount('demo_admin'), '9999-12-31');
+  await assert.rejects(() => adminService.updateBooking(order, 'confirm'), { status: 409 });
+  assert.equal(db.prepare('SELECT status FROM bookings WHERE id = ?').get(order).status, 'pending');
+
+  const past = '2000-01-01';
+  const ownerId = db.prepare('SELECT user_id FROM bookings WHERE id = ?').get(order).user_id;
+  db.prepare('INSERT INTO departures (tour_id, day, capacity) VALUES (?, ?, 3)').run(tourId, past);
+  db.prepare(`
+    INSERT INTO bookings (id, user_id, tour_id, day, title, name, phone, adults, children, unit_price)
+    VALUES ('past-fixture', ?, ?, ?, 'Tour', 'Người đặt thử', '0900000000', 1, 0, 1200000)
+  `).run(ownerId, tourId, past);
+  assert.equal((await request('ops/bookings/past-fixture/confirm', {}, admin)).status, 409);
+  assert.equal(db.prepare('SELECT reserved FROM departures WHERE tour_id = ? AND day = ?').get(tourId, past).reserved, 1);
+  assert.equal((await request('ops/bookings/past-fixture/cancel', {}, admin)).status, 200);
+  assert.equal(db.prepare('SELECT reserved FROM departures WHERE tour_id = ? AND day = ?').get(tourId, past).reserved, 0);
+});
+
+test('Trục 3: Điểm đến dùng lại giữa nhiều tour, thuộc tính ngày và hoạt động theo từng liên kết', async t => {
+  const { request, db, admin, tourId } = await fixture(t);
+  const second = await request('ops/tours', {
+    ...tour, title: 'Tour thứ hai', itinerary: ['Tham quan bảo tàng', 'Đi bộ ven hồ'],
+    stops: ['Bảo tàng Hà Nội', tour.place],
+  }, admin);
+  assert.equal(second.status, 201);
+  const points = db.prepare(`
+    SELECT s.tour_id, s.day_number, s.activity, s.destination_id
+    FROM tour_stops s JOIN destinations d ON s.destination_id = d.id
+    WHERE s.tour_id IN (?, ?) AND d.name = ? ORDER BY s.day_number, s.tour_id
+  `).all(tourId, second.data.id, tour.place);
+  assert.equal(points.length, 3);
+  assert.equal(new Set(points.map(row => row.destination_id)).size, 1);
+  assert.equal(points.find(row => row.tour_id === second.data.id && row.day_number === 2).activity, 'Đi bộ ven hồ');
 });

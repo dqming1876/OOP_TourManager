@@ -292,9 +292,10 @@ async function refreshSchedule(id) {
 }
 
 function bookingManagement(payments) {
-  const statusFor = b => payments ? (b.paid ? 'Đã thu tiền' : 'Chưa thu tiền') : statusName[b.status];
+  const today = todayInVietnam();
+  const statusFor = b => payments ? (b.paid ? 'Đã thu tiền' : 'Chưa thu tiền') : bookingStatusLabel(b, today);
   const items = payments ? bookings.filter(b => b.status === 'confirmed') : bookings;
-  const options = payments ? ['Đã thu tiền', 'Chưa thu tiền'] : Object.values(statusName);
+  const options = payments ? ['Đã thu tiền', 'Chưa thu tiền'] : [...Object.values(statusName), 'Quá hạn xác nhận'];
   const rows = items.map(b => `<tr data-status="${statusFor(b)}">
     <td>${esc(b.id)}<br>${esc(b.name)}<br><small>${esc(b.phone)}</small></td>
     <td>${esc(b.title)}<br><small>${date(b.date)} · ${b.people} khách</small></td>
@@ -318,19 +319,23 @@ async function editBooking(id, payments) {
     return;
   }
   if (!location.hash.startsWith('#admin')) return;
-  const net = history.reduce((total, row) => total + (row.kind === 'collect' ? row.amount : -row.amount), 0);
+  // Older Worker versions did not include signedAmount in the payment payload.
+  const net = history.reduce((total, row) => total + (row.signedAmount ?? (row.kind === 'collect' ? row.amount : -row.amount)), 0);
+  const today = todayInVietnam();
+  const expired = b.status === 'pending' && b.date < today;
   const actions = payments ? [[b.paid ? 'refund' : 'collect', b.paid ? 'Ghi nhận hoàn tiền' : 'Ghi nhận đã thu']]
-    : [...(b.status === 'pending' ? [['confirm', 'Xác nhận đơn']] : []),
+    : [...(b.status === 'pending' && !expired ? [['confirm', 'Xác nhận đơn']] : []),
        ...(b.status !== 'cancelled' && !b.paid ? [['cancel', 'Hủy và trả chỗ']] : [])];
   modal(`<h2>${payments ? 'Phiếu thanh toán' : 'Phiếu xử lý đơn'}</h2>
     <p>${esc(b.id)} · ${esc(b.title)}</p><p>${esc(b.name)} · ${date(b.date)} · ${b.people} khách</p>
-    <p>${statusName[b.status]} · <strong>${money(b.total)}</strong></p>
+    <p>${bookingStatusLabel(b, today)} · <strong>${money(b.total)}</strong></p>
     <p>${b.adults} người lớn · ${b.children} trẻ em · ${money(b.unitPrice)}/khách</p>
     <h3>Lịch sử thu và hoàn</h3>
     ${history.length ? `<table><thead><tr><th>Ngày ghi nhận</th><th>Thao tác</th><th>Số tiền</th></tr></thead>
     <tbody>${history.map(row => `<tr><td>${date(row.date)}</td><td>${row.kind === 'collect' ? 'Thu tiền' : 'Hoàn tiền'}</td>
       <td class="report-number">${money(row.amount)}</td></tr>`).join('')}</tbody></table>` : '<p>Chưa có giao dịch.</p>'}
     <p>Đã thu ròng <b>${money(net)}</b> · Còn phải thu <b>${money(b.status === 'cancelled' ? 0 : b.total - net)}</b></p>
+    ${expired ? '<p class="notice">Đợt đã qua ngày khởi hành. Có thể hủy phiếu và trả chỗ.</p>' : ''}
     <form id="${payments ? 'frm005_nv_thanh_toan' : 'frm004_nv_xu_ly_don'}" class="form operation-form" onsubmit="submitBookingAction(event,'${b.id}')">
       ${actions.map(([value, label]) => `<button type="submit" value="${value}">${label}</button>`).join('')}
       <p class="submission-error" role="alert"></p>

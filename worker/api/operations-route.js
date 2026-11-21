@@ -1,6 +1,7 @@
 import { ReportsRepository } from '../database/reports-repository.js';
 import { ReportsService } from '../service/reports-service.js';
 import { OperationsRepository } from '../database/operations-repository.js';
+import { AccountRole } from '../domain/account.js';
 import { AppError } from '../domain/errors.js';
 import { currentAccount } from '../service/accounts-service.js';
 import { TourOperations } from '../service/operations-service.js';
@@ -23,12 +24,11 @@ export async function operationsRoute(request, env, url) {
     throw new AppError(404, 'Không tìm thấy chức năng.');
   }
   if (request.method === 'GET' && resource === 'bookings' && id && action === 'payments') {
-    service.requireRole('admin');
-    return json({ payments: await repository.paymentHistory(id) });
+    return json({ payments: await service.paymentHistory(id) });
   }
   requirePost(request);
-  const customerAction = resource === 'bookings' && (!id || (action === 'cancel' && actor?.role === 'customer'));
-  service.requireRole(customerAction ? 'customer' : 'admin');
+  const customerAction = resource === 'bookings' && (!id || (action === 'cancel' && actor?.role === AccountRole.CUSTOMER));
+  service.requireRole(customerAction ? AccountRole.CUSTOMER : AccountRole.ADMIN);
   const body = await readObject(request, 3_000_000);
   if (resource === 'tours' && !action) return json(await service.saveTour(id, body), id ? 200 : 201);
   if (resource === 'tours' && id && action === 'visibility') await service.setVisibility(id, body.hidden);

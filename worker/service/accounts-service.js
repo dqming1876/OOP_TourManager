@@ -1,18 +1,10 @@
 import { AccountsRepository } from '../database/accounts-repository.js';
 import { AccessError, AppError, ConflictError, ValidationError } from '../domain/errors.js';
-import { validCalendarDay } from '../domain/validation.js';
+import { AccountRole, AdministratorAccount, CustomerAccount } from '../domain/account.js';
 import { equal, passwordHash } from './passwords.js';
 import { adminCookie, authenticated, customerCookie, sessionIdentity } from './session.js';
 
 const loginAttempts = new Map();
-
-function adminAccount(env) {
-  return { id: 'admin', name: 'Quản trị viên', username: env.ADMIN_USERNAME, role: 'admin' };
-}
-
-function publicAccount({ id, name, username, email, phone, address, birthday }) {
-  return { id, name, username, role: 'customer', email, phone, address, birthday };
-}
 
 function accounts(env) {
   if (!env.DB) throw new AppError(503, 'Hệ thống tài khoản chưa sẵn sàng.');
@@ -20,10 +12,10 @@ function accounts(env) {
 }
 
 export async function currentAccount(request, env) {
-  if (await authenticated(request, env)) return adminAccount(env);
+  if (await authenticated(request, env)) return new AdministratorAccount(env.ADMIN_USERNAME);
   const id = await sessionIdentity(request, env.ADMIN_SESSION_SECRET, customerCookie);
   const row = id && env.DB ? await accounts(env).findPublicById(id) : null;
-  return row ? publicAccount(row) : null;
+  return row ? new CustomerAccount(row) : null;
 }
 
 function credentials(body) {
@@ -61,14 +53,14 @@ export async function loginAccount(request, env, body, adminOnly = false) {
     const hash = await passwordHash(password, env.ADMIN_PASSWORD_SALT);
     if (equal(hash, env.ADMIN_PASSWORD_HASH)) {
       loginAttempts.delete(key);
-      return { user: adminAccount(env), cookie: adminCookie };
+      return { user: new AdministratorAccount(env.ADMIN_USERNAME).toPublic(), cookie: adminCookie };
     }
   } else if (!adminOnly) {
     const row = await accounts(env).findByUsername(username);
     const hash = await passwordHash(password, row?.salt || 'dummy-login-salt');
     if (row && equal(hash, row.password_hash)) {
       loginAttempts.delete(key);
-      return { user: publicAccount(row), cookie: customerCookie };
+      return { user: new CustomerAccount(row).toPublic(), cookie: customerCookie };
     }
   }
   throw new AccessError(401, 'Tài khoản hoặc mật khẩu không đúng.');
@@ -93,31 +85,10 @@ export async function registerAccount(request, env, body) {
   loginAttempts.delete(key);
 }
 
-const profileFields = {
-  name: ['Họ tên', 80], email: ['Email', 120], phone: ['Số điện thoại', 20],
-  address: ['Địa chỉ', 250], birthday: ['Ngày sinh', 10],
-};
-
-function validatedProfile(body) {
-  const invalid = field => new ValidationError(profileFields[field][0] + ' không hợp lệ.', field);
-  const profile = {};
-  for (const [field, [, limit]] of Object.entries(profileFields)) {
-    const value = body[field] ?? '';
-    if (typeof value !== 'string' || value.trim().length > limit) throw invalid(field);
-    profile[field] = value.trim();
-  }
-  const { name, email, phone, birthday } = profile;
-  if (!name) throw invalid('name');
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw invalid('email');
-  if (phone && (!/^[0-9+ ()-]+$/.test(phone) || phone.replace(/\D/g, '').length < 8)) throw invalid('phone');
-  if (birthday && !validCalendarDay(birthday)) throw invalid('birthday');
-  return profile;
-}
-
 export async function saveCustomerProfile(request, env, body) {
   const user = await currentAccount(request, env);
-  if (user?.role !== 'customer') throw new AccessError(401, 'Vui lòng đăng nhập tài khoản khách hàng.');
-  const profile = validatedProfile(body);
+  if (user?.role !== AccountRole.CUSTOMER) throw new AccessError(401, 'Vui lòng đăng nhập tài khoản khách hàng.');
+  const profile = user.validateUpdate(body);
   await accounts(env).updateProfile(user.id, profile);
-  return { ...user, ...profile };
+  return { ...user.toPublic(), ...profile };
 }

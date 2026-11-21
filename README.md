@@ -5,7 +5,7 @@ Website quản lý tour du lịch. [Bản đang chạy trên Cloudflare](https:/
 - `dist/` chứa giao diện và tài nguyên khách tải về. `dist/Resource/` chứa dữ liệu địa danh dùng chung.
 - `worker/api/` xử lý HTTP, `worker/service/` thực hiện nghiệp vụ, `worker/domain/` chứa quy tắc và kiểu lỗi, `worker/database/` truy cập D1.
 - `Database/` chứa migration tài khoản, tour, lịch, đơn và chỉ mục báo cáo.
-- Minh chứng [1.1–1.4](docs/checklist-1.1-1.4.md), [2.1](docs/checklist-2.1.md), [2.2](docs/checklist-2.2.md), [2.3](docs/checklist-2.3.md) và [2.4](docs/checklist-2.4.md).
+- Minh chứng [1.1–1.4](docs/checklist-1.1-1.4.md), [2.1](docs/checklist-2.1.md), [2.2](docs/checklist-2.2.md), [2.3](docs/checklist-2.3.md), [2.4](docs/checklist-2.4.md), [3.1](docs/checklist-3.1.md), [3.2](docs/checklist-3.2.md) và [3.3](docs/checklist-3.3.md).
 
 ## Bản demo
 

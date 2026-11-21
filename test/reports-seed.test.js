@@ -73,4 +73,5 @@ test('Phiếu thu và hoàn xuất hiện ngay trên báo cáo và chi tiết đ
   assert.deepEqual(await report(), [{ month: today.slice(0,7), collected: 2400000, refunded: 2400000 }]);
   const history = await (await request('ops/bookings/'+id+'/payments', null, cookie)).json();
   assert.deepEqual(history.payments.map(p => [p.kind,p.amount]), [['collect',2400000],['refund',2400000]]);
+  assert.deepEqual(history.payments.map(p => p.signedAmount), [2400000, -2400000]);
 });

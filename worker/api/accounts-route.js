@@ -5,7 +5,10 @@ import { json, readObject, requirePost, withCookies } from './http.js';
 
 export async function accountsRoute(request, env, path) {
   if (request.method === 'GET') {
-    if (path === '/api/auth/me') return json({ user: await currentAccount(request, env) });
+    if (path === '/api/auth/me') {
+      const user = await currentAccount(request, env);
+      return json({ user: user?.toPublic() ?? null });
+    }
     if (path === '/api/admin/session') return json({ authenticated: await authenticated(request, env) });
   }
   const login = path === '/api/auth/login' || path === '/api/admin/login';
