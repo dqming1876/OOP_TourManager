@@ -11,7 +11,7 @@ Website quản lý tour du lịch. [Bản đang chạy trên Cloudflare](https:/
 
 ## Bản demo
 
-Chạy `npm run demo` với Node.js 24 rồi mở địa chỉ in trong Terminal. Demo tự tạo dữ liệu trên SQLite trong bộ nhớ và in thông tin hai tài khoản thử. Mở **Quản trị → Báo cáo** để đối chiếu dữ liệu trong [minh chứng 1.1–1.4](docs/checklist-1.1-1.4.md).
+Chạy `npm run demo` với Node.js 24 rồi mở địa chỉ in trong Terminal. Demo tự tạo **126 đơn đặt tour** trên SQLite trong bộ nhớ và in thông tin hai tài khoản thử. Đăng nhập quản trị rồi vào **Xử lý đơn** để xem danh sách hoặc vào **Báo cáo** để đối chiếu dữ liệu trong [minh chứng 1.1–1.4](docs/checklist-1.1-1.4.md).
 
 Đổi cổng bằng `MINGO_DEMO_PORT`. Đóng gói bằng `node scripts/package-demo.mjs mingo-demo.zip` (cần lệnh `zip`).
 

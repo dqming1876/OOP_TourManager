@@ -11,12 +11,33 @@ const tours = [
   { id: 'demo-dalat', title: 'Đà Lạt – Đồi thông và hồ', province: 'Lâm Đồng', price: 2400000,
     stops: ['Hồ Xuân Hương', 'Hồ Tuyền Lâm'], activities: ['Dạo ven hồ, ghé chợ Đà Lạt', 'Đi bộ ven rừng và ngắm Hồ Tuyền Lâm'] },
 ];
+const originalOrders = (singleGuestOutcome) => [
+  [2, 0, 'paid'],
+  [2, 0, 'pending'],
+  [1, 0, singleGuestOutcome],
+  [2, 0, 'confirmed'],
+];
+const historicalOrders = originalOrders('refunded');
+const nextMonthOrders = originalOrders('paid');
+const extraOrders = [
+  [1, 0, 'pending'],
+  [2, 1, 'paid'],
+  [1, 1, 'confirmed'],
+  [2, 0, 'cancelled'],
+  [3, 1, 'paid'],
+  [1, 0, 'refunded'],
+  [2, 2, 'confirmed'],
+  [1, 2, 'pending'],
+  [4, 0, 'paid'],
+  [2, 1, 'pending'],
+];
 function sql(value) {
   return typeof value === 'number' ? String(value) : "'" + value.replaceAll("'", "''") + "'";
 }
 
 export function demoSql(now = new Date()) {
-  const [year, month] = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now).split('-').map(Number);
+  const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now);
+  const [year, month] = today.split('-').map(Number);
   const scheduleDay = (offset, day) => new Date(Date.UTC(year, month - 1 + offset, day)).toISOString().slice(0, 10);
   const queries = [];
   const insert = (table, columns, values, ignore = false) =>
@@ -39,24 +60,32 @@ export function demoSql(now = new Date()) {
         SELECT ${sql(tour.id)},${index + 1},id,${sql(tour.activities[index])} FROM destinations
         WHERE province = ${sql(tour.province)} AND name = ${sql(place)};`);
     });
-    [-2, -1, 1].forEach((offset, period) => {
-      const day = scheduleDay(offset, 12 + tourIndex);
-      const eventDay = scheduleDay(offset, 5 + tourIndex);
-      insert('departures', 'tour_id,day,capacity', [tour.id, day, 8]);
-      [2, 2, 1, 2].forEach((guests, index) => {
+    const currentEventDay = scheduleDay(0, 3 + tourIndex);
+    const bookedThisMonth = currentEventDay < today ? currentEventDay : today;
+    const departures = [
+      { day: scheduleDay(-2, 12 + tourIndex), eventDay: scheduleDay(-2, 5 + tourIndex), capacity: 8, orders: historicalOrders },
+      { day: scheduleDay(-1, 12 + tourIndex), eventDay: scheduleDay(-1, 5 + tourIndex), capacity: 8, orders: historicalOrders },
+      { day: scheduleDay(1, 12 + tourIndex), eventDay: scheduleDay(1, 5 + tourIndex), capacity: 8, orders: nextMonthOrders },
+      { day: scheduleDay(-3, 22 + tourIndex), eventDay: scheduleDay(-3, 3 + tourIndex), capacity: 30, orders: extraOrders },
+      { day: scheduleDay(0, 22 + tourIndex), eventDay: bookedThisMonth, capacity: 28, orders: extraOrders },
+      { day: scheduleDay(2, 22 + tourIndex), eventDay: bookedThisMonth, capacity: 24, orders: extraOrders },
+    ];
+    departures.forEach(({ day, eventDay, capacity, orders }, period) => {
+      insert('departures', 'tour_id,day,capacity', [tour.id, day, capacity]);
+      orders.forEach(([adults, children, outcome], index) => {
         const id = 'MGDEMO' + tourIndex + period + index;
         const customer = (tourIndex + period + index) % customers.length;
         insert('bookings','id,user_id,tour_id,day,title,name,phone,adults,children,unit_price,created_at', [
           id, 'demo-c' + customer, tour.id, day, tour.title, customers[customer],
-          '09000000' + String(customer).padStart(2,'0'), guests, 0, tour.price, eventDay + ' 09:00:00',
+          '09000000' + String(customer).padStart(2,'0'), adults, children, tour.price, eventDay + ' 09:00:00',
         ]);
-        if (index === 0 || index === 2) update(id, "status = 'confirmed', paid = 1");
-        if (index === 2 && offset < 0) {
-          update(id, 'paid = 0');
-          update(id, "status = 'cancelled'");
+        if (outcome === 'paid' || outcome === 'refunded') {
+          update(id, "status = 'confirmed', paid = 1");
+          if (outcome === 'refunded') update(id, "paid = 0, status = 'cancelled'");
+          queries.push(`UPDATE payment_events SET recorded_on = ${sql(eventDay)} WHERE booking_id = ${sql(id)};`);
         }
-        if (index === 3) update(id, "status = 'confirmed'");
-        queries.push(`UPDATE payment_events SET recorded_on = ${sql(eventDay)} WHERE booking_id = ${sql(id)};`);
+        if (outcome === 'confirmed') update(id, "status = 'confirmed'");
+        if (outcome === 'cancelled') update(id, "status = 'cancelled'");
       });
     });
   });
