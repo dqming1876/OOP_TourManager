@@ -109,7 +109,7 @@ Hai tài khoản này dùng cho bản demo SQLite cục bộ.
 
 Mục này dùng để thử Python Worker trên D1 cục bộ.
 
-**Yêu cầu:** Python 3.12 trở lên, Node.js 24, npm.
+**Yêu cầu:** Python 3.12 trở lên, Node.js 24, npm và [uv](https://docs.astral.sh/uv/getting-started/installation/). Python Worker dùng [pywrangler](https://developers.cloudflare.com/workers/languages/python/#the-pywrangler-cli-tool) để đóng gói SDK; không chạy trực tiếp `wrangler dev` với `entry.py`.
 
 ### 1. Cài đặt và tạo cơ sở dữ liệu cục bộ
 
@@ -117,6 +117,7 @@ Bash (macOS, Linux, Git Bash, WSL):
 
 ```bash
 npm ci
+uv sync --locked
 cp wrangler.example.jsonc wrangler.local.jsonc
 cp .dev.vars.example .dev.vars
 npx wrangler d1 migrations apply DB --local --config wrangler.local.jsonc
@@ -126,6 +127,7 @@ PowerShell (Windows):
 
 ```powershell
 npm ci
+uv sync --locked
 Copy-Item wrangler.example.jsonc wrangler.local.jsonc
 Copy-Item .dev.vars.example .dev.vars
 npx wrangler d1 migrations apply DB --local --config wrangler.local.jsonc
@@ -165,7 +167,7 @@ Không commit `.dev.vars` và không dùng lại mật khẩu thật của bạn
 ### 3. Chạy
 
 ```bash
-npm run dev -- --config wrangler.local.jsonc
+npm run dev
 ```
 
 ### 4. Đổi cơ sở dữ liệu
@@ -199,12 +201,14 @@ Các lệnh `python3 -m unittest ...` không cần cài Node.js. Các lệnh `np
 
 ## Triển khai lên Cloudflare
 
-1. **Tạo D1** (bỏ qua nếu đã có): `npx wrangler d1 create <tên-database>`, rồi điền `database_id` vào `wrangler.jsonc`. Giữ binding là `DB`.
-2. **Áp dụng migration** cho D1 của môi trường đích: `npx wrangler d1 migrations apply DB --remote`.
-3. **Đặt secrets** bằng `npx wrangler secret put <TÊN>` cho `ADMIN_PASSWORD_SALT`, `ADMIN_PASSWORD_HASH` và `ADMIN_SESSION_SECRET`. Cách tạo giá trị xem [mục tạo thông tin đăng nhập quản trị](#2-tạo-thông-tin-đăng-nhập-quản-trị). Repo hiện không khai báo `ADMIN_USERNAME` trong `vars` của `wrangler.jsonc`. Khi tạo Worker mới theo hướng dẫn này, đặt tên đăng nhập bằng `npx wrangler secret put ADMIN_USERNAME`. Nếu Worker hiện có đã cấu hình tên đăng nhập, giữ nguyên binding đang dùng.
-4. **Kiểm tra gói Worker**: `npx wrangler deploy --dry-run --outdir .wrangler/python-bundle`.
-5. **Triển khai**: `npx wrangler deploy`.
-6. **Kiểm tra**: đăng nhập quản trị trên địa chỉ vừa triển khai.
+Cài dependency bằng `npm ci` và `uv sync --locked`. Nếu triển khai vào tài khoản/Worker mới, sao chép `wrangler.example.jsonc` thành `wrangler.deploy.jsonc` (đã được gitignore), điền tên Worker, account và D1 của bạn. Các lệnh dưới đây luôn chỉ rõ tệp cấu hình đích. **`wrangler.jsonc` trong repo trỏ tới Mingo hiện có**, chỉ sử dụng tệp đó khi chủ đích nâng cấp chính môi trường này.
+
+1. **Tạo D1 riêng** nếu chưa có: `npx wrangler d1 create <tên-database> --config wrangler.deploy.jsonc`; điền ID vào cấu hình, giữ binding `DB`.
+2. **Migration**: `npx wrangler d1 migrations apply DB --remote --config wrangler.deploy.jsonc`. Bản này cần `0006_login_attempts.sql` để lưu giới hạn đăng nhập dùng chung giữa các Worker; migration không sửa dữ liệu khách hàng hay đơn.
+3. **Secrets**: `npx wrangler secret put <TÊN> --config wrangler.deploy.jsonc` cho `ADMIN_USERNAME`, `ADMIN_PASSWORD_SALT`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`. Cách tạo hash xem mục trên. Giữ nguyên secrets khi nâng cấp môi trường hiện có.
+4. **Kiểm tra gói Worker**: `uv run pywrangler deploy --dry-run --outdir .wrangler/python-bundle --config wrangler.deploy.jsonc`.
+5. **Triển khai**: `uv run pywrangler deploy --config wrangler.deploy.jsonc`.
+6. **Kiểm tra runtime**: mở danh mục, đăng nhập, thử đặt/hủy một đơn mẫu trên môi trường thử. Dry-run chỉ xác nhận đóng gói, không chứng minh D1 hoặc đăng nhập hoạt động.
 
 > [!WARNING]
 > **Nâng cấp từ phiên bản cũ.** Phiên bản cũ là backend JavaScript trên Cloudflare Workers, trước [commit chuyển sang Python](https://github.com/dqming1876/OOP_TourManager/commit/888adb87f1ec2f87eb50947960050889b047efec). Khi nâng cấp, tiếp tục dùng ID D1, binding `DB` và cấu hình đăng nhập của cùng môi trường. Bản Python giữ định dạng cookie của backend JavaScript.
@@ -219,9 +223,9 @@ Các lệnh `python3 -m unittest ...` không cần cài Node.js. Các lệnh `np
 | Hạng mục | Vị trí |
 | --- | --- |
 | Gói chạy demo | `python3 -m scripts.package_demo mingo-demo.zip` |
-| Báo cáo | Sẽ bổ sung liên kết |
-| Slide | Sẽ bổ sung liên kết |
-| Video demo (3–5 phút) | Sẽ bổ sung liên kết |
+| Báo cáo | Chưa có tệp trong repository |
+| Slide | Chưa có tệp trong repository |
+| Video demo (3–5 phút) | Chưa có tệp trong repository |
 | Minh chứng theo từng tiêu chí | [Tài liệu & minh chứng](#tài-liệu--minh-chứng) |
 
 ## Tài liệu & minh chứng
@@ -267,3 +271,16 @@ Phiếu đánh giá của học phần gồm **2 trục**: **Trục I** (hoàn t
 
 - **Tác giả** — Đỗ Quang Minh, MSSV 202418948, lớp MI1-01, nhóm 1 người.
 - **Giấy phép** — Repo chưa công bố giấy phép sử dụng mã nguồn. Dự án được thực hiện cho mục đích học tập.
+
+## Quy tắc đặt tour và đăng nhập
+
+- Mỗi lần gửi đơn có `requestId` và `expectedPrice` (giá trên biểu mẫu). Khi mất kết nối rồi gửi lại cùng biểu mẫu, client giữ nguyên mã yêu cầu; server trả lại cùng mã đơn, không giữ chỗ lần nữa. Đổi nội dung tạo yêu cầu mới. Tải lại/đóng trang sẽ kết thúc biểu mẫu; nếu không chắc đơn đã tạo, kiểm tra **Hành trình của tôi** trước khi đặt tiếp.
+- Giá được đối chiếu ngay trong câu INSERT. Nếu giá thay đổi, khách tải lại trang để xem và xác nhận giá mới. Client cũ thiếu các trường này bị từ chối; cần tải lại trang sau nâng cấp.
+- Bộ chọn ngày chỉ hiển thị lịch từ hôm nay theo múi giờ Việt Nam và còn chỗ. Backend vẫn kiểm tra lại ngày, giá và sức chứa khi ghi đơn.
+- Giới hạn 12 lượt đăng nhập/đăng ký trong cửa sổ 5 phút được lưu trong D1 theo mã HMAC của IP, dùng chung giữa các isolate. Đăng nhập thành công xóa cửa sổ hiện tại. Nhiều người dùng chung IP cũng dùng chung hạn mức; đây là lựa chọn đơn giản cho quy mô đồ án.
+
+### Kiểm tra Python Worker với D1 cục bộ
+
+Sau khi áp dụng migration và chạy `npm run dev`, mở terminal khác, đặt `MINGO_SMOKE_ADMIN` bằng tên quản trị cục bộ rồi chạy `python3 -m tests.worker_smoke`. Lệnh hỏi mật khẩu qua đầu vào ẩn, chỉ chấp nhận localhost, tạo tour/khách/đơn giả trong D1 cục bộ và kiểm tra gửi lại đơn, giá cũ, hủy đơn, báo cáo. Có thể đổi địa chỉ qua `MINGO_SMOKE_ORIGIN` (mặc định `http://localhost:8787`).
+
+`pywrangler` đóng gói SDK đã khóa phiên bản; build gọi `scripts.prepare_worker` để chỉ đưa `entry.py` và `backend/` vào `.wrangler/python-src`, tránh đưa môi trường ảo, test và script demo vào Worker.
