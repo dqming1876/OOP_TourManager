@@ -100,7 +100,7 @@ Lệnh này khởi chạy máy chủ và in địa chỉ để mở trong trình
 
 Hai tài khoản này dùng cho bản demo SQLite cục bộ.
 
-Đăng nhập quản trị, rồi vào **Xử lý đơn** để xem danh sách hoặc vào **Báo cáo** để đối chiếu dữ liệu theo [minh chứng 1.1–1.4](docs/checklist-1.1-1.4.md).
+Đăng nhập quản trị, rồi vào **Xử lý đơn** để xem danh sách hoặc vào **Báo cáo** để đối chiếu dữ liệu theo [minh chứng 1.3](docs/checklist-1.3.md).
 
 - Đổi cổng bằng biến môi trường `MINGO_DEMO_PORT`.
 - Đóng gói bản demo: `python3 -m scripts.package_demo mingo-demo.zip`.
@@ -232,10 +232,10 @@ Phiếu đánh giá của học phần gồm **2 trục**: **Trục I** (hoàn t
 | --- | --- | --- |
 | **Trục I — Hoàn thiện sản phẩm** | | |
 | **Nhóm 1 — Khối lượng công việc và hoàn thiện chức năng** | | |
-| 1.1 | Quy mô và hoàn thiện chức năng cốt lõi | [checklist-1.1-1.4](docs/checklist-1.1-1.4.md) |
-| 1.2 | Chức năng nâng cao, Master-Detail, báo cáo đầu ra | [checklist-1.1-1.4](docs/checklist-1.1-1.4.md) |
-| 1.3 | Dữ liệu mẫu (seed) và độ sâu nghiệp vụ | [checklist-1.1-1.4](docs/checklist-1.1-1.4.md) |
-| 1.4 | Đóng gói clean-room, hồ sơ bàn giao, Git | [checklist-1.1-1.4](docs/checklist-1.1-1.4.md) |
+| 1.1 | Quy mô và hoàn thiện chức năng cốt lõi | [checklist-1.1](docs/checklist-1.1.md) |
+| 1.2 | Chức năng nâng cao, Master-Detail, báo cáo đầu ra | [checklist-1.2](docs/checklist-1.2.md) |
+| 1.3 | Dữ liệu mẫu (seed) và độ sâu nghiệp vụ | [checklist-1.3](docs/checklist-1.3.md) |
+| 1.4 | Đóng gói clean-room, hồ sơ bàn giao, Git | [checklist-1.4](docs/checklist-1.4.md) |
 | **Nhóm 2 — Chất lượng sản phẩm, trải nghiệm và độ tin cậy** | | |
 | 2.1 | Giao diện (UI/UX), chuẩn miền, validation 2 lớp | [checklist-2.1](docs/checklist-2.1.md) |
 | 2.2 | Ổn định end-to-end, ngoại lệ, bảo mật, ACID transaction | [checklist-2.2](docs/checklist-2.2.md) |
