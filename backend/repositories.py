@@ -4,6 +4,7 @@ import json
 from collections import defaultdict
 
 from .domain import Booking, Departure, PaymentEvent
+from .pricing import PricingPolicy, StandardPrice
 from .views import booking_view, departure_view, payment_view
 
 
@@ -33,8 +34,9 @@ class AccountsRepository:
 
 
 class BookingRepository:
-    def __init__(self, db):
+    def __init__(self, db, pricing: PricingPolicy | None = None):
         self.db = db
+        self.pricing = StandardPrice() if pricing is None else pricing
 
     async def list_bookings(self, user_id):
         if user_id is None:
@@ -55,14 +57,24 @@ class BookingRepository:
         return [payment_view(PaymentEvent(**row)) for row in rows]
 
     async def place_booking(self, booking, today):
+        tour = await self.db.first("SELECT price FROM tours WHERE id = ?", booking.tour_id)
+        if tour is None:
+            return False
+
+        list_price = tour["price"]
+        unit_price = self.pricing.unit_price(list_price)
+        if type(unit_price) is not int or unit_price < 1:
+            raise ValueError("Giá chốt phải là số nguyên dương.")
+
+        # Compare with the price used for this quote in the same write as the seat check.
         return await self.db.execute("""
             INSERT INTO bookings (id,user_id,tour_id,day,title,name,phone,adults,children,unit_price)
-            SELECT ?,?,t.id,d.day,json_extract(t.content,'$.title'),?,?,?,?,t.price
+            SELECT ?,?,t.id,d.day,json_extract(t.content,'$.title'),?,?,?,?,?
             FROM departures d JOIN tours t ON t.id = d.tour_id
             WHERE t.id = ? AND d.day = ? AND d.day >= ? AND t.hidden = 0
-              AND d.capacity - d.reserved >= ?
+              AND d.capacity - d.reserved >= ? AND t.price = ?
         """, booking.id, booking.user_id, booking.name, booking.phone, booking.adults,
-            booking.children, booking.tour_id, booking.day, today, booking.people) > 0
+            booking.children, unit_price, booking.tour_id, booking.day, today, booking.people, list_price) > 0
 
     async def update_booking(self, booking_id, rule, owner_id, today):
         return await self.db.execute("""
