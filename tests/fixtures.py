@@ -1,4 +1,5 @@
 import json
+from datetime import date, timedelta
 
 from backend.app import Request
 from backend.auth import ADMIN_COOKIE, CUSTOMER_COOKIE, create_session
@@ -27,14 +28,15 @@ GUEST = AccessPolicy(CustomerAccount(dict(
 OTHER = AccessPolicy(CustomerAccount({**GUEST.actor.public(), "id": OTHER_ID, "username": "other_user"}))
 
 
-def last_seats():
+def last_seats(*, day_offset=7):
+    departure_day = (date.fromisoformat(TODAY) + timedelta(days=day_offset)).isoformat()
     worker = LocalWorker(today=lambda: TODAY, seed="""
         INSERT INTO accounts (id,username,name,password_hash,salt) VALUES
           ('axis5-guest','axis5_guest','Khách thử','fixture-only','fixture-only'),
           ('other-user','other_user','Khách khác','fixture-only','fixture-only');
         INSERT INTO tours (id,price,content) VALUES ('axis5-tour',500000,'{"title":"Tour thử trục 5"}');
     """)
-    worker.database.execute("INSERT INTO departures(tour_id,day,capacity) VALUES ('axis5-tour',?,3)", (FUTURE,))
+    worker.database.execute("INSERT INTO departures(tour_id,day,capacity) VALUES ('axis5-tour',?,3)", (departure_day,))
     return worker
 
 
