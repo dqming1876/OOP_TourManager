@@ -1,4 +1,5 @@
 import json
+from uuid import uuid4
 
 from backend.app import Request
 from backend.auth import ADMIN_COOKIE, CUSTOMER_COOKIE, create_session
@@ -10,6 +11,7 @@ TODAY = "2028-02-29"
 FUTURE = "2028-03-07"
 ORIGIN = "http://localhost"
 ORDER = {
+    "requestId": "fixture-order", "expectedPrice": 500000,
     "tourId": "axis5-tour", "day": FUTURE, "name": "Khách thử",
     "phone": "0900000000", "adults": 2, "children": 1,
 }
@@ -44,6 +46,8 @@ def cookie(worker, actor=ADMIN):
 
 
 async def api(worker, path, body=None, token=None, *, origin=ORIGIN, method=None):
+    if path == "/api/ops/bookings" and body is not None and body.get("requestId") == "fixture-order":
+        body = {**body, "requestId": str(uuid4())}
     headers = {"Origin": origin}
     if token:
         headers["Cookie"] = token

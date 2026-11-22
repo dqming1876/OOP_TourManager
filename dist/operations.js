@@ -14,6 +14,10 @@ async function operationsApi(path, body) {
   return result;
 }
 
+function vietnamDay(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
 let operationsRefresh = 0;
 
 async function refreshOperations({ includeBookings = false } = {}) {
@@ -26,7 +30,7 @@ async function refreshOperations({ includeBookings = false } = {}) {
   if (refresh !== operationsRefresh || activeUser !== user?.id) return false;
   tours = catalog.tours.map(tour => ({
     ...tour,
-    dates: tour.departures.map(item => item.day),
+    dates: tour.departures.filter(item => item.day >= vietnamDay() && item.remaining > 0).map(item => item.day),
   }));
   bookings = orders?.bookings || [];
   return true;
@@ -54,17 +58,26 @@ async function placeOrder(event, tourId) {
   const day = fields.get('day');
   const adults = Number(fields.get('adults'));
   const children = Number(fields.get('children'));
-  const available = remaining(tours.find(tour => tour.id === tourId), day);
+  const tour = tours.find(tour => tour.id === tourId);
+  const available = remaining(tour, day);
   const capacityError = day && adults + children > available ? {
     day: 'Đợt này còn ' + available + ' chỗ. Chọn đợt khác hoặc giảm số khách.',
   } : {};
   if (!validateMingoForm(form, capacityError)) return;
   const button = form.querySelector('button[type="submit"]');
+  if (button.disabled) return;
   button.disabled = true;
+  const payload = { tourId, day, adults, children, name: fields.get('name'), phone: fields.get('phone'), expectedPrice: Number(form.dataset.price) };
+  const signature = JSON.stringify({ userId: user.id, ...payload });
+  // Keep the same key after a network failure; changed form contents create a new intent.
+  if (form.dataset.signature !== signature) {
+    form.dataset.signature = signature;
+    form.dataset.requestId = crypto.randomUUID();
+  }
   let receipt;
   try {
     receipt = await operationsApi('bookings', {
-      tourId, day, adults, children, name: fields.get('name'), phone: fields.get('phone'),
+      ...payload, requestId: form.dataset.requestId,
     });
   } catch (error) {
     showSubmissionError(form, error);

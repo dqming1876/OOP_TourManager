@@ -3,7 +3,7 @@
 import json
 from collections import defaultdict
 
-from .domain import Booking, Departure, PaymentEvent
+from .domain import Booking, Departure, PaymentEvent, ConflictError
 from .views import booking_view, departure_view, payment_view
 
 
@@ -55,14 +55,28 @@ class BookingRepository:
         return [payment_view(PaymentEvent(**row)) for row in rows]
 
     async def place_booking(self, booking, today):
-        return await self.db.execute("""
+        # The primary key and seat trigger make retries atomic, including across isolates.
+        inserted = await self.db.execute("""
             INSERT INTO bookings (id,user_id,tour_id,day,title,name,phone,adults,children,unit_price)
             SELECT ?,?,t.id,d.day,json_extract(t.content,'$.title'),?,?,?,?,t.price
             FROM departures d JOIN tours t ON t.id = d.tour_id
             WHERE t.id = ? AND d.day = ? AND d.day >= ? AND t.hidden = 0
-              AND d.capacity - d.reserved >= ?
+              AND d.capacity - d.reserved >= ? AND t.price = ?
+            ON CONFLICT(id) DO NOTHING
         """, booking.id, booking.user_id, booking.name, booking.phone, booking.adults,
-            booking.children, booking.tour_id, booking.day, today, booking.people) > 0
+            booking.children, booking.tour_id, booking.day, today, booking.people, booking.unit_price)
+        if inserted:
+            return True
+        previous = await self.db.first("SELECT * FROM bookings WHERE id = ?", booking.id)
+        if previous:
+            fields = ("user_id", "tour_id", "day", "name", "phone", "adults", "children", "unit_price")
+            if all(previous[key] == getattr(booking, key) for key in fields):
+                return True
+            raise ConflictError("Mã yêu cầu đã được dùng cho nội dung khác. Vui lòng mở lại trang đặt tour.")
+        tour = await self.db.first("SELECT price FROM tours WHERE id = ?", booking.tour_id)
+        if tour and tour["price"] != booking.unit_price:
+            raise ConflictError("Giá tour đã thay đổi. Vui lòng tải lại trang và xác nhận giá mới.", "expectedPrice")
+        return False
 
     async def update_booking(self, booking_id, rule, owner_id, today):
         return await self.db.execute("""

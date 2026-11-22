@@ -1,13 +1,15 @@
 """Business services depend on ports, independent of HTTP and D1."""
 
 import re
+from dataclasses import replace
+from hashlib import sha256
 from time import monotonic
 from uuid import uuid4
 
 from .auth import ADMIN_COOKIE, CUSTOMER_COOKIE, Settings, derive_password, equal, session_identity
 from .domain import (
     ADMIN, CUSTOMER, AccessError, AdministratorAccount, AppError, Booking, ConflictError,
-    CustomerAccount, Departure, Tour, ValidationError, calendar_day, text_length,
+    CustomerAccount, Departure, Tour, ValidationError, calendar_day, text_length, integer_between, required_text,
 )
 from .ports import AccountsPort, BookingPort, ReportsPort, TourCatalogPort
 
@@ -124,8 +126,11 @@ class BookingService:
 
     async def place_booking(self, body):
         self.access.require_role(CUSTOMER)
-        booking_id = "MG" + uuid4().hex.upper()
+        request_id = required_text(body.get("requestId"), 80, "Mã yêu cầu", "requestId")
+        booking_id = "MG" + sha256((self.access.actor.id + ":" + request_id).encode()).hexdigest().upper()
         booking = Booking.request(booking_id, self.access.actor.id, body)
+        booking = replace(booking, unit_price=integer_between(
+            body.get("expectedPrice"), 1, 1_000_000_000, "Giá đã xem", "expectedPrice"))
         if not await self.repository.place_booking(booking, self.today):
             raise ConflictError("Đợt khởi hành đã đóng hoặc không còn đủ chỗ.", "day")
         return {"id": booking_id}
