@@ -552,7 +552,7 @@ async function editBooking(id, payments) {
     <h3>Lịch sử thu và hoàn</h3>
     ${
       history.length
-        ? `<table><thead><tr><th>Ngày ghi nhận</th><th>Thao tác</th><th>Số tiền</th></tr></thead>
+        ? `<table><thead><tr><th>Ngày ghi nhận</th><th>Thao tác</th><th class="report-number">Số tiền</th></tr></thead>
     <tbody>${history
       .map(
         (
@@ -621,20 +621,24 @@ function editDestination(id, k, i) {
   )[i];
   modal(
     `<h2>${i < 0 ? "Thêm" : "Sửa"} ${k === "attractions" ? "địa danh" : "đặc sản"}</h2>
-      <form id="frm009_dm_diem_den" data-entry="${esc(entry?.id || "")}" data-version="${entry?.version || ""}" class="form" onsubmit="saveDestination(event,${id},'${k}',${i})">
-        <label>Tên<input name="name" required value="${esc(n)}">
+      <form id="frm009_dm_diem_den" data-entry="${esc(entry?.id || "")}" data-version="${entry?.version || ""}" class="form catalog-form" data-validated novalidate onsubmit="saveDestination(event,${id},'${k}',${i})">
+        <label>Tên<input name="name" required maxlength="120" value="${esc(n)}">
       </label>
-      <label>Mô tả ngắn<textarea name="description" required>${esc(m.description || "")}</textarea>
+      <label>Mô tả ngắn<textarea name="description" required maxlength="4000">${esc(m.description || "")}</textarea>
       </label>
-      <label>Địa chỉ ảnh HTTPS<input name="url" type="url" required value="${esc(m.url?.startsWith("/") ? location.origin + m.url : m.url || "")}">
+      <label>Địa chỉ ảnh (HTTPS hoặc /images/...)<input name="url" type="text" data-image-url required maxlength="2000" value="${esc(m.url || "")}">
       </label>
-      <label>Nguồn ảnh<input name="source" required value="${esc(m.source || "")}"></label><button>Lưu</button></form>`,
+      <label>Nguồn ảnh<input name="source" required maxlength="250" value="${esc(m.source || "")}"></label>
+      <p class="submission-error" role="alert"></p>
+      <button type="submit">Lưu</button></form>`,
   );
 }
 async function saveDestination(e, id, kind, index) {
   e.preventDefault();
   const form = e.currentTarget;
-  const button = form.querySelector("button");
+  form.querySelector(".submission-error").textContent = "";
+  if (!validateMingoForm(form)) return;
+  const button = form.querySelector("button[type=submit]");
   const data = Object.fromEntries(new FormData(form));
   const entry = form.dataset.entry
     ? { id: form.dataset.entry, version: Number(form.dataset.version) }
@@ -653,7 +657,7 @@ async function saveDestination(e, id, kind, index) {
     destinationEditor(String(id));
     toast("Đã lưu danh mục dùng chung.");
   } catch (error) {
-    toast(error.message);
+    showSubmissionError(form, error);
   } finally {
     button.disabled = false;
   }

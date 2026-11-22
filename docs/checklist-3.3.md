@@ -15,7 +15,7 @@ flowchart LR
 | --- | --- | --- |
 | R01 Giá chốt — `Booking.total`, `BookingRepository.place_booking` | Tour đang mở bán, giá nguyên hợp lệ, ít nhất một người lớn | Ghi giá tại lúc đặt. Sửa giá danh mục sau đó không đổi giá trị phiếu cũ. |
 | R02 Giữ chỗ đồng thời — `Booking.people`, `place_booking`, `reserve_booking_seats` | Đợt chưa qua ngày, còn đủ chỗ cho người lớn và trẻ em | Tạo đơn chờ và tăng chỗ giữ trong cùng câu lệnh. Hai yêu cầu cuối cùng tranh chỗ thì chỉ yêu cầu hợp lệ được ghi. |
-| R03 Chống trùng và giảm quá mức — `Departure`, `saveDeparture`, khóa `(tour_id, day)` | Admin; ngày hợp lệ, chưa qua; sức chứa 1–100 | Trùng ngày khi tạo trả 409. Khi chỉnh sửa, sức chứa phải ít nhất bằng số chỗ đã giữ. |
+| R03 Chống trùng và giảm quá mức — `Departure`, `TourCatalogService.save_departure`, khóa `(tour_id, day)` | Admin; ngày hợp lệ, chưa qua; sức chứa 1–100 | Trùng ngày khi tạo trả 409. Khi chỉnh sửa, sức chứa phải ít nhất bằng số chỗ đã giữ. |
 | R04 Xác nhận trước khi quá ngày — `Booking.transition('confirm')`, `update_booking` | Admin; đơn đang chờ; ngày khởi hành lớn hơn hoặc bằng ngày hiện tại theo giờ Việt Nam | Chuyển sang xác nhận, số chỗ giữ không đổi. Quá ngày trả 409 và đơn giữ nguyên. |
 | R05 Thu/hoàn theo trạng thái — `Booking.transition`, `record_payment_change` | Admin; đơn đã xác nhận. Thu khi chưa thu, hoàn khi đã thu. | Đổi cờ `paid` và thêm bút toán tương ứng trong cùng giao dịch. Lặp thao tác trả 409. |
 | R06 Hủy và trả chỗ — `Booking.transition('cancel')`, `release_booking_seats` | Khách chỉ được hủy đơn chờ của chính mình. Admin hủy đơn chờ hoặc đã xác nhận khi không còn tiền đã thu. | Đơn chuyển sang hủy, trả số chỗ đúng một lần; đơn khác và lịch sử thanh toán giữ nguyên. |

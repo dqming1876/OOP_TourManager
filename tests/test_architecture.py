@@ -2,10 +2,11 @@ import ast
 import json
 import sqlite3
 from dataclasses import FrozenInstanceError
+from types import MappingProxyType
 from unittest import IsolatedAsyncioTestCase
 
 from backend.app import Repositories
-from backend.domain import AdministratorAccount, AppError, Tour
+from backend.domain import AdministratorAccount, AppError, Destination, Tour, TourStop
 from backend.services import AccessPolicy
 from scripts.sqlite_worker import ROOT, LocalWorker
 from tests.fixtures import FUTURE, GUEST, ORDER, TOUR, api, cookie
@@ -63,9 +64,10 @@ class Architecture(IsolatedAsyncioTestCase):
         for name in modules:
             visit(name, set())
         self.assertFalse(dependencies["domain"])
+        self.assertFalse(dependencies["pricing"])
         self.assertLessEqual(dependencies["services"], {"domain", "auth", "ports", "login_limits"})
         self.assertNotIn("services", dependencies["repositories"])
-        for name in ("app", "domain", "services"):
+        for name in ("app", "domain", "services", "destinations", "login_limits", "pricing"):
             for node in ast.walk(modules[name]):
                 if isinstance(node, ast.Constant) and isinstance(node.value, str):
                     self.assertNotRegex(node.value, r"(?i)\b(SELECT .+ FROM|INSERT INTO|UPDATE .+ SET|DELETE FROM)\b")
@@ -81,6 +83,19 @@ class Architecture(IsolatedAsyncioTestCase):
         with self.assertRaises(TypeError):
             tour.details["days"] = 0
         self.assertIsInstance(tour.stops, tuple)
+        valid_place = Destination("Hà Nội", "Hồ Gươm")
+        for invalid in (
+            lambda: Destination("", "Hồ Gươm"),
+            lambda: Destination("Hà Nội", "   "),
+            lambda: TourStop(0, "Đi bộ", valid_place),
+            lambda: TourStop(1, "  ", valid_place),
+            lambda: Tour("tour", MappingProxyType({}), ()),
+            lambda: Tour("tour", dict(tour.details), None),
+            lambda: Tour("tour", tour.details, (TourStop(1, "Đi bộ", valid_place),)),
+        ):
+            with self.assertRaises(AppError) as error:
+                invalid()
+            self.assertEqual(error.exception.status, 400)
 
     async def test_in_memory_booking_port_at_http_entry(self):
         class InMemoryBooking:

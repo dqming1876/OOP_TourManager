@@ -10,6 +10,7 @@ from uuid import uuid4
 from .auth import ADMIN_COOKIE, CUSTOMER_COOKIE, clear_cookie, create_session, derive_password, session_identity
 from .domain import ADMIN, CUSTOMER, AccessError, AppError, ValidationError, text_length
 from .destinations import DestinationsService
+from .pricing import PricingPolicy, StandardPrice
 from .repositories import DestinationsRepository, AccountsRepository, BookingRepository, ReportsRepository, TourCatalogRepository
 from .services import AccessPolicy, AccountsService, BookingService, ReportsService, TourCatalogService
 
@@ -91,10 +92,11 @@ async def accounts_route(request, path, accounts, settings):
     if not (login or logout or path in ("/api/profile", "/api/auth/register")):
         raise AppError(404, NOT_FOUND)
     require_post(request)
+    secure = urlsplit(request.url).scheme == "https"
     if logout:
-        cookies = [clear_cookie(ADMIN_COOKIE)]
+        cookies = [clear_cookie(ADMIN_COOKIE, secure=secure)]
         if path == "/api/auth/logout":
-            cookies.append(clear_cookie(CUSTOMER_COOKIE))
+            cookies.append(clear_cookie(CUSTOMER_COOKIE, secure=secure))
         return json_response({"ok": True}, cookies=cookies)
     body = await read_object(request, 8192)
     if path == "/api/profile":
@@ -105,9 +107,9 @@ async def accounts_route(request, path, accounts, settings):
     legacy = path == "/api/admin/login"
     user = await accounts.login_account(request.header("CF-Connecting-IP") or "local", body, legacy)
     cookie = ADMIN_COOKIE if user["role"] == ADMIN else CUSTOMER_COOKIE
-    token = create_session(cookie, settings.secret, user["id"] if user["role"] == CUSTOMER else None)
+    token = create_session(cookie, settings.secret, user["id"] if user["role"] == CUSTOMER else None, secure=secure)
     return json_response({"ok": True} if legacy else {"user": user}, cookies=(
-        clear_cookie(CUSTOMER_COOKIE if cookie == ADMIN_COOKIE else ADMIN_COOKIE), token,
+        clear_cookie(CUSTOMER_COOKIE if cookie == ADMIN_COOKIE else ADMIN_COOKIE, secure=secure), token,
     ))
 
 
@@ -176,13 +178,15 @@ class Repositories:
 
 
 class Application:
-    def __init__(self, repositories=None, today=local_day, derive=derive_password):
+    def __init__(self, repositories=None, today=local_day, derive=derive_password, pricing: PricingPolicy | None = None):
         self.repositories = repositories or Repositories()
         self.today = today
         self.derive = derive
+        self.pricing = StandardPrice() if pricing is None else pricing
 
-    async def fetch(self, request, db, settings, assets):
+    async def fetch(self, request, db, settings, assets, pricing: PricingPolicy | None = None):
         url = urlsplit(request.url)
+        policy = self.pricing if pricing is None else pricing
         try:
             if url.path.startswith("/api/"):
                 repo = self.repositories
@@ -191,9 +195,15 @@ class Application:
                     return await accounts_route(request, url.path, accounts, settings)
                 access = AccessPolicy(await accounts.current_account(request_identity(request, settings)))
                 day = self.today()
+                catalog_repo = (
+                    repo.catalog(db, policy) if repo.catalog is TourCatalogRepository else repo.catalog(db)
+                )
+                booking_repo = (
+                    repo.bookings(db, policy) if repo.bookings is BookingRepository else repo.bookings(db)
+                )
                 return await operations_route(
-                    request, url, TourCatalogService(repo.catalog(db), access, day),
-                    BookingService(repo.bookings(db), access, day), ReportsService(repo.reports(db), access, day), access,
+                    request, url, TourCatalogService(catalog_repo, access, day),
+                    BookingService(booking_repo, access, day), ReportsService(repo.reports(db), access, day), access,
                     DestinationsService(repo.destinations(db), access),
                 )
             if url.path == "/admin.js":

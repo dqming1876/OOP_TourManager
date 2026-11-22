@@ -16,10 +16,12 @@
 
 | Port | Bên tiêu thụ | Bên cung cấp |
 | --- | --- | --- |
-| `BookingPort` — bốn phương thức | BookingService | BookingRepository hoặc bản in-memory |
-| `TourCatalogPort` — sáu phương thức | TourCatalogService | TourCatalogRepository |
-| `ReportsPort` — chỉ `load(filter)` | ReportsService | ReportsRepository |
-| `AccountsPort` — tài khoản, khởi tạo admin và cửa sổ đăng nhập | AccountsService | AccountsRepository |
+| `Database` — bốn phương thức (`first`, `all`, `execute`, `batch`) | Các lớp Repository | `D1Database` (Cloudflare) hoặc `SQLiteDatabase` (demo/test) |
+| `BookingPort` — bốn phương thức | `BookingService` | `BookingRepository` hoặc bản in-memory |
+| `TourCatalogPort` — sáu phương thức | `TourCatalogService` | `TourCatalogRepository` |
+| `ReportsPort` — chỉ `load(start, end, tour_id, today)` | `ReportsService` | `ReportsRepository` |
+| `AccountsPort` — bảy phương thức tài khoản, admin & rate limit | `AccountsService`, `LoginRateLimiter` | `AccountsRepository` |
+| `DestinationsPort` — ba phương thức (`list_entries`, `save_entry`, `remove_entry`) | `DestinationsService` | `DestinationsRepository` |
 
 Các hợp đồng dùng kiểu cấu trúc qua `typing.Protocol`. Service nhận port qua constructor và instance kho được tạo ở `Application()`. Route nhận Service đã lắp. Clock ngày Việt Nam được truyền tại root, `LoginRateLimiter` lưu bộ đếm dùng chung trong D1; service nhận địa chỉ IP đã trích xuất ở HTTP boundary. [Port](../backend/ports.py) · [Composition Root](../entry.py)
 

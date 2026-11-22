@@ -1,6 +1,5 @@
 """Create the same catalog, departures, bookings and payment history as the previous demo."""
 
-import json
 from datetime import date
 from secrets import token_hex
 

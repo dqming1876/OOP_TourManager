@@ -42,7 +42,7 @@ class SQLiteDatabase:
 
 
 class LocalWorker:
-    def __init__(self, *, admin_password=None, seed=None, today=local_day, repositories=None, assets=None):
+    def __init__(self, *, admin_password=None, seed=None, today=local_day, repositories=None, assets=None, pricing=None):
         self.database = sqlite3.connect(":memory:", isolation_level=None)
         self.database.row_factory = sqlite3.Row
         self.database.execute("PRAGMA foreign_keys = ON")
@@ -58,7 +58,7 @@ class LocalWorker:
         salt = str(uuid4())
         self.settings = Settings("demo_admin", password_hash(self.admin_password, salt), salt, str(uuid4()))
         self.db = SQLiteDatabase(self.database)
-        self.app = Application(repositories=repositories, today=today)
+        self.app = Application(repositories=repositories, today=today, pricing=pricing)
         self.assets = assets or missing_asset
 
     async def fetch(self, request):

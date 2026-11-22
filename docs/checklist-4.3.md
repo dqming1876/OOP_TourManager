@@ -2,14 +2,18 @@
 
 ```mermaid
 flowchart TB
-    gui["GUI · dist"] -->|"HTTP JSON"| api["API · backend/app.py"]
-    api --> service["BLL · backend/services.py"]
+    gui["GUI · dist"] -->|"HTTP JSON"| api["API & Root · backend/app.py"]
+    api --> service["BLL · services.py / destinations.py / login_limits.py"]
+    api --> auth["Crypto & Session · backend/auth.py"]
+    api --> pricing["Chính sách giá · backend/pricing.py"]
+    service --> auth
     service --> domain["Domain · backend/domain.py"]
     service --> ports["Hợp đồng · backend/ports.py"]
     dal["DAL · backend/repositories.py"] -->|"hiện thực"| ports
     dal -->|"dựng thực thể"| domain
+    dal -->|"áp dụng giá"| pricing
     dal --> dto["DTO · backend/views.py"]
-    dal --> db["Database · D1"]
+    dal --> db["Database · D1 / SQLite"]
 ```
 
 Luồng gọi lúc chạy là GUI → API → Service → repository → DB. Chiều phụ thuộc tĩnh là Service → Domain và hợp đồng của ứng dụng; Repository hiện thực phía ngoài. `entry.py` là điểm lắp đặt và biết các lớp cụ thể.

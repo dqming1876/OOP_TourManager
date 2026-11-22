@@ -34,23 +34,33 @@ sequenceDiagram
     participant R as "BookingRepository"
     participant DB as "D1"
     F->>S: placeOrder và POST qua operations_route
-    S->>B: request(id,userId,input)
-    B-->>S: đơn chờ với số người hợp lệ
-    S->>R: place_booking(booking,today)
-    R->>DB: SELECT giá niêm yết của tour
-    DB-->>R: giá hiện tại
-    R->>R: tính đơn giá qua PricingPolicy
-    R->>DB: INSERT SELECT kiểm giá niêm yết, ngày, trạng thái bán và sức chứa
-    alt Còn đủ chỗ và ghi thành công
-        DB->>DB: trigger reserve_booking_seats
-        DB-->>R: một dòng được tạo
-        S-->>F: HTTP 201 và mã đơn
-    else Không khớp điều kiện
-        DB-->>R: không tạo dòng
-        S-->>F: HTTP 409
-    else Lỗi khi ghi đơn hoặc tăng chỗ
-        DB-->>R: rollback câu lệnh
-        S-->>F: HTTP 500 qua bộ xử lý lỗi
+    S->>B: Booking.request(booking_id, user_id, body)
+    B-->>S: đơn chờ với số người và expectedPrice hợp lệ
+    S->>R: place_booking(booking, today)
+    R->>DB: SELECT đơn cũ theo booking.id (idempotency retry)
+    alt Đã tồn tại đơn với cùng requestId
+        R->>R: same_request(previous, booking)
+        R-->>S: khớp nội dung → HTTP 201 (lệch → ConflictError 409)
+    else Yêu cầu mới
+        R->>DB: SELECT giá niêm yết của tour
+        DB-->>R: list_price hiện tại
+        R->>R: tính unit_price qua PricingPolicy và so với expectedPrice
+        alt Giá đã đổi (expectedPrice != unit_price)
+            R-->>S: ConflictError 409 (không giữ chỗ)
+        else Giá khớp
+            R->>DB: INSERT SELECT kiểm giá niêm yết, ngày, trạng thái bán và sức chứa
+            alt Còn đủ chỗ và ghi thành công
+                DB->>DB: trigger reserve_booking_seats
+                DB-->>R: một dòng được tạo
+                S-->>F: HTTP 201 và mã đơn
+            else Không khớp điều kiện
+                DB-->>R: không tạo dòng
+                S-->>F: HTTP 409
+            else Lỗi khi ghi đơn hoặc tăng chỗ
+                DB-->>R: rollback câu lệnh
+                S-->>F: HTTP 500 qua bộ xử lý lỗi
+            end
+        end
     end
 ```
 

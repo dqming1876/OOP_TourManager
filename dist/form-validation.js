@@ -40,11 +40,26 @@ function fieldValidationMessage(field) {
   if (field.validity.stepMismatch) return 'Vui lòng nhập số nguyên.';
   if (field.validity.tooShort) return 'Nhập ít nhất ' + field.minLength + ' ký tự.';
   if (field.validity.tooLong) return 'Nhập tối đa ' + field.maxLength + ' ký tự.';
+  if (field.validity.patternMismatch) return 'Chỉ dùng chữ cái không dấu, chữ số và dấu gạch dưới.';
   if (field.validity.typeMismatch) return 'Định dạng không hợp lệ.';
   if (field.dataset.phone !== undefined && field.value.trim()) {
     const phone = field.value.trim();
     if (!/^[0-9+ ()-]+$/.test(phone) || phone.replace(/\D/g, '').length < 8) {
       return 'Nhập ít nhất 8 chữ số. Có thể dùng +, khoảng trắng, ngoặc và dấu gạch.';
+    }
+  }
+  if (field.dataset.imageUrl !== undefined && field.value.trim()) {
+    const raw = field.value.trim();
+    const localPath = /^\/images\/[A-Za-z0-9._-]+$/.test(raw) && !raw.includes('..');
+    let httpsUrl = false;
+    try {
+      const parsed = new URL(raw);
+      httpsUrl = parsed.protocol === 'https:' && Boolean(parsed.hostname) && !parsed.username && !parsed.password;
+    } catch (_error) {
+      httpsUrl = false;
+    }
+    if (!localPath && !httpsUrl) {
+      return 'Dùng địa chỉ ảnh HTTPS hoặc đường dẫn /images/... hợp lệ.';
     }
   }
   return field.validity.valid ? '' : 'Vui lòng kiểm tra lại ô này.';

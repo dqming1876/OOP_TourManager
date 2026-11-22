@@ -1,5 +1,77 @@
 # Minh chứng 3.2 — ERD và mô hình thực thể
 
+## Sơ đồ ERD tổng thể (10 bảng hoạt động)
+
+```mermaid
+erDiagram
+    ROLES ||--o{ ACCOUNTS : "phân vai trò"
+    ACCOUNTS ||--o{ BOOKINGS : "đặt"
+    TOURS ||--o{ DEPARTURES : "mở đợt"
+    TOURS ||--o{ TOUR_STOPS : "gồm lịch trình"
+    DESTINATIONS ||--o{ TOUR_STOPS : "được ghé"
+    DEPARTURES ||--o{ BOOKINGS : "nhận đặt chỗ"
+    BOOKINGS ||--o{ PAYMENT_EVENTS : "ghi nhận thu/hoàn"
+    ROLES {
+        string name PK
+    }
+    ACCOUNTS {
+        string id PK
+        string username UK
+        string role FK
+    }
+    TOURS {
+        string id PK
+        int price
+        int days
+        int hidden
+    }
+    DESTINATIONS {
+        int id PK
+        string province UK
+        string name UK
+    }
+    TOUR_STOPS {
+        string tour_id PK,FK
+        int day_number PK
+        int destination_id FK
+        string activity
+    }
+    DEPARTURES {
+        string tour_id PK,FK
+        string day PK
+        int capacity
+        int reserved
+    }
+    BOOKINGS {
+        string id PK
+        string user_id FK
+        string tour_id FK
+        string day FK
+        int unit_price
+        string status
+        int paid
+    }
+    PAYMENT_EVENTS {
+        int id PK
+        string booking_id FK
+        string recorded_on
+        string kind
+        int amount
+    }
+    DESTINATION_ENTRIES {
+        string id PK
+        int province_id
+        string kind
+        string name
+        int version
+    }
+    LOGIN_ATTEMPTS {
+        string key PK
+        int count
+        int expires_at
+    }
+```
+
 ## Hai liên kết nhiều–nhiều có thuộc tính
 
 ```mermaid
@@ -39,9 +111,9 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 
 | Lớp | Thực thể hoặc nguồn | Hành vi và nơi gọi |
 | --- | --- | --- |
-| `Tour` | `tours` | Ràng buộc giá, số ngày, ảnh; tạo tập `TourStop` đủ số ngày. Dùng khi `TourCatalogService.save_tour`. |
-| `Destination` | `destinations` | Chuẩn hóa tên địa danh và tỉnh theo quy tắc chiều dài trước khi ghi điểm ghé. `Tour` dùng khi dựng liên kết. |
-| `TourStop` | `tour_stops` | Kiểm ngày thứ mấy và nội dung. Cung cấp ngày/điểm/hoạt động để repository ghi trong cùng batch với tour. |
+| `Tour` | `tours` | Kiểm bất biến ở cả `__post_init__` và `Tour.request()` (giá, số ngày, ảnh, `MappingProxyType`, tập `TourStop` đủ số ngày). Dùng khi `TourCatalogService.save_tour`. |
+| `Destination` | `destinations` | Chuẩn hóa tên địa danh và tỉnh ở cả `__post_init__` và `Destination.request()`. `Tour` dùng khi dựng liên kết. |
+| `TourStop` | `tour_stops` | Kiểm ngày thứ mấy (`1..30`), nội dung hoạt động và đối tượng `Destination` ngay trong `__post_init__`. Cung cấp `write_row()` để repository ghi trong cùng batch với tour. |
 | `Departure` | `departures` | Kiểm ngày và sức chứa trước ghi. Tính chỗ còn từ sức chứa trừ chỗ đã giữ khi dựng danh mục. |
 | `Booking` | `bookings` | Kiểm số khách và thông tin liên hệ, tính tổng tiền từ giá chốt, quyết định trạng thái/ngày/tiền được phép chuyển. |
 | `PaymentEvent` | `payment_events` | Tính trị giá có dấu của khoản thu/hoàn. DTO khoản tiền có dấu được phiếu admin cộng thành thu ròng. |
@@ -52,7 +124,7 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 
 ## Đọc ngược thuộc tính lịch sử
 
-`bookings.unit_price` được lấy từ `tours.price` ngay trong câu lệnh tạo đơn. `Booking.total` tính `(adults + children) × unitPrice` từ bản chụp trên phiếu. Ví dụ test đặt 3 người lúc giá 1.200.000 ₫, rồi sửa tour lên 5.000.000 ₫. Giá trị đơn cũ vẫn là 3.600.000 ₫. `bookings.title` cũng là bản chụp để tên hiển thị trên phiếu cũ giữ được ý nghĩa lịch sử. [Kiểm thử](../tests/test_operations.py)
+`bookings.unit_price` được lấy từ `tours.price` (qua `PricingPolicy`) ngay trong câu lệnh tạo đơn. `Booking.total` tính `(adults + children) × unit_price` từ bản chụp trên phiếu. Ví dụ test đặt 3 người lúc giá 1.200.000 ₫, rồi sửa tour lên 5.000.000 ₫. Giá trị đơn cũ vẫn là 3.600.000 ₫. `bookings.title` cũng là bản chụp để tên hiển thị trên phiếu cũ giữ được ý nghĩa lịch sử. [Kiểm thử](../tests/test_operations.py)
 
 Nếu đổi quan hệ Tour–Đợt từ 1–n sang n–n thì đợt có định danh riêng và cần bảng nối có khóa `(tour_id, departure_id)`. Cần quyết định chỗ giữ dùng chung cho đợt hay theo tour. Khi đó `Departure`, khóa ngoại của `Booking`, trigger giữ/trả chỗ và truy vấn sức chứa đều cần sửa theo lựa chọn đó. Trước khi đổi, phải ánh xạ các đơn lịch sử sang khóa mới để giữ chính xác ngày và tour đã đặt.
 

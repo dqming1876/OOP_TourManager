@@ -159,8 +159,9 @@ class ReportsRepository:
 
 
 class TourCatalogRepository:
-    def __init__(self, db):
+    def __init__(self, db, pricing: PricingPolicy | None = None):
         self.db = db
+        self.pricing = StandardPrice() if pricing is None else pricing
 
     async def catalog(self, include_hidden):
         visibility = (int(include_hidden),)
@@ -186,6 +187,7 @@ class TourCatalogRepository:
             itineraries[row["tour_id"]].append(row)
         return [{
             **row, "hidden": bool(row["hidden"]),
+            "bookingPrice": self.pricing.unit_price(row["price"]),
             "itinerary": [stop["activity"] for stop in itineraries[row["id"]]],
             "stops": [stop["place"] for stop in itineraries[row["id"]]],
             "departures": schedules[row["id"]],

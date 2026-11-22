@@ -6,58 +6,73 @@
 classDiagram
     direction TB
     class Tour {
-        +id
-        +details
-        +stops
-        +request()
+        +id: str
+        +details: MappingProxyType
+        +stops: tuple~TourStop~ | None
+        +request(tour_id, body)$
     }
     class TourStop {
-        +day_number
-        +activity
-        +destination
+        +day_number: int
+        +activity: str
+        +destination: Destination
         +write_row()
     }
     class Destination {
-        +province
-        +name
+        +province: str
+        +name: str
+        +request(province, name, field)$
     }
     class Booking {
-        +id
-        +tour_id
-        +day
-        +unit_price
-        +status
-        +paid
-        +request()$
-        +transition()$
+        +id: str
+        +user_id: str
+        +tour_id: str
+        +day: str
+        +name: str
+        +phone: str
+        +adults: int
+        +children: int
+        +title: str | None
+        +unit_price: int | None
+        +status: BookingStatus
+        +paid: bool
+        +request(booking_id, user_id, body)$
+        +transition(action, own_booking_only)$
         +people()
         +total()
     }
     class Departure {
-        +tour_id
-        +day
-        +capacity
-        +reserved
-        +require_open_date()
+        +tour_id: str
+        +day: str
+        +capacity: int
+        +reserved: int
+        +validate_day(value)$
+        +require_open_date(today)
         +remaining()
     }
     class Account {
-        +id
-        +role
+        +id: str
+        +name: str
+        +username: str
+        +role: Role
         +public()
+        +has_role(role)
+        +manages_catalog()
+        +cancellation_owner()
         +booking_scope()
     }
     class CustomerAccount {
-        +profile
-        +validate_update()
+        +profile: MappingProxyType
         +public()
+        +validate_update(body)
     }
     class AdministratorAccount {
+        +manages_catalog()
+        +cancellation_owner()
         +booking_scope()
     }
     class AccessPolicy {
-        +actor
-        +require_role()
+        +actor: Account | None
+        +require_role(role)
         +booking_scope()
     }
     Tour "1" *-- "0..30" TourStop : chứa
@@ -68,45 +83,65 @@ classDiagram
     AccessPolicy o--> "0..1" Account : nhận qua constructor
 ```
 
-`people`, `total`, `remaining` là Python `@property`. `details` là mapping chỉ đọc, `stops` là tuple; `None` biểu thị yêu cầu sửa không gửi lịch trình. `Tour.request()` tạo và sở hữu các `TourStop`.
+`people`, `total`, `remaining`, `manages_catalog` là Python `@property`. `details` là `MappingProxyType` chỉ đọc, `stops` là `tuple`; `None` biểu thị yêu cầu sửa không gửi lịch trình. `Tour.request()` tạo và sở hữu các `TourStop`; cả `Tour`, `TourStop` và `Destination` đều kiểm tra bất biến trong `__post_init__`.
 
-## Service, port và lưu trữ
+## Service, port, chính sách giá và lưu trữ
 
 ```mermaid
 classDiagram
     direction TB
     class BookingPort {
         <<interface>>
-        +list_bookings(owner_id)
+        +list_bookings(user_id)
+        +payment_history(booking_id)
         +place_booking(booking, today)
-        +update_booking(id, rule, owner_id, today)
-        +payment_history(id)
+        +update_booking(booking_id, rule, owner_id, today)
+    }
+    class PricingPolicy {
+        <<interface>>
+        +unit_price(list_price)
+    }
+    class StandardPrice {
+        +unit_price(list_price)
+    }
+    class PercentageDiscount {
+        +percent: int
+        +unit_price(list_price)
     }
     class BookingService {
+        +repository: BookingPort
+        +access: AccessPolicy
+        +today: str
         +bookings()
-        +place_booking(input)
-        +update_booking(id, action)
-        +payment_history(id)
+        +place_booking(body)
+        +payment_history(booking_id)
+        +update_booking(booking_id, action)
     }
     class BookingRepository {
-        +list_bookings(owner_id)
-        +place_booking(booking, today)
-        +update_booking(id, rule, owner_id, today)
+        +db
+        +pricing: PricingPolicy
+        +list_bookings(user_id)
         +payment_history(booking_id)
+        +place_booking(booking, today)
+        +same_request(previous, booking)$
+        +update_booking(booking_id, rule, owner_id, today)
     }
     class PaymentEvent {
-        +date
-        +kind
-        +amount
+        +date: str
+        +kind: PaymentKind
+        +amount: int
         +signed_amount()
     }
     BookingService --> BookingPort : constructor
     BookingRepository ..|> BookingPort : hiện thực
+    BookingRepository --> PricingPolicy : constructor
+    StandardPrice ..|> PricingPolicy : hiện thực
+    PercentageDiscount ..|> PricingPolicy : hiện thực
     BookingService ..> Booking : kiểm và tạo
     BookingRepository ..> PaymentEvent : ánh xạ sự kiện
 ```
 
-Tổng cộng sơ đồ có **12 lớp chạy thật** sau khi loại interface `BookingPort`. Sáu loại quan hệ và đối chiếu mã:
+Tổng cộng sơ đồ có **14 lớp chạy thật** sau khi loại 2 interface (`BookingPort`, `PricingPolicy`). Sáu loại quan hệ và đối chiếu mã:
 
 | Quan hệ UML | Ví dụ | Đọc từ code hoặc SQL |
 | --- | --- | --- |
@@ -123,9 +158,9 @@ Lớp cơ sở `Account` chứa constructor và mã chạy dùng chung. Hợp đ
 
 | Lớp | Đối chiếu cấu trúc và quan hệ |
 | --- | --- |
-| `Tour` | `Tour` là dataclass bất biến. `details` là mapping chỉ đọc, `stops` là tuple. `Tour.request()` tạo các `TourStop` theo đúng thứ tự. [domain.py](../backend/domain.py) |
-| `TourStop` | Constructor nhận thứ tự, hoạt động, tỉnh và điểm. Instance đóng băng ba thuộc tính trong UML. `write_row()` xuất đúng khóa ngày, điểm ghé, nội dung hoạt động. [domain.py](../backend/domain.py) |
-| `BookingRepository` | Constructor nhận DB. Bốn phương thức trong port khớp chữ ký triển khai. `payment_history()` dựng `PaymentEvent`; `place_booking()` lấy khóa đợt từ đối tượng Booking và kiểm khóa trong SQL. [repositories.py](../backend/repositories.py) |
+| `Tour` | `Tour` là `@dataclass(frozen=True)`. `details` là `MappingProxyType`, `stops` là `tuple[TourStop, ...] \| None`. Cả `__post_init__` và `Tour.request()` đều bảo vệ bất biến số ngày, giá, nội dung và thứ tự các `TourStop`. [domain.py](../backend/domain.py) |
+| `TourStop` | Constructor nhận `(day_number, activity, destination)` với `destination: Destination`. `__post_init__` kiểm ngày `1..30`, nội dung và kiểu `Destination`; đóng băng ba thuộc tính trong UML. `write_row()` xuất `{"dayNumber", "place", "activity"}`. [domain.py](../backend/domain.py) |
+| `BookingRepository` | Constructor nhận `(db, pricing: PricingPolicy \| None = None)`, mặc định `StandardPrice()`. Bốn phương thức khớp chữ ký `BookingPort` (`list_bookings(user_id)`, `payment_history(booking_id)`, `place_booking(booking, today)`, `update_booking(booking_id, rule, owner_id, today)`) kèm `@staticmethod same_request(previous, booking)`. [repositories.py](../backend/repositories.py) |
 
 ## Bảng nghiệp vụ và phụ thuộc hàm
 

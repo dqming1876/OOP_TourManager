@@ -1,8 +1,18 @@
 """Shared destination editor, with authorization and optimistic concurrency."""
+import re
 from urllib.parse import urlsplit
 from uuid import uuid4
 from .domain import ADMIN, ConflictError, ValidationError, integer_between, required_text
 from .ports import DestinationsPort
+
+LOCAL_IMAGE_PATH = re.compile(r"/images/[A-Za-z0-9._-]+")
+
+
+def valid_image_url(value):
+    if LOCAL_IMAGE_PATH.fullmatch(value) and ".." not in value:
+        return True
+    url = urlsplit(value)
+    return url.scheme == "https" and bool(url.hostname) and not url.username and not url.password
 
 
 class DestinationsService:
@@ -22,9 +32,8 @@ class DestinationsService:
         values = {'province_id': province_id, 'kind': kind}
         for name, limit in [('name', 120), ('description', 4000), ('url', 2000), ('source', 250)]:
             values[name] = required_text(body.get(name), limit, name, name)
-        url = urlsplit(values['url'])
-        if url.scheme != 'https' or not url.hostname or url.username or url.password:
-            raise ValidationError('Dùng địa chỉ ảnh HTTPS hợp lệ.', 'url')
+        if not valid_image_url(values['url']):
+            raise ValidationError('Dùng địa chỉ ảnh HTTPS hoặc đường dẫn /images/... hợp lệ.', 'url')
         version = self.version(body) if entry_id else None
         if not await self.repository.save_entry(entry_id or str(uuid4()), values, version):
             raise ConflictError('Tên đã tồn tại hoặc dữ liệu đã thay đổi. Vui lòng tải lại danh mục.')

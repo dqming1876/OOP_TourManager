@@ -6,6 +6,7 @@ from workers import Response as WorkerResponse, WorkerEntrypoint
 
 from backend.app import Application, Request, Response
 from backend.auth import Settings
+from backend.pricing import pricing_from_percent
 
 
 def setting(env, key):
@@ -84,7 +85,8 @@ class Default(WorkerEntrypoint):
                 dict_converter=Object.fromEntries,
             ))
 
-        response = await app.fetch(WorkerRequest(request), db, settings, assets)
+        pricing = pricing_from_percent(setting(env, "BOOKING_DISCOUNT_PERCENT"))
+        response = await app.fetch(WorkerRequest(request), db, settings, assets, pricing=pricing)
         if not isinstance(response, Response):
             return WorkerResponse(response)
         headers = Headers.new()

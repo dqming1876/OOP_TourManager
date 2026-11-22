@@ -47,7 +47,7 @@ Dự án là bài tập lớn cuối kỳ học phần Lập trình hướng đ�
 | Backend | Python 3.12+ chạy dưới dạng Python Worker trên Cloudflare |
 | Cơ sở dữ liệu | Cloudflare D1 (Worker), SQLite trong bộ nhớ (demo) |
 | Giao diện | Web tĩnh trong `dist/`, có test JavaScript bằng `node --test` |
-| Công cụ | Node.js 24, npm, Wrangler 4.92.0 |
+| Công cụ | Node.js 24, npm, Wrangler 4.166.0 |
 | Kiểm thử | `unittest` (hoặc `pytest`), `node --test` |
 
 ## Cấu trúc thư mục
@@ -103,6 +103,7 @@ Hai tài khoản này dùng cho bản demo SQLite cục bộ.
 Đăng nhập quản trị, rồi vào **Xử lý đơn** để xem danh sách hoặc vào **Báo cáo** để đối chiếu dữ liệu theo [minh chứng 1.3](docs/checklist-1.3.md).
 
 - Đổi cổng bằng biến môi trường `MINGO_DEMO_PORT`.
+- Bật thử chính sách giảm giá `PercentageDiscount` lúc chạy bằng `MINGO_DISCOUNT_PERCENT=10` (mặc định `0` dùng `StandardPrice`).
 - Đóng gói bản demo: `python3 -m scripts.package_demo mingo-demo.zip`.
 
 ## Phát triển cục bộ (D1 + Wrangler)

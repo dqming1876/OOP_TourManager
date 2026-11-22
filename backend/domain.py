@@ -294,6 +294,10 @@ class Destination:
     province: str
     name: str
 
+    def __post_init__(self):
+        object.__setattr__(self, "province", required_text(self.province, 80, "Tỉnh thành", "province"))
+        object.__setattr__(self, "name", required_text(self.name, 120, "Điểm đến", "place"))
+
     @classmethod
     def request(cls, province, name, field="place"):
         return cls(required_text(province, 80, "Tỉnh thành", "province"),
@@ -306,6 +310,12 @@ class TourStop:
     activity: str
     destination: Destination
 
+    def __post_init__(self):
+        integer_between(self.day_number, 1, 30, "Ngày lịch trình", "dayNumber")
+        object.__setattr__(self, "activity", required_text(self.activity, 2000, "Nội dung lịch trình", "activity"))
+        if not isinstance(self.destination, Destination):
+            raise ValidationError("Điểm ghé không hợp lệ.", "place")
+
     def write_row(self):
         return {"dayNumber": self.day_number, "place": self.destination.name, "activity": self.activity}
 
@@ -315,6 +325,23 @@ class Tour:
     id: str
     details: MappingProxyType
     stops: tuple[TourStop, ...] | None
+
+    def __post_init__(self):
+        object.__setattr__(self, "id", required_text(self.id, 70, "Mã tour", "id"))
+        if not isinstance(self.details, MappingProxyType):
+            raise ValidationError("Thông tin tour phải là bản ghi chỉ đọc.")
+        required_text(self.details.get("title"), 120, "Tên tour", "title")
+        required_text(self.details.get("province"), 80, "Tỉnh thành", "province")
+        required_text(self.details.get("place"), 120, "Điểm đến", "place")
+        integer_between(self.details.get("price"), 1, 1_000_000_000, "Giá tour", "price")
+        required_text(self.details.get("desc"), 4000, "Mô tả", "desc")
+        days = integer_between(self.details.get("days"), 1, 30, "Số ngày", "days")
+        if self.stops is not None:
+            if not isinstance(self.stops, tuple) or len(self.stops) != days or any(
+                not isinstance(stop, TourStop) or stop.day_number != index
+                for index, stop in enumerate(self.stops, start=1)
+            ):
+                raise ValidationError("Lịch trình phải có đủ nội dung mỗi ngày.")
 
     @classmethod
     def request(cls, tour_id, body):

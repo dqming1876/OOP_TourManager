@@ -39,16 +39,20 @@ def equal(left, right):
     return isinstance(right, str) and hmac.compare_digest(left.encode(), right.encode(errors="surrogatepass"))
 
 
-def clear_cookie(name):
-    return f"{name}={COOKIE_OPTIONS}0"
+def cookie_options(secure=True):
+    return f"; HttpOnly{'; Secure' if secure else ''}; SameSite=Strict; Path=/; Max-Age="
 
 
-def create_session(name, secret, customer_id=None):
+def clear_cookie(name, secure=True):
+    return f"{name}={cookie_options(secure)}0"
+
+
+def create_session(name, secret, customer_id=None, secure=True):
     if not secret:
         raise AppError(503, "Hệ thống tài khoản chưa sẵn sàng.")
     expiry = int(time.time() * 1000) + SESSION_SECONDS * 1000
     value = f"{customer_id}.{expiry}" if customer_id else str(expiry)
-    return f"{name}={value}.{signature(value, secret)}{COOKIE_OPTIONS}{SESSION_SECONDS}"
+    return f"{name}={value}.{signature(value, secret)}{cookie_options(secure)}{SESSION_SECONDS}"
 
 
 def session_identity(request, secret, name):

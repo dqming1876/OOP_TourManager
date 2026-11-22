@@ -14,99 +14,8 @@ const $ = (s) => document.querySelector(s),
         })[c],
     ),
   money = (n) => wholeNumber(n) + " ₫";
-const seed = [
-  [
-    "halong",
-    "Quảng Ninh",
-    "Hạ Long — một khoảng trời xanh",
-    "Vịnh Hạ Long",
-    3290000,
-    3,
-  ],
-  [
-    "trangan",
-    "Ninh Bình",
-    "Ninh Bình — giữa miền di sản",
-    "Tràng An",
-    1890000,
-    2,
-  ],
-  [
-    "hoian",
-    "Đà Nẵng",
-    "Đà Nẵng & Hội An — nắng bên hiên",
-    "Phố cổ Hội An",
-    4590000,
-    4,
-  ],
-  [
-    "dalat",
-    "Lâm Đồng",
-    "Đà Lạt — chậm một nhịp giữa thông",
-    "Đà Lạt",
-    2890000,
-    3,
-  ],
-  ["sapa", "Lào Cai", "Sa Pa — qua những mùa mây", "Sa Pa", 3590000, 3],
-  [
-    "phuquoc",
-    "An Giang",
-    "Phú Quốc — hẹn với biển xanh",
-    "Phú Quốc",
-    5290000,
-    4,
-  ],
-];
-let tours = seed.map((t, i) => ({
-  id: t[0],
-  province: t[1],
-  title: t[2],
-  place: t[3],
-  price: t[4],
-  days: t[5],
-  capacity: 24,
-  hidden: false,
-  dates: ["2026-12-05", "2026-12-12", "2026-12-19"],
-  desc: [
-    "Lênh đênh giữa những đảo đá, dành một buổi chiều thong thả ngắm vịnh và thưởng thức hải sản.",
-    "Đi thuyền qua những dãy núi đá vôi, ghé cố đô Hoa Lư và khám phá hương vị đất Ninh Bình.",
-    "Một hành trình nối biển Đà Nẵng với những con phố nhỏ Hội An, đủ thời gian để ngắm, ăn và dạo bước.",
-    "Dành những ngày mát lành cho đồi thông, hồ nước và những bữa ăn nóng hổi giữa phố núi.",
-    "Ghé bản làng, đi qua ruộng bậc thang và dành thời gian cho những cung đường quanh Sa Pa.",
-    "Thư thả bên bờ biển, dạo chợ và khám phá những món ăn quen thuộc của đảo ngọc.",
-  ][i],
-}));
-
-for (const p of PROVINCES) {
-  if (!tours.some((t) => t.province === p.name)) {
-    tours.push({
-      id: "province-" + p.id,
-      province: p.name,
-      title: p.name + " — khám phá " + p.attractions[0],
-      place: p.attractions[0],
-      price: 1890000 + (p.id % 5) * 300000,
-      days: 3,
-      capacity: 24,
-      hidden: false,
-      dates: ["2026-12-05", "2026-12-12", "2026-12-19"],
-      desc:
-        "Hành trình 3 ngày tại " +
-        p.name +
-        ", tập trung khám phá " +
-        p.attractions[0] +
-        ", tìm hiểu đời sống địa phương và thưởng thức những món ăn đặc trưng.",
-    });
-  }
-}
-for (const t of tours) {
-  if (!IMAGE_MAP[t.place]) {
-    let p = province(t.province);
-    let n = p.attractions.find((n) => IMAGE_MAP[n]);
-    if (n) t.place = n;
-  }
-}
-for (const tour of tours) tour.dates = [];
-let bookings = [],
+let tours = [],
+  bookings = [],
   user = null,
   adminTab = "overview";
 function toast(s) {
@@ -148,7 +57,7 @@ function card(t) {
     <div class="bottom">
     <div>
     <small>Từ </small>
-    <span class="price">${money(t.price)}</span>
+    <span class="price">${money(t.bookingPrice ?? t.price)}</span>
     <small> / khách</small>
     </div>
     <span class="arrow">→</span>
@@ -326,6 +235,7 @@ function catalog() {
     <option value="date">Khởi hành sớm nhất</option>
     </select>
     </label>
+    <button type="button" class="outline" onclick="resetTourFilters()">Xóa lọc</button>
     </div>
     <p id="count" class="muted">
     </p>
@@ -334,6 +244,16 @@ function catalog() {
     </section>`;
 }
 let visibleTours = 12;
+
+function resetTourFilters() {
+  $("#q").value = "";
+  $("#p").value = "";
+  $("#price").value = "0";
+  $("#days").value = "0";
+  $("#from-date").value = "";
+  $("#sort").value = "default";
+  filterTours();
+}
 
 function filterTours(showMore = false) {
   visibleTours = showMore ? visibleTours + 12 : 12;
@@ -346,8 +266,9 @@ function filterTours(showMore = false) {
   const firstDeparture = (tour) =>
     tour.dates.find((day) => day >= from) || "9999-12-31";
   const comparators = {
-    price: (a, b) => a.price - b.price,
-    "price-desc": (a, b) => b.price - a.price,
+    price: (a, b) => (a.bookingPrice ?? a.price) - (b.bookingPrice ?? b.price),
+    "price-desc": (a, b) =>
+      (b.bookingPrice ?? b.price) - (a.bookingPrice ?? a.price),
     days: (a, b) => a.days - b.days,
     date: (a, b) => firstDeparture(a).localeCompare(firstDeparture(b)),
   };
@@ -355,7 +276,7 @@ function filterTours(showMore = false) {
     (tour) =>
       !tour.hidden &&
       (!region || province(tour.province).region === region) &&
-      matchesPrice(tour.price, price) &&
+      matchesPrice(tour.bookingPrice ?? tour.price, price) &&
       (!days || tour.days === days) &&
       (!from || tour.dates.some((day) => day >= from)) &&
       (tour.title + " " + tour.province)
@@ -482,8 +403,8 @@ function detail(id) {
       <h2>Hương vị của ${esc(t.province)}</h2>
       <p class="notice">Gợi ý thưởng thức · Chi phí ăn uống tự túc.</p>${minis(p.specialties, p.id, "specialties")}</section>
       </div>
-    <aside class="booking-panel"><div class="eyebrow">ĐẶT CHUYẾN ĐI</div><span class="price">${money(t.price)}</span><small> / khách</small>
-    <form id="frm003_nv_dat_tour" data-price="${t.price}" class="form operation-form" data-validated novalidate onsubmit="placeOrder(event,'${t.id}')"><label>Ngày khởi hành<select id="departure" name="day" required onchange="quote('${t.id}')">${t.dates.length ? "" : '<option value="">Chưa có lịch còn chỗ</option>'}${t.dates.map((d) => `<option value="${d}">${date(d)} — ${remaining(t, d)} chỗ</option>`).join("")}</select></label>${guestStepper(id, "people", "adults", "Người lớn", 1, 100)}
+    <aside class="booking-panel"><div class="eyebrow">ĐẶT CHUYẾN ĐI</div><span class="price">${money(t.bookingPrice ?? t.price)}</span><small> / khách</small>${t.bookingPrice && t.bookingPrice < t.price ? ` <small class="muted"><s>${money(t.price)}</s></small>` : ""}
+    <form id="frm003_nv_dat_tour" data-price="${t.bookingPrice ?? t.price}" class="form operation-form" data-validated novalidate onsubmit="placeOrder(event,'${t.id}')"><label>Ngày khởi hành<select id="departure" name="day" required onchange="quote('${t.id}')">${t.dates.length ? "" : '<option value="">Chưa có lịch còn chỗ</option>'}${t.dates.map((d) => `<option value="${d}">${date(d)} — ${remaining(t, d)} chỗ</option>`).join("")}</select></label>${guestStepper(id, "people", "adults", "Người lớn", 1, 100)}
       ${guestStepper(id, "children", "children", "Trẻ em", 0, 99)}
       <p class="notice">Giá trẻ em bằng giá người lớn trong bản trải nghiệm. Mỗi khách sử dụng một chỗ.</p>
         <label>Họ tên người đại diện<input name="name" required maxlength="80" value="${esc(user?.name || "")}" autocomplete="name">
@@ -492,7 +413,7 @@ function detail(id) {
         </label>
         <div class="total">
         <span>Tổng tiền</span>
-        <b id="quote" class="number">${money(t.price)}</b>
+        <b id="quote" class="number">${money(t.bookingPrice ?? t.price)}</b>
         </div>
         <p class="submission-error" role="alert">
         </p>
@@ -561,7 +482,7 @@ function quote(id) {
   const tour = tours.find((item) => item.id === id);
   const guests = (+$("#people").value || 0) + (+$("#children").value || 0);
   const available = Math.max(0, remaining(tour, $("#departure").value));
-  $("#quote").textContent = money(tour.price * guests);
+  $("#quote").textContent = money((tour.bookingPrice ?? tour.price) * guests);
   $('.booking-panel form [type="submit"]').textContent =
     guests > available ? "Kiểm tra số chỗ →" : "Đặt tour →";
 }
@@ -579,7 +500,7 @@ function account() {
 }
 function authForm(register = false) {
   return `<h2>${register ? "Tạo tài khoản" : "Đăng nhập"}</h2>
-    <form id="${register ? "frm008_dang_ky" : "frm000_dang_nhap"}" class="form" onsubmit="${register ? "registerAccount" : "login"}(event)">${
+    <form id="${register ? "frm008_dang_ky" : "frm000_dang_nhap"}" class="form" data-validated novalidate onsubmit="${register ? "registerAccount" : "login"}(event)">${
       register
         ? '<label>Họ tên<input name="name" autocomplete="name" maxlength="80" required>' +
           "</label>"
@@ -588,22 +509,25 @@ function authForm(register = false) {
     </label>
     <label>Mật khẩu<input name="password" type="password" autocomplete="${register ? "new-password" : "current-password"}" required ${register ? 'minlength="6"' : ""} maxlength="128">
     </label>
-    <p id="auth-error" role="alert" style="color:var(--orange)">
+    <p id="auth-error" class="submission-error" role="alert" style="color:var(--orange)">
     </p>
-    <button>${register ? "Đăng ký" : "Đăng nhập"}</button>
+    <button type="submit">${register ? "Đăng ký" : "Đăng nhập"}</button>
     </form>
     <p style="text-align:center;margin-bottom:0">${register ? "Đã có tài khoản?" : "Chưa có tài khoản?"} <button class="auth-link" onclick="$('#modal-body').innerHTML=authForm(${!register})">${register ? "Đăng nhập" : "Đăng ký"}</button>
       </p>`;
 }
 async function authSubmit(e, path) {
   e.preventDefault();
-  let button = e.target.querySelector("button");
+  const form = e.target;
+  $("#auth-error").textContent = "";
+  if (!validateMingoForm(form)) return null;
+  let button = form.querySelector("button[type=submit]");
   button.disabled = true;
   try {
     let r = await fetch(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(Object.fromEntries(new FormData(e.target))),
+        body: JSON.stringify(Object.fromEntries(new FormData(form))),
       }),
       data = await r.json();
     if (!r.ok) {
@@ -884,7 +808,7 @@ async function openAdmin() {
       if (!adminScriptPromise)
         adminScriptPromise = new Promise((resolve, reject) => {
           const script = document.createElement("script");
-          script.src = "/admin.js?v=ocp1";
+          script.src = "/admin.js?v=review3";
           script.onload = resolve;
           script.onerror = () => {
             script.remove();

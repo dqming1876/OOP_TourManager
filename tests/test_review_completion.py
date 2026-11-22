@@ -113,7 +113,11 @@ class ReviewBoundaries(IsolatedAsyncioTestCase):
         self.assertEqual(public['description'], body['description'])
         self.assertEqual(public['version'], original['version'] + 1)
         self.assertEqual((await api(self.worker, target, {**public, 'url': 'javascript:alert(1)'}, self.admin)).status, 400)
-        self.assertEqual((await api(self.worker, target + '/remove', {'version': public['version']}, self.admin)).status, 200)
+        self.assertEqual((await api(self.worker, target, {**public, 'url': 'http://127.0.0.1:4173/images/demo.jpg'}, self.admin)).status, 400)
+        self.assertEqual((await api(self.worker, target, {**public, 'url': '/images/../secret.jpg'}, self.admin)).status, 400)
+        self.assertEqual((await api(self.worker, target, {**public, 'url': '/images/fill-north-6b2f8e99a0.jpg'}, self.admin)).status, 200)
+        reloaded = json.loads((await api(self.worker, path)).body)['entries'][0]
+        self.assertEqual((await api(self.worker, target + '/remove', {'version': reloaded['version']}, self.admin)).status, 200)
 
     async def test_destinations_duplicate_and_last_item_guard(self):
         path = '/api/ops/destinations'
