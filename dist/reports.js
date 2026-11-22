@@ -14,8 +14,9 @@ function reportPanel() {
     </div>
     <p class="submission-error" role="alert"></p>
   </form><div class="toolbar">
-    <button id="report-excel" class="outline" onclick="downloadReport()" disabled>Tải Excel</button>
-    <button id="report-pdf" class="outline" onclick="window.print()" disabled>In / Lưu PDF</button>
+    <button id="report-excel" class="outline" data-report-export onclick="downloadReport('xlsx')" disabled>Tải Excel</button>
+    <button class="outline" data-report-export onclick="downloadReport('csv')" disabled>Tải CSV</button>
+    <button id="report-pdf" data-report-export class="outline" onclick="window.print()" disabled>In / Lưu PDF</button>
   </div><section id="report-output" aria-live="polite"></section>`;
 }
 
@@ -39,8 +40,8 @@ async function loadReport() {
   const filter = Object.fromEntries(new FormData(form));
   const { kind, ...params } = filter;
   const output = $('#report-output');
-  const excel = $('#report-excel'), pdf = $('#report-pdf');
-  excel.disabled = pdf.disabled = true;
+  const exports = document.querySelectorAll('[data-report-export]');
+  exports.forEach(button => { button.disabled = true; });
   currentReport = null;
   output.textContent = '';
   form.querySelector('.submission-error').textContent = '';
@@ -56,7 +57,7 @@ async function loadReport() {
     const scope = (tours.find(t => t.id === params.tour)?.title || 'Tất cả tour') + ' · ' + (range || 'Mọi kỳ');
     currentReport = { ...body, kind, scope, printedOn };
     output.innerHTML = reportMarkup(currentReport);
-    excel.disabled = pdf.disabled = false;
+    exports.forEach(button => { button.disabled = false; });
   } catch (error) {
     if (request === reportRequest && output.isConnected) output.textContent = error.message;
   }
@@ -86,15 +87,16 @@ function cashChart(group) {
     <small>${money(row.refunded)}</small></div></div>`).join('')}</figure>`;
 }
 
-function downloadReport() {
+function downloadReport(format) {
   const report = currentReport;
-  if (!report) return;
-  const blob = reportWorkbook([[report.title], ['Ngày xuất', report.printedOn], ['Phạm vi', report.scope],
+  const exporter = reportExporters.get(format);
+  if (!report || !exporter) return;
+  const blob = exporter.export([[report.title], ['Ngày xuất', report.printedOn], ['Phạm vi', report.scope],
     [report.note], [], report.headers, ...report.rows, report.total]);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = 'mingo-' + report.kind + '.xlsx';
+  anchor.download = 'mingo-' + report.kind + '.' + exporter.extension;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

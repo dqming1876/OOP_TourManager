@@ -25,3 +25,7 @@ Mã R01–R07 đối chiếu với [quy tắc nghiệp vụ ở trục 3](checkl
 ## Đọc một ca theo AAA
 
 UT-08 **Arrange** tạo tài khoản khách, ngày cố định và stub `place_booking` trả thất bại. **Act** gửi yêu cầu đặt cho 2 người lớn và 1 trẻ em. **Assert** kiểm 409, trường ngày, đúng một lần gọi port, giá trị 3 khách và ID đã lấy từ phiên. Kết quả mong đợi là hằng từ tình huống và quy tắc, không gọi lại hàm sản phẩm để sinh expected. [Bộ Unit](../tests/test_unit_axis5.py)
+
+## Bổ sung sau rà soát
+
+Bổ sung `tests/test_review_completion.py`: quyền trực tiếp của 4 service method với khách và vô danh; pending/paid; sức chứa bằng reserved; ngày báo cáo bằng hôm nay; mật khẩu 5/6 ký tự; danh mục dùng chung và nâng cấp schema. Test ngưỡng 12/13 nằm trong `tests/test_login_limits.py`.

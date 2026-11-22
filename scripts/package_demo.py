@@ -14,7 +14,7 @@ def main():
     if args.file.suffix != ".zip":
         parser.error("Dùng đường dẫn có đuôi .zip.")
     items = ("dist", "Database", "backend", "scripts", "tests", "docs", "entry.py",
-             "package.json", "package-lock.json", "README.md", "wrangler.jsonc",
+             "pyproject.toml", "pylock.toml", "uv.lock", "package.json", "package-lock.json", "README.md", "wrangler.jsonc",
              "wrangler.example.jsonc", ".dev.vars.example", ".gitignore")
     with ZipFile(args.file, "x", compression=ZIP_DEFLATED) as archive:
         for name in items:

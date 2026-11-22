@@ -4,12 +4,21 @@ import json
 from collections import defaultdict
 
 from .domain import Booking, Departure, PaymentEvent, ConflictError
+from .pricing import PricingPolicy, StandardPrice
 from .views import booking_view, departure_view, payment_view
 
 
 class AccountsRepository:
     def __init__(self, db):
         self.db = db
+
+    async def ensure_admin(self, username, password_hash, salt):
+        # Bootstrap once. An existing customer is never promoted by a username collision.
+        await self.db.execute("""
+            INSERT INTO accounts (id,username,name,password_hash,salt,role)
+            VALUES ('admin',?,'Quản trị viên',?,?,'admin')
+            ON CONFLICT DO NOTHING
+        """, username, password_hash, salt)
 
     async def claim_attempt(self, key, now):
         await self.db.execute("DELETE FROM login_attempts WHERE expires_at <= ?", now)
@@ -25,7 +34,7 @@ class AccountsRepository:
 
     async def find_public(self, account_id):
         return await self.db.first(
-            "SELECT id, username, name, email, phone, address, birthday FROM accounts WHERE id = ?", account_id
+            "SELECT id, username, name, role, email, phone, address, birthday FROM accounts WHERE id = ?", account_id
         )
 
     async def find_by_username(self, username):
@@ -45,8 +54,9 @@ class AccountsRepository:
 
 
 class BookingRepository:
-    def __init__(self, db):
+    def __init__(self, db, pricing: PricingPolicy | None = None):
         self.db = db
+        self.pricing = StandardPrice() if pricing is None else pricing
 
     async def list_bookings(self, user_id):
         if user_id is None:
@@ -67,28 +77,40 @@ class BookingRepository:
         return [payment_view(PaymentEvent(**row)) for row in rows]
 
     async def place_booking(self, booking, today):
-        # The primary key and seat trigger make retries atomic, including across isolates.
+        # Retry is resolved before checking today's catalog price: historical orders are immutable.
+        previous = await self.db.first("SELECT * FROM bookings WHERE id = ?", booking.id)
+        if previous:
+            return self.same_request(previous, booking)
+        tour = await self.db.first("SELECT price FROM tours WHERE id = ?", booking.tour_id)
+        if tour is None:
+            return False
+        list_price = tour["price"]
+        unit_price = self.pricing.unit_price(list_price)
+        if type(unit_price) is not int or not 1 <= unit_price <= 1_000_000_000:
+            raise ValueError("Giá chốt phải là số nguyên dương hợp lệ.")
+        if booking.unit_price is not None and booking.unit_price != unit_price:
+            raise ConflictError("Giá tour đã thay đổi. Vui lòng tải lại trang và xác nhận giá mới.", "expectedPrice")
         inserted = await self.db.execute("""
             INSERT INTO bookings (id,user_id,tour_id,day,title,name,phone,adults,children,unit_price)
-            SELECT ?,?,t.id,d.day,json_extract(t.content,'$.title'),?,?,?,?,t.price
+            SELECT ?,?,t.id,d.day,t.title,?,?,?,?,?
             FROM departures d JOIN tours t ON t.id = d.tour_id
             WHERE t.id = ? AND d.day = ? AND d.day >= ? AND t.hidden = 0
               AND d.capacity - d.reserved >= ? AND t.price = ?
             ON CONFLICT(id) DO NOTHING
         """, booking.id, booking.user_id, booking.name, booking.phone, booking.adults,
-            booking.children, booking.tour_id, booking.day, today, booking.people, booking.unit_price)
+            booking.children, unit_price, booking.tour_id, booking.day, today, booking.people, list_price)
         if inserted:
             return True
         previous = await self.db.first("SELECT * FROM bookings WHERE id = ?", booking.id)
-        if previous:
-            fields = ("user_id", "tour_id", "day", "name", "phone", "adults", "children", "unit_price")
-            if all(previous[key] == getattr(booking, key) for key in fields):
-                return True
-            raise ConflictError("Mã yêu cầu đã được dùng cho nội dung khác. Vui lòng mở lại trang đặt tour.")
-        tour = await self.db.first("SELECT price FROM tours WHERE id = ?", booking.tour_id)
-        if tour and tour["price"] != booking.unit_price:
-            raise ConflictError("Giá tour đã thay đổi. Vui lòng tải lại trang và xác nhận giá mới.", "expectedPrice")
-        return False
+        return self.same_request(previous, booking) if previous else False
+
+    @staticmethod
+    def same_request(previous, booking):
+        fields = ("user_id", "tour_id", "day", "name", "phone", "adults", "children")
+        price_matches = booking.unit_price is None or previous["unit_price"] == booking.unit_price
+        if price_matches and all(previous[key] == getattr(booking, key) for key in fields):
+            return True
+        raise ConflictError("Mã yêu cầu đã được dùng cho nội dung khác. Vui lòng mở lại trang đặt tour.")
 
     async def update_booking(self, booking_id, rule, owner_id, today):
         return await self.db.execute("""
@@ -126,7 +148,7 @@ class ReportsRepository:
                 GROUP BY month, state ORDER BY month, state
             """, (today, today, *bounds)),
             ("""
-                SELECT d.day, json_extract(t.content,'$.title') AS tour, d.capacity,
+                SELECT d.day, t.title AS tour, d.capacity,
                   d.reserved AS reserved, d.capacity - d.reserved AS available
                 FROM departures d JOIN tours t ON t.id = d.tour_id
                 WHERE d.day BETWEEN ? AND ? AND (? = '' OR d.tour_id = ?)
@@ -163,7 +185,7 @@ class TourCatalogRepository:
         for row in stops:
             itineraries[row["tour_id"]].append(row)
         return [{
-            **json.loads(row["content"]), "id": row["id"], "price": row["price"], "hidden": bool(row["hidden"]),
+            **row, "hidden": bool(row["hidden"]),
             "itinerary": [stop["activity"] for stop in itineraries[row["id"]]],
             "stops": [stop["place"] for stop in itineraries[row["id"]]],
             "departures": schedules[row["id"]],
@@ -174,10 +196,13 @@ class TourCatalogRepository:
             return False
         content = dict(tour.details)
         price = content.pop("price")
-        write = "INSERT INTO tours (price, content, id) VALUES (?, ?, ?)" if create else (
-            "UPDATE tours SET price = ?, content = ? WHERE id = ?"
-        )
-        params = (price, json.dumps(content, ensure_ascii=True), tour.id)
+        columns = ("price", "title", "province", "place", "days", "desc", "category",
+                   "pickup", "includes", "excludes", "coverSource", "cover")
+        quoted = ",".join('"' + column + '"' for column in columns)
+        assignments = ",".join('"' + column + '" = ?' for column in columns)
+        write = (f"INSERT INTO tours ({quoted},id) VALUES ({','.join('?' for _ in columns)},?)"
+                 if create else f"UPDATE tours SET {assignments} WHERE id = ?")
+        params = (price, *(content.get(column, "") for column in columns[1:]), tour.id)
         if tour.stops is None:
             return await self.db.execute(write, *params) == 1
         details = json.dumps([stop.write_row() for stop in tour.stops], ensure_ascii=True)
@@ -220,3 +245,37 @@ class TourCatalogRepository:
             DELETE FROM departures WHERE tour_id = ? AND day = ?
               AND NOT EXISTS (SELECT 1 FROM bookings WHERE tour_id = ? AND day = ?)
         """, tour_id, day, tour_id, day) == 1
+
+
+class DestinationsRepository:
+    def __init__(self, db):
+        self.db = db
+
+    async def list_entries(self):
+        return await self.db.all("SELECT * FROM destination_entries ORDER BY province_id,kind,rowid")
+
+    async def save_entry(self, entry_id, values, version):
+        fields = (values['province_id'], values['kind'], values['name'], values['description'],
+                  values['url'], values['source'])
+        if version is None:
+            return await self.db.execute("""
+                INSERT INTO destination_entries(id,province_id,kind,name,description,url,source)
+                SELECT ?,?,?,?,?,?,? WHERE NOT EXISTS (
+                    SELECT 1 FROM destination_entries WHERE province_id=? AND kind=? AND name=?
+                )
+            """, entry_id, *fields, *fields[:3]) == 1
+        return await self.db.execute("""
+            UPDATE destination_entries SET name=?,description=?,url=?,source=?,version=version+1
+            WHERE id=? AND version=? AND province_id=? AND kind=? AND NOT EXISTS (
+                SELECT 1 FROM destination_entries WHERE province_id=? AND kind=? AND name=? AND id<>?
+            )
+        """, *fields[2:], entry_id, version, *fields[:2], *fields[:3], entry_id) == 1
+
+    async def remove_entry(self, entry_id, version):
+        return await self.db.execute("""
+            DELETE FROM destination_entries WHERE id=? AND version=? AND (
+                SELECT count(*) FROM destination_entries siblings
+                WHERE siblings.province_id=destination_entries.province_id
+                  AND siblings.kind=destination_entries.kind
+            ) > 1
+        """, entry_id, version) == 1

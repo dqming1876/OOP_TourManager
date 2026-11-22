@@ -25,3 +25,7 @@ Tour báo cáo, kỳ **10–12/05/2028**. Dữ liệu cụ thể được dựng
 Tổng thu **2.500.000 ₫**, hoàn **1.000.000 ₫**, thu ròng **1.500.000 ₫**. Dòng tổng gồm **2 đơn, 5 khách**. Dòng hủy riêng có 1 đơn và 1 khách. Hai đợt có sức chứa 6, lần lượt còn **4** và **3** chỗ. Nếu lọc đúng ngày 12/05, thu bằng 0 và hoàn 1.000.000 ₫. Đây là dòng tiền theo ngày ghi nhận, nên khoản hoàn trong kỳ vẫn xuất hiện khi khoản thu gốc ở kỳ khác.
 
 Kết quả được đối chiếu trực tiếp cả tại SQL và qua [Strategy đang dùng để dựng bảng và tệp xuất](../dist/report-strategies.js).
+
+## Bổ sung sau rà soát
+
+Kiểm tra sửa/xóa danh mục với version cũ trả 409, khách không được sửa, không xóa mục cuối nhóm; tài khoản admin được đọc từ DB. Migration test chạy trên schema cũ có dữ liệu trước khi nâng cấp và kiểm FK, nội dung tour.

@@ -181,8 +181,8 @@ class Operations(IsolatedAsyncioTestCase):
         self.worker.db.queries.clear()
         all_orders = await self.request("/api/ops/reports", token=self.admin)
         self.assertEqual(sum(row["orders"] for row in json.loads(all_orders.body)["bookings"]), 120)
-        self.assertEqual(len(self.worker.db.queries), 3)
-        plan = self.db.execute("EXPLAIN QUERY PLAN " + self.worker.db.queries[1],
+        self.assertEqual(len(self.worker.db.queries), 5)
+        plan = self.db.execute("EXPLAIN QUERY PLAN " + self.worker.db.queries[-2],
                                (TODAY, TODAY, FUTURE, "2028-03-09", "", "")).fetchall()
         self.assertTrue(any("bookings_report_by_day" in row["detail"] for row in plan))
         path = f"/api/ops/reports?tour=axis5-tour&from={FUTURE}&to={FUTURE}"
@@ -192,7 +192,7 @@ class Operations(IsolatedAsyncioTestCase):
             start = perf_counter()
             response = await self.request(path, token=self.admin)
             timings.append((perf_counter() - start) * 1000)
-            self.assertEqual(len(self.worker.db.queries), 3)
+            self.assertEqual(len(self.worker.db.queries), 5)
             self.assertEqual(json.loads(response.body)["bookings"], [
                 {"month": "2028-03", "state": "confirmed", "orders": 60, "guests": 60},
             ])

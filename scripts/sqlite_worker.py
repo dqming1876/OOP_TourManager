@@ -28,7 +28,7 @@ class SQLiteDatabase:
         return [dict(row) for row in self.query(sql, values)]
 
     async def execute(self, sql, *values):
-        return self.query(sql, values).rowcount
+        return len(self.query(sql.rstrip().rstrip(";") + " RETURNING 1", values).fetchall())
 
     async def batch(self, statements):
         self.connection.execute("BEGIN")

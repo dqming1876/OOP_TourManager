@@ -12,19 +12,19 @@ class SharedLoginLimits(IsolatedAsyncioTestCase):
 
     async def test_login_limit_shared_across_app_instances_and_expires(self):
         body = {'username': 'demo_admin', 'password': 'wrong-test-password'}
-        with patch('backend.services.time', return_value=1000):
+        with patch('backend.login_limits.time', return_value=1000):
             for _ in range(12):
                 self.worker.app = Application()
                 self.assertEqual((await api(self.worker, '/api/auth/login', body)).status, 401)
             self.worker.app = Application()
             self.assertEqual((await api(self.worker, '/api/auth/login', body)).status, 429)
-        with patch('backend.services.time', return_value=1299):
+        with patch('backend.login_limits.time', return_value=1299):
             self.assertEqual((await api(self.worker, '/api/auth/login', body)).status, 429)
-        with patch('backend.services.time', return_value=1300):
+        with patch('backend.login_limits.time', return_value=1300):
             self.assertEqual((await api(self.worker, '/api/auth/login', body)).status, 401)
 
     async def test_successful_login_clears_attempt_window(self):
-        with patch('backend.services.time', return_value=1000):
+        with patch('backend.login_limits.time', return_value=1000):
             for _ in range(11):
                 await api(self.worker, '/api/auth/login', {'username': 'demo_admin', 'password': 'wrong'})
             response = await api(self.worker, '/api/auth/login', {'username': 'demo_admin', 'password': self.worker.admin_password})

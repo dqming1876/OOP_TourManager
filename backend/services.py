@@ -3,11 +3,10 @@
 import re
 from dataclasses import replace
 from hashlib import sha256
-from time import time
-import hmac
 from uuid import uuid4
 
-from .auth import ADMIN_COOKIE, CUSTOMER_COOKIE, Settings, derive_password, equal, session_identity
+from .auth import Settings, derive_password, equal
+from .login_limits import LoginRateLimiter
 from .domain import (
     ADMIN, CUSTOMER, AccessError, AdministratorAccount, AppError, Booking, ConflictError,
     CustomerAccount, Departure, Tour, ValidationError, calendar_day, text_length, integer_between, required_text,
@@ -35,46 +34,45 @@ class AccountsService:
             raise AppError(503, "Hệ thống tài khoản chưa sẵn sàng.")
         return self.repository
 
-    async def current_account(self, request):
-        if session_identity(request, self.settings.secret, ADMIN_COOKIE):
-            return AdministratorAccount(self.settings.username)
-        account_id = session_identity(request, self.settings.secret, CUSTOMER_COOKIE)
-        row = await self.repository.find_public(account_id) if account_id and self.repository else None
-        return CustomerAccount(row) if row else None
-
-    async def record_attempt(self, request):
-        address = request.header("CF-Connecting-IP") or "local"
-        key = hmac.new((self.settings.secret or "local").encode(), address.encode(), "sha256").hexdigest()
-        ticket = await self.accounts().claim_attempt(key, int(time()))
-        if ticket is None:
-            raise AppError(429, "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau 5 phút.")
-        return key, ticket["expires_at"]
-
-    async def login_account(self, request, body, admin_only=False):
-        username, password = credentials(body)
-        key, expires_at = await self.record_attempt(request)
+    async def bootstrap_admin(self):
         settings = self.settings
-        if username == (settings.username or "").lower():
-            if not (settings.salt and settings.password_hash and settings.secret):
-                raise AppError(503, "Tài khoản quản trị chưa được cấu hình.")
-            if equal(await self.derive(password, settings.salt), settings.password_hash):
-                await self.accounts().clear_attempts(key, expires_at)
-                return AdministratorAccount(settings.username).public(), ADMIN_COOKIE
-        elif not admin_only:
-            row = await self.accounts().find_by_username(username)
-            digest = await self.derive(password, row["salt"] if row else "dummy-login-salt")
-            if row and equal(digest, row["password_hash"]):
-                await self.accounts().clear_attempts(key, expires_at)
-                return CustomerAccount(row).public(), CUSTOMER_COOKIE
+        if settings.username and settings.salt and settings.password_hash:
+            await self.accounts().ensure_admin(settings.username.lower(), settings.password_hash, settings.salt)
+
+    async def current_account(self, identity):
+        if not identity:
+            return None
+        if identity == "admin":
+            await self.bootstrap_admin()
+        row = await self.accounts().find_public(identity)
+        if not row:
+            return None
+        return AdministratorAccount(row["username"]) if row["role"] == ADMIN else CustomerAccount(row)
+
+    def limiter(self):
+        return LoginRateLimiter(self.accounts(), self.settings.secret)
+
+    async def login_account(self, address, body, admin_only=False):
+        username, password = credentials(body)
+        limiter = self.limiter()
+        ticket = await limiter.claim(address)
+        await self.bootstrap_admin()
+        row = await self.accounts().find_by_username(username)
+        digest = await self.derive(password, row["salt"] if row else "dummy-login-salt")
+        if row and equal(digest, row["password_hash"]) and (not admin_only or row["role"] == ADMIN):
+            await limiter.clear(ticket)
+            user = AdministratorAccount(row["username"]) if row["role"] == ADMIN else CustomerAccount(row)
+            return user.public()
         raise AccessError(401, "Tài khoản hoặc mật khẩu không đúng.")
 
-    async def register_account(self, request, body):
+    async def register_account(self, address, body):
         username, password = credentials(body)
         name = body.get("name")
         name = name.strip() if isinstance(name, str) else ""
         if not name or text_length(name) > 80 or not re.fullmatch(r"[a-z0-9_]{3,32}", username) or text_length(password) < 6:
             raise ValidationError("Nhập họ tên, tên đăng nhập 3–32 ký tự hợp lệ và mật khẩu tối thiểu 6 ký tự.")
-        key, expires_at = await self.record_attempt(request)
+        limiter = self.limiter()
+        ticket = await limiter.claim(address)
         repository = self.accounts()
         if username == (self.settings.username or "").lower() or await repository.find_by_username(username):
             raise ConflictError("Tên đăng nhập đã được sử dụng.")
@@ -82,11 +80,11 @@ class AccountsService:
         digest = await self.derive(password, salt)
         if not await repository.create(str(uuid4()), username, name, digest, salt):
             raise ConflictError("Tên đăng nhập đã được sử dụng.")
-        await self.accounts().clear_attempts(key, expires_at)
+        await limiter.clear(ticket)
 
-    async def save_customer_profile(self, request, body):
-        user = await self.current_account(request)
-        if not user or user.role != CUSTOMER:
+    async def save_customer_profile(self, identity, body):
+        user = await self.current_account(identity)
+        if not user or not user.has_role(CUSTOMER):
             raise AccessError(401, "Vui lòng đăng nhập tài khoản khách hàng.")
         profile = user.validate_update(body)
         await self.accounts().update_profile(user.id, profile)
@@ -100,7 +98,7 @@ class AccessPolicy:
     def require_role(self, role):
         if self.actor is None:
             raise AccessError(401, "Vui lòng đăng nhập.")
-        if self.actor.role != role:
+        if not self.actor.has_role(role):
             raise AccessError(403, "Bạn không có quyền thực hiện thao tác này.")
 
     def booking_scope(self):
@@ -135,7 +133,7 @@ class BookingService:
 
     async def update_booking(self, booking_id, action):
         actor = self.access.actor
-        customer_cancel = action == "cancel" and actor is not None and actor.role == CUSTOMER
+        customer_cancel = action == "cancel" and actor is not None and actor.cancellation_owner() is not None
         rule = Booking.transition(action, customer_cancel)
         self.access.require_role(CUSTOMER if customer_cancel else ADMIN)
         owner_id = actor.id if customer_cancel else None
@@ -151,7 +149,7 @@ class TourCatalogService:
 
     async def catalog(self):
         actor = self.access.actor
-        return await self.repository.catalog(actor is not None and actor.role == ADMIN)
+        return await self.repository.catalog(actor is not None and actor.manages_catalog)
 
     async def save_tour(self, tour_id, body):
         self.access.require_role(ADMIN)

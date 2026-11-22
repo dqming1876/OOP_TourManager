@@ -13,7 +13,7 @@
 ## Quy ước
 
 - ID form theo nhóm chức năng, ví dụ `frm000_dang_nhap`, `frm001_dm_tour`, `frm002_nv_lich_khoi_hanh`, `frm003_nv_dat_tour` và `frm007_bc_don_dat`. Có thể kiểm tra ID trên DOM khi mở màn hình tương ứng.
-- File theo `kebab-case`, lớp theo `PascalCase` như `BookingService`, phương thức và biến theo `camelCase` như `bookingReport`.
+- Module Python, phương thức và biến dùng `snake_case`; lớp dùng `PascalCase` như `BookingService`. JavaScript giao diện giữ `camelCase`.
 - Điểm vào thực tế là [entry.py](../entry.py). Python Worker nạp các module của backend qua import.
 - Kiểm tra hai file [app.py](../backend/app.py) và [services.py](../backend/services.py) để thấy tách biệt HTTP, xác thực và nghiệp vụ. [app.js](../dist/app.js) có một điểm render, một hàm lọc tour và một luồng dựng chi tiết; không còn các lớp ghi đè hàm cũ.
 

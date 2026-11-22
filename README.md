@@ -201,7 +201,7 @@ Các lệnh `python3 -m unittest ...` không cần cài Node.js. Các lệnh `np
 
 ## Triển khai lên Cloudflare
 
-Cài dependency bằng `npm ci` và `uv sync --locked`. Nếu triển khai vào tài khoản/Worker mới, sao chép `wrangler.example.jsonc` thành `wrangler.deploy.jsonc` (đã được gitignore), điền tên Worker, account và D1 của bạn. Các lệnh dưới đây luôn chỉ rõ tệp cấu hình đích. **`wrangler.jsonc` trong repo trỏ tới Mingo hiện có**, chỉ sử dụng tệp đó khi chủ đích nâng cấp chính môi trường này.
+Cài dependency bằng `npm ci` và `uv sync --locked`. Nếu triển khai vào tài khoản/Worker mới, sao chép `wrangler.example.jsonc` thành `wrangler.deploy.jsonc` (đã được gitignore), điền tên Worker, account và D1 của bạn. Các lệnh dưới đây luôn chỉ rõ tệp cấu hình đích. `wrangler.jsonc` và `wrangler.example.jsonc` dùng ID giả cho local. Cấu hình triển khai thật đặt trong `wrangler.deploy.jsonc` đã gitignore; giữ tên Worker và D1 của môi trường cần nâng cấp.
 
 1. **Tạo D1 riêng** nếu chưa có: `npx wrangler d1 create <tên-database> --config wrangler.deploy.jsonc`; điền ID vào cấu hình, giữ binding `DB`.
 2. **Migration**: `npx wrangler d1 migrations apply DB --remote --config wrangler.deploy.jsonc`. Bản này cần `0006_login_attempts.sql` để lưu giới hạn đăng nhập dùng chung giữa các Worker; migration không sửa dữ liệu khách hàng hay đơn.
@@ -264,7 +264,7 @@ Phiếu đánh giá của học phần gồm **2 trục**: **Trục I** (hoàn t
 
 ## Hạn chế
 
-- **Địa danh và đặc sản:** thay đổi từ trình chỉnh sửa riêng chỉ lưu trên trình duyệt đang dùng. Các thay đổi này không đồng bộ giữa các máy và không ghi vào D1. Tour, lịch và đơn thì lưu trên D1.
+- **Địa danh và đặc sản:** lưu dùng chung trong D1, tự tải lại khi mở trang hoặc quay lại cửa sổ. Bản localStorage cũ không tự ghi đè dữ liệu chung; cần đối chiếu và nhập lại các chỉnh sửa muốn giữ.
 - **Bản demo SQLite:** dữ liệu nằm trong bộ nhớ nên mất khi dừng máy chủ và được tạo lại (126 đơn) ở lần chạy sau.
 
 ## Giấy phép và tác giả
@@ -284,3 +284,11 @@ Phiếu đánh giá của học phần gồm **2 trục**: **Trục I** (hoàn t
 Sau khi áp dụng migration và chạy `npm run dev`, mở terminal khác, đặt `MINGO_SMOKE_ADMIN` bằng tên quản trị cục bộ rồi chạy `python3 -m tests.worker_smoke`. Lệnh hỏi mật khẩu qua đầu vào ẩn, chỉ chấp nhận localhost, tạo tour/khách/đơn giả trong D1 cục bộ và kiểm tra gửi lại đơn, giá cũ, hủy đơn, báo cáo. Có thể đổi địa chỉ qua `MINGO_SMOKE_ORIGIN` (mặc định `http://localhost:8787`).
 
 `pywrangler` đóng gói SDK đã khóa phiên bản; build gọi `scripts.prepare_worker` để chỉ đưa `entry.py` và `backend/` vào `.wrangler/python-src`, tránh đưa môi trường ảo, test và script demo vào Worker.
+
+## Nâng cấp sau rà soát Python
+
+- Áp dụng migration 0006–0009 trước khi chạy mã mới. Không sửa migration đã áp dụng; sao lưu/export D1 trước nâng cấp production.
+- Migration 0007 giữ nguyên khách cũ, thêm vai trò; admin được bootstrap một lần từ `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `ADMIN_PASSWORD_SALT`. Sau đó DB là nguồn xác thực: đổi secrets không tự ghi đè mật khẩu admin đã lưu. Muốn đổi mật khẩu, tạo hash/salt mới và cập nhật bản ghi admin qua công cụ quản trị DB được cấp quyền; không commit chúng.
+- Migration 0008 chuyển thuộc tính tour sang cột, giữ JSON gốc trong `legacy_tour_content` để đối chiếu. Migration 0009 nạp 204 mục địa danh/đặc sản từ tài nguyên đang có, không thay lịch trình hay đơn cũ.
+- Chạy `python3 -m scripts.verify_review` để kiểm tra 11 lỗi tiêm thử; `npm test` chạy cả Python và JavaScript. Trên PowerShell, chạy `node --test (Get-ChildItem tests/frontend/*.test.js).FullName` để bao gồm toàn bộ test frontend.
+- Minh chứng kiểm chứng và giới hạn môi trường: [Rà soát Python](docs/review-verification.md).

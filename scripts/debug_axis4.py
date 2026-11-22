@@ -48,7 +48,7 @@ async def check():
         tour_id = json.loads(tour.body)["id"]
         slot = await api(worker, f"/api/ops/tours/{tour_id}/departures", {"day": FUTURE, "capacity": 3}, admin)
         assert slot.status == 200
-        booking = await api(worker, "/api/ops/bookings", {**ORDER, "tourId": tour_id}, guest)
+        booking = await api(worker, "/api/ops/bookings", {**ORDER, "tourId": tour_id, "expectedPrice": TOUR["price"]}, guest)
         assert booking.status == 201
         booking_id = json.loads(booking.body)["id"]
         collect = await api(worker, f"/api/ops/bookings/{booking_id}/collect", {}, admin)

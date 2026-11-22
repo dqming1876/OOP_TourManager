@@ -45,8 +45,8 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 | `Departure` | `departures` | Kiểm ngày và sức chứa trước ghi. Tính chỗ còn từ sức chứa trừ chỗ đã giữ khi dựng danh mục. |
 | `Booking` | `bookings` | Kiểm số khách và thông tin liên hệ, tính tổng tiền từ giá chốt, quyết định trạng thái/ngày/tiền được phép chuyển. |
 | `PaymentEvent` | `payment_events` | Tính trị giá có dấu của khoản thu/hoàn. DTO khoản tiền có dấu được phiếu admin cộng thành thu ròng. |
-| `CustomerAccount` | `accounts` | Kiểm dữ liệu cập nhật hồ sơ. `bookingScope()` trả ID chủ đơn để giới hạn phạm vi đọc. |
-| `AdministratorAccount` | Danh tính admin từ phiên và cấu hình Worker | `bookingScope()` cho phạm vi quản trị toàn bộ đơn. `toPublic()` chỉ đưa danh tính công khai ra HTTP. |
+| `CustomerAccount` | `accounts` | Kiểm dữ liệu cập nhật hồ sơ. `booking_scope()` trả ID chủ đơn để giới hạn phạm vi đọc. |
+| `AdministratorAccount` | Bảng `accounts` có FK `role` tới `roles`; cấu hình chỉ khởi tạo admin lần đầu | `booking_scope()` cho phạm vi quản trị toàn bộ đơn. `public()` chỉ đưa danh tính công khai ra HTTP. |
 
 `Account` là lớp cơ sở nội bộ cho hai loại tài khoản, không tính vào tám lớp cụ thể. Python kiểm tra các tập giá trị trạng thái đơn (pending, confirmed, cancelled), loại giao dịch (collect, refund) và vai trò (admin, customer). Trạng thái báo cáo “quá hạn/hoàn thành” là giá trị suy ra từ ngày, trạng thái và thanh toán. [Mã miền](../backend/domain.py) · [Repository tour](../backend/repositories.py) · [Repository đơn](../backend/repositories.py)
 
@@ -55,3 +55,7 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 `bookings.unit_price` được lấy từ `tours.price` ngay trong câu lệnh tạo đơn. `Booking.total` tính `(adults + children) × unitPrice` từ bản chụp trên phiếu. Ví dụ test đặt 3 người lúc giá 1.200.000 ₫, rồi sửa tour lên 5.000.000 ₫. Giá trị đơn cũ vẫn là 3.600.000 ₫. `bookings.title` cũng là bản chụp để tên hiển thị trên phiếu cũ giữ được ý nghĩa lịch sử. [Kiểm thử](../tests/test_operations.py)
 
 Nếu đổi quan hệ Tour–Đợt từ 1–n sang n–n thì đợt có định danh riêng và cần bảng nối có khóa `(tour_id, departure_id)`. Cần quyết định chỗ giữ dùng chung cho đợt hay theo tour. Khi đó `Departure`, khóa ngoại của `Booking`, trigger giữ/trả chỗ và truy vấn sức chứa đều cần sửa theo lựa chọn đó. Trước khi đổi, phải ánh xạ các đơn lịch sử sang khóa mới để giữ chính xác ngày và tour đã đặt.
+
+## Bổ sung sau rà soát
+
+Ba kiểu `StrEnum`: `Role`, `BookingStatus`, `PaymentKind`. Booking và PaymentEvent chuyển đầu vào về Enum và từ chối giá trị không hợp lệ; JSON vẫn dùng giá trị chuỗi tương thích giao diện.

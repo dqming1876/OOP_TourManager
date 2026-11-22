@@ -9,7 +9,8 @@
     "test": "python3 -m unittest discover && node --test tests/frontend/*.test.js",
     "test:unit": "python3 -m unittest tests.test_unit_axis5",
     "test:integration": "python3 -m unittest tests.test_integration_axis5",
-    "test:mutation": "python3 -m scripts.verify_axis5"
+    "test:mutation": "python3 -m scripts.verify_axis5",
+    "test:review": "python3 -m scripts.verify_review"
   },
   "devDependencies": {
     "wrangler": "4.166.0"

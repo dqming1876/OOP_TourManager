@@ -9,8 +9,7 @@
 
 ## Kết quả cục bộ
 
-- `npm test` tạo **120 đơn**, đo **30 lượt** lọc ngày và tour, xác minh mỗi lượt trả 60 đơn xác nhận và 60 khách. Phân tích truy vấn xác nhận ba câu lệnh cố định và index theo ngày. P95 được in khi chạy test, chỉ gồm Worker/SQLite nội bộ.
-- Kiểm tra DOM mô phỏng trên 120 tour: màn hình khởi tạo dựng 12 thẻ, sau Xem thêm dựng 24. Báo cáo hiển thị số liệu trả về từ Worker; các nút xuất tải đúng trạng thái.
+- `python3 -m unittest discover` chạy ca tạo **120 đơn**, đo **30 lượt** lọc ngày và tour, xác minh mỗi lượt trả 60 đơn xác nhận và 60 khách. Phân tích truy vấn xác nhận ba câu lệnh cố định và index theo ngày. P95 được in khi chạy test, chỉ gồm Worker/SQLite nội bộ.
 - Tạo D1 cục bộ và kiểm tra bundle bằng Wrangler. Cách đổi cấu hình và tái lập dữ liệu có trong [README](../README.md).
 
 Tài liệu đối chiếu: [Cloudflare D1 Database](https://developers.cloudflare.com/d1/worker-api/d1-database/) và [Workers local secrets](https://developers.cloudflare.com/workers/local-development/environment-variables/).

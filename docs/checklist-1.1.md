@@ -16,8 +16,8 @@
 
 | UC | Nhánh | Người dùng | Form hoặc màn hình | Điểm xử lý |
 | --- | --- | --- | --- | --- |
-| UC01 Quản lý tour | 1 | Admin | Quản lý tour → biên tập tour | `TourCatalogService.save_tour/setVisibility` |
-| UC02 Quản lý lịch | 2 | Admin | Lịch khởi hành → chọn tour và lưu đợt | `TourCatalogService.save_departure/removeDeparture` |
+| UC01 Quản lý tour | 1 | Admin | Quản lý tour → biên tập tour | `TourCatalogService.save_tour/set_visibility` |
+| UC02 Quản lý lịch | 2 | Admin | Lịch khởi hành → chọn tour và lưu đợt | `TourCatalogService.save_departure/remove_departure` |
 | UC03 Đặt tour và giữ chỗ | 3 | Khách | Chi tiết tour → form đặt chuyến đi | `BookingService.place_booking` |
 | UC04 Xem đơn của mình | 3 | Khách | Hành trình của tôi | `BookingService.bookings` |
 | UC05 Xác nhận đơn | 3 | Admin | Xử lý đơn → phiếu xử lý đơn | `BookingService.update_booking('confirm')` |
@@ -37,3 +37,7 @@ Sáu form nghiệp vụ gồm biên tập tour, lịch khởi hành, đặt chuy
 - `npm test` với Python 3.12. Bộ kiểm thử đi qua Worker với SQLite tạm, gồm tranh chỗ, quyền hai vai trò, trạng thái, giá lịch sử và lỗi giữa lúc giữ chỗ.
 - Demo qua UI trên môi trường cục bộ: admin tạo tour và đợt, khách đặt, admin mở phiếu xác nhận/thu và hoàn, admin hủy, khách thấy chỗ được trả lại. Khi khách khác mở Hành trình của tôi, đơn của khách đặt không xuất hiện.
 - Tệp triển khai D1 nằm ở `Database/0001_tour_operations.sql` và `Database/0002_initial_catalog.sql`. Dữ liệu nghiệp vụ từ localStorage của bản cũ cần được rà soát trước khi chuyển sang CSDL dùng chung.
+
+## Bổ sung sau rà soát
+
+Admin và khách đều nằm trong `accounts`, vai trò tham chiếu `roles`. Admin được khởi tạo từ hash/salt cấu hình một lần; đăng nhập và đọc phiên kiểm dữ liệu DB. Form `frm009_dm_diem_den` dùng `/api/ops/destinations`, lưu D1 và kiểm version để tránh ghi đè phiên khác.

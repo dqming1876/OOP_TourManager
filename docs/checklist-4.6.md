@@ -2,7 +2,7 @@
 
 | Mẫu GoF | Vấn đề và vai trò | Cách chọn lúc chạy |
 | --- | --- | --- |
-| **Strategy — Behavioral** | Báo cáo có ba công thức và cấu trúc bảng. `ReportPresenter` là Context; hợp đồng của Strategy là `title` và `summarize(data)`. `CashReport`, `BookingReport`, `CapacityReport` là Concrete Strategies. | Người dùng chọn loại báo cáo. `loadReport` chuyển mã vào Presenter, Presenter ủy quyền chiến lược đã đăng ký. Bảng, XLSX và phần in đọc chung kết quả. [Code](../dist/report-strategies.js) |
+| **Strategy — Behavioral** | Báo cáo có ba công thức và cấu trúc bảng. `ReportPresenter` là Context; hợp đồng của Strategy là `title` và `summarize(data)`. `CashReport`, `BookingReport`, `CapacityReport` là Concrete Strategies. | Người dùng chọn loại báo cáo. `loadReport` chuyển mã vào Presenter, Presenter ủy quyền chiến lược đã đăng ký. Bảng, XLSX, CSV và phần in đọc chung kết quả. [Code](../dist/report-strategies.js) |
 | **Object Adapter — Structural** | Repository dùng port `Database` gồm `first/all/execute/batch`. `D1Database` chuyển kiểu dữ liệu qua FFI và giữ batch D1. `SQLiteDatabase` bọc `sqlite3`, trả cùng hình dạng dữ liệu và thực thi batch trong BEGIN/COMMIT hoặc ROLLBACK. | Worker nhận binding D1 ở môi trường Cloudflare. Root demo/test cấp adapter SQLite. Các repository gọi cùng Target và tự chạy trên backend đang được lắp. [D1Database](../entry.py) · [SQLiteDatabase](../scripts/sqlite_worker.py) |
 
 ## Bài mở rộng tại chỗ
@@ -30,3 +30,10 @@ Test 4.6 lắp registry mở rộng và gọi cả báo cáo gốc và biến th
 
 - Strategy làm tăng số lớp và cần đăng ký biến thể. Một nhánh cố định đơn giản dùng hàm thường sẽ dễ hơn. Việc chọn nhầm contract có thể gây bảng và tệp xuất thiếu cột, vì vậy mỗi Strategy cần test cả cấu trúc kết quả.
 - Adapter duy trì thêm một lớp chuyển đổi. SQLite cục bộ giúp chạy nhanh và tái lập, nhưng không mô phỏng quota, độ trễ mạng hay mọi đặc tính của Cloudflare D1. Các tính chất đó phải đo trên môi trường đích khi triển khai.
+
+## Bài OCP cho định dạng xuất và chính sách giá
+
+- `XlsxReportExporter` và `CsvReportExporter` nhận cùng danh sách dòng. Tạo lớp có `export(rows)` và `extension`, đăng ký trong `reportExporters` rồi thêm nút chọn. Hàm `downloadReport` không cần sửa. [Bộ xuất](../dist/report-export.js) · [Test frontend](../tests/frontend/exporters.test.js)
+- `BookingRepository` nhận `PricingPolicy` qua constructor. Worker dùng `StandardPrice` mặc định. `PercentageDiscount` minh họa mức giảm theo phần trăm nguyên, làm tròn xuống theo đơn vị đồng và giữ đơn giá tối thiểu 1 đồng.
+- Repository lưu kết quả vào `unit_price` và đối chiếu lại `t.price = ?` trong INSERT. Nếu giá niêm yết đổi giữa hai bước, API từ chối và không giữ chỗ. `Booking.total` vẫn nhân số khách với đơn giá đã chốt. Trước khi bật giảm giá cho khách, màn hình báo giá cần dùng chính sách phía máy chủ. [Chính sách](../backend/pricing.py) · [Test giá](../tests/test_pricing.py)
+- Với bài trạng thái duyệt mới, tập liệt kê quyền, chuyển trạng thái, báo cáo và kiểm thử. Chỉ ra migration cần cập nhật ràng buộc `CHECK` của `bookings` và cách giữ dữ liệu cũ. Bản này chưa thêm trạng thái mới.

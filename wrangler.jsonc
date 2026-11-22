@@ -1,6 +1,5 @@
 {
-  "name": "mingo",
-  "account_id": "a4d4ba32c45359ddb8a6665bdb702450",
+  "name": "mingo-local",
   "main": ".wrangler/python-src/entry.py",
   "compatibility_flags": [
     "python_workers"
@@ -18,8 +17,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "mingo",
-      "database_id": "b378e40e-886d-4f71-aeee-58a16e306718",
+      "database_name": "mingo-local",
+      "database_id": "00000000-0000-4000-8000-000000000001",
       "migrations_dir": "Database"
     }
   ],

@@ -37,7 +37,9 @@ def main():
     first=call('/api/ops/bookings',order,guest);assert first[0]==201,first[:2]
     second=call('/api/ops/bookings',order,guest);assert second[:2]==first[:2]
     assert call('/api/ops/bookings',{**order,'requestId':uuid4().hex,'expectedPrice':1},guest)[0]==409
-    assert call('/api/ops/bookings/'+first[1]['id']+'/cancel',{},guest)[0]==200
+    for action in ('confirm','collect','refund','cancel'):
+        assert call('/api/ops/bookings/'+first[1]['id']+'/'+action,{},admin)[0]==200
+    assert call('/api/ops/destinations')[0]==200
     assert call('/api/ops/reports',cookie=admin)[0]==200
     print('PASS: actual Python Worker + local D1: assets, catalog, admin login, create tour/departure, register/login, booking retry, stale quote, cancel, reports.')
 

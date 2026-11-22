@@ -19,7 +19,7 @@ flowchart LR
 | R04 Xác nhận trước khi quá ngày — `Booking.transition('confirm')`, `update_booking` | Admin; đơn đang chờ; ngày khởi hành lớn hơn hoặc bằng ngày hiện tại theo giờ Việt Nam | Chuyển sang xác nhận, số chỗ giữ không đổi. Quá ngày trả 409 và đơn giữ nguyên. |
 | R05 Thu/hoàn theo trạng thái — `Booking.transition`, `record_payment_change` | Admin; đơn đã xác nhận. Thu khi chưa thu, hoàn khi đã thu. | Đổi cờ `paid` và thêm bút toán tương ứng trong cùng giao dịch. Lặp thao tác trả 409. |
 | R06 Hủy và trả chỗ — `Booking.transition('cancel')`, `release_booking_seats` | Khách chỉ được hủy đơn chờ của chính mình. Admin hủy đơn chờ hoặc đã xác nhận khi không còn tiền đã thu. | Đơn chuyển sang hủy, trả số chỗ đúng một lần; đơn khác và lịch sử thanh toán giữ nguyên. |
-| R07 Phạm vi đọc — `bookingScope`, `BookingService.bookings/payment_history` | Có phiên với một vai trò hợp lệ | Khách chỉ nhận DTO đơn của mình; admin đọc các đơn để xử lý. Lịch sử thu/hoàn nội bộ yêu cầu quyền admin. |
+| R07 Phạm vi đọc — `booking_scope`, `BookingService.bookings/payment_history` | Có phiên với một vai trò hợp lệ | Khách chỉ nhận DTO đơn của mình; admin đọc các đơn để xử lý. Lịch sử thu/hoàn nội bộ yêu cầu quyền admin. |
 
 ## Ma trận phân quyền
 
@@ -42,3 +42,7 @@ npm test
 ```
 
 Bộ test đi qua Service trực tiếp, Worker và SQLite tạm mô phỏng D1. Các bài kiểm thử tiêm lỗi trên DB tạm xác minh đơn, chỗ giữ và sổ tiền giữ trạng thái trước giao dịch khi thao tác lỗi.
+
+## Bổ sung sau rà soát
+
+Guard ngày/chỗ/giá nằm trong cùng INSERT/UPDATE để tránh TOCTOU: dữ liệu có thể thay đổi sau khi đọc. Domain kiểm dữ liệu và quyết định quy tắc chuyển trạng thái; repository áp dụng quy tắc trên trạng thái DB hiện tại, trigger cập nhật chỗ và sổ thu/hoàn nguyên tử.

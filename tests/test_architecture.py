@@ -17,7 +17,7 @@ class Architecture(IsolatedAsyncioTestCase):
         db = worker.database
         self.addCleanup(db.close)
         db.executescript("""
-            INSERT INTO tours VALUES ('tour-4a',1200000,0,'{}'),('tour-4b',1200000,0,'{}');
+            INSERT INTO tours (id,price) VALUES ('tour-4a',1200000),('tour-4b',1200000);
             INSERT INTO destinations (province,name) VALUES ('Hà Nội','Điểm thử 4.1');
             INSERT INTO tour_stops SELECT 'tour-4a',1,id,'Sáng đi bộ' FROM destinations WHERE name='Điểm thử 4.1';
             INSERT INTO tour_stops SELECT 'tour-4b',1,id,'Tối đi bộ' FROM destinations WHERE name='Điểm thử 4.1';
@@ -36,7 +36,7 @@ class Architecture(IsolatedAsyncioTestCase):
         db = sqlite3.connect(":memory:")
         self.addCleanup(db.close)
         db.execute("PRAGMA foreign_keys = ON")
-        migrations = sorted((ROOT / "Database").glob("*.sql"))
+        migrations = sorted(p for p in (ROOT / "Database").glob("*.sql") if p.name <= "0005_tour_stop_ownership.sql")
         for migration in migrations[:-1]:
             db.executescript(migration.read_text(encoding="utf-8"))
         db.executescript("""
@@ -63,7 +63,7 @@ class Architecture(IsolatedAsyncioTestCase):
         for name in modules:
             visit(name, set())
         self.assertFalse(dependencies["domain"])
-        self.assertLessEqual(dependencies["services"], {"domain", "auth", "ports"})
+        self.assertLessEqual(dependencies["services"], {"domain", "auth", "ports", "login_limits"})
         self.assertNotIn("services", dependencies["repositories"])
         for name in ("app", "domain", "services"):
             for node in ast.walk(modules[name]):

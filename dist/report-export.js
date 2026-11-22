@@ -85,3 +85,28 @@ function reportWorkbook(rows) {
       <col min="3" max="6" width="20" customWidth="1"/></cols><sheetData>${sheetRows}</sheetData></worksheet>`,
   });
 }
+
+class XlsxReportExporter {
+  get extension() { return 'xlsx'; }
+  export(rows) { return reportWorkbook(rows); }
+}
+
+class CsvReportExporter {
+  get extension() { return 'csv'; }
+  export(rows) {
+    const field = value => {
+      let text = String(value ?? '');
+      // Keep spreadsheet software from treating user-supplied labels as formulas.
+      if (typeof value === 'string' && /^[\s]*[=+@-]|^[\t\r\n]/.test(text)) text = "'" + text;
+      return '"' + text.replaceAll('"', '""') + '"';
+    };
+    return new Blob(['\uFEFF', rows.map(row => row.map(field).join(',')).join('\r\n')], {
+      type: 'text/csv;charset=utf-8',
+    });
+  }
+}
+
+const reportExporters = new Map([
+  ['xlsx', new XlsxReportExporter()],
+  ['csv', new CsvReportExporter()],
+]);

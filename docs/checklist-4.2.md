@@ -10,7 +10,7 @@ sequenceDiagram
     participant R as "TourCatalogRepository"
     participant DB as "D1"
     F->>S: submitTour và POST qua operations_route
-    S->>T: new Tour(id,input)
+    S->>T: Tour.request(id, input)
     loop Mỗi ngày trong itinerary
         T->>T: tạo TourStop cho ngày index + 1
     end
@@ -37,7 +37,10 @@ sequenceDiagram
     S->>B: request(id,userId,input)
     B-->>S: đơn chờ với số người hợp lệ
     S->>R: place_booking(booking,today)
-    R->>DB: INSERT SELECT kiểm ngày, bán và sức chứa
+    R->>DB: SELECT giá niêm yết của tour
+    DB-->>R: giá hiện tại
+    R->>R: tính đơn giá qua PricingPolicy
+    R->>DB: INSERT SELECT kiểm giá niêm yết, ngày, trạng thái bán và sức chứa
     alt Còn đủ chỗ và ghi thành công
         DB->>DB: trigger reserve_booking_seats
         DB-->>R: một dòng được tạo
@@ -79,3 +82,9 @@ Chạy `python3 -m scripts.debug_axis4` với Python 3.12. Script dùng `sys.set
 | `BookingRepository.update_booking`, trước UPDATE khi thử thu đơn chờ | `update_booking → update_booking → operations_route` | Guard yêu cầu `confirmed`, ghi `next_paid = true`, admin không giới hạn chủ đơn. Đơn thực tế `pending`; HTTP 409, `paid = 0`, không có bút toán. |
 
 Khi vấn đáp, có thể mở `python3 -m pdb -m scripts.demo` trong IDE, đặt breakpoint tương ứng và thao tác qua Form. Cửa sổ máy chủ sẽ hiện thông tin tài khoản thử sau khi tiếp tục chạy. Browser call stack có `placeOrder/submitTour`; Python call stack bắt đầu ở Worker vì đi qua HTTP. [Script xác minh](../scripts/debug_axis4.py)
+
+### Tự tập breakpoint trước buổi vấn đáp
+
+1. Mở `scripts.demo` bằng Python debugger của IDE, hoặc chạy `python3 -m pdb -m scripts.demo`. Đặt điểm dừng ở `BookingService.place_booking` và dòng INSERT trong `BookingRepository.place_booking`, rồi tiếp tục để mở demo trên trình duyệt.
+2. Đặt tour bằng tài khoản khách. Dùng Call Stack và Watch để đọc `booking.day`, `booking.people`, `today`, `list_price` và `unit_price`. Thử một đợt hết chỗ và giải thích HTTP 409.
+3. Mở đơn bằng admin. Đặt breakpoint ở `Booking.transition`, đọc trạng thái trước/sau và điều kiện đã thu, rồi theo dấu đến UPDATE.

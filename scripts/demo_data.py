@@ -57,9 +57,8 @@ def demo_sql(today=None):
                f"mingo-khach{index + 1}@example.invalid")
 
     for tour_index, (tour_id, title, province, price, stops, activities) in enumerate(TOURS):
-        insert("tours", "id,price,content", tour_id, price, json.dumps({
-            "title": title, "province": province, "place": stops[0], "days": 2, "desc": ". ".join(activities),
-        }, ensure_ascii=False))
+        insert("tours", "id,price,title,province,place,days,desc", tour_id, price,
+               title, province, stops[0], 2, ". ".join(activities))
         for index, (place, activity) in enumerate(zip(stops, activities), start=1):
             insert("destinations", "province,name", province, place, ignore=True)
             queries.append(f"""

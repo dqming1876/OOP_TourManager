@@ -5,9 +5,11 @@
 | `TourCatalogService` | Điều phối vòng đời danh mục tour và các đợt khởi hành. |
 | `BookingService` | Điều phối giữ chỗ, phạm vi phiếu và chuyển trạng thái thu/hoàn/hủy. |
 | `ReportsService` | Kiểm bộ lọc và quyền trước khi lấy báo cáo. |
+| `LoginRateLimiter` | Giới hạn thử đăng nhập theo IP, lưu qua port dùng chung. |
+| `DestinationsService` | Kiểm dữ liệu, quyền và phiên bản chỉnh sửa danh mục dùng chung. |
 | `AccountsService` | Xác thực và cập nhật danh tính/hồ sơ tài khoản. |
 | `AccessPolicy` | Áp dụng phạm vi của tài khoản và yêu cầu vai trò. |
-| `OperationsRoute` | Chuyển phương thức và đường dẫn HTTP thành lời gọi Service. |
+| `operations_route` | Chuyển phương thức và đường dẫn HTTP thành lời gọi Service. |
 | `BookingRepository` và `TourCatalogRepository` | Lưu dữ liệu đơn và danh mục tương ứng bằng câu SQL tham số hóa. |
 
 ## Hợp đồng chuyên biệt
@@ -16,10 +18,10 @@
 | --- | --- | --- |
 | `BookingPort` — bốn phương thức | BookingService | BookingRepository hoặc bản in-memory |
 | `TourCatalogPort` — sáu phương thức | TourCatalogService | TourCatalogRepository |
-| `ReportPort` — chỉ `load(filter)` | ReportsService | ReportsRepository |
-| `AccountsPort` — bốn phương thức tài khoản | AccountsService | AccountsRepository |
+| `ReportsPort` — chỉ `load(filter)` | ReportsService | ReportsRepository |
+| `AccountsPort` — tài khoản, khởi tạo admin và cửa sổ đăng nhập | AccountsService | AccountsRepository |
 
-Các hợp đồng dùng kiểu cấu trúc qua `typing.Protocol`. Service nhận port qua constructor và instance kho được tạo ở `Application()`. Route nhận Service đã lắp. Clock ngày Việt Nam được truyền tại root, bộ đếm đăng nhập ở cùng vòng đời Worker do root cấp xuống AccountsService. [Port](../backend/ports.py) · [Composition Root](../entry.py)
+Các hợp đồng dùng kiểu cấu trúc qua `typing.Protocol`. Service nhận port qua constructor và instance kho được tạo ở `Application()`. Route nhận Service đã lắp. Clock ngày Việt Nam được truyền tại root, `LoginRateLimiter` lưu bộ đếm dùng chung trong D1; service nhận địa chỉ IP đã trích xuất ở HTTP boundary. [Port](../backend/ports.py) · [Composition Root](../entry.py)
 
 ## Thử đổi DAL
 

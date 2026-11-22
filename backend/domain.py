@@ -1,13 +1,30 @@
 """Immutable business entities shared by the application and persistence layers."""
 
 import re
+from enum import StrEnum
 from dataclasses import dataclass, replace
 from datetime import date
 from types import MappingProxyType
 
 MAX_SAFE = 2**53 - 1
-ADMIN = "admin"
-CUSTOMER = "customer"
+class Role(StrEnum):
+    ADMIN = "admin"
+    CUSTOMER = "customer"
+
+
+class BookingStatus(StrEnum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    CANCELLED = "cancelled"
+
+
+class PaymentKind(StrEnum):
+    COLLECT = "collect"
+    REFUND = "refund"
+
+
+ADMIN = Role.ADMIN
+CUSTOMER = Role.CUSTOMER
 
 
 class AppError(Exception):
@@ -77,10 +94,20 @@ class Account:
     id: str
     name: str
     username: str
-    role: str
+    role: Role
 
     def public(self):
         return {"id": self.id, "name": self.name, "username": self.username, "role": self.role}
+
+    def has_role(self, role):
+        return self.role == role
+
+    @property
+    def manages_catalog(self):
+        return False
+
+    def cancellation_owner(self):
+        return self.id
 
     def booking_scope(self):
         return self.id
@@ -89,6 +116,13 @@ class Account:
 class AdministratorAccount(Account):
     def __init__(self, username):
         super().__init__("admin", "Quản trị viên", username, ADMIN)
+
+    @property
+    def manages_catalog(self):
+        return True
+
+    def cancellation_owner(self):
+        return None
 
     def booking_scope(self):
         return None
@@ -155,7 +189,7 @@ class Departure:
         return self.capacity - self.reserved
 
 
-PENDING, CONFIRMED, CANCELLED = "pending", "confirmed", "cancelled"
+PENDING, CONFIRMED, CANCELLED = BookingStatus
 
 
 @dataclass(frozen=True)
@@ -188,10 +222,14 @@ class Booking:
     children: int
     title: str | None = None
     unit_price: int | None = None
-    status: str = PENDING
+    status: BookingStatus = PENDING
     paid: bool = False
 
     def __post_init__(self):
+        try:
+            object.__setattr__(self, "status", BookingStatus(self.status))
+        except ValueError:
+            raise ValidationError("Trạng thái đơn không hợp lệ.") from None
         if self.status not in (PENDING, CONFIRMED, CANCELLED) or type(self.paid) is not bool or (
             self.paid and self.status != CONFIRMED
         ):
@@ -235,13 +273,15 @@ class Booking:
 @dataclass(frozen=True)
 class PaymentEvent:
     date: str
-    kind: str
+    kind: PaymentKind
     amount: int
 
     def __post_init__(self):
         calendar_day(self.date, "Ngày ghi nhận không hợp lệ.", "date")
-        if self.kind not in ("collect", "refund"):
-            raise ValidationError("Loại nghiệp vụ thanh toán không hợp lệ.")
+        try:
+            object.__setattr__(self, "kind", PaymentKind(self.kind))
+        except ValueError:
+            raise ValidationError("Loại nghiệp vụ thanh toán không hợp lệ.") from None
         integer_between(self.amount, 1, MAX_SAFE, "Số tiền", "amount")
 
     @property
