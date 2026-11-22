@@ -19,18 +19,71 @@ function admin() {
   </section>`;
 }
 
-function showAdminTab(tab) {
+const liveAdminTabs = new Set(['overview', 'bookings', 'payments']);
+let adminSyncTimer;
+let adminSyncPending = false;
+let adminRenderedContent = "";
+
+function showAdminTab(tab, refresh = true) {
   adminTab = tab;
   $('#app').innerHTML = admin();
+  const content = $('#admin-live-data');
+  if (content) adminRenderedContent = adminLiveContent(tab);
   if (tab === 'reports') loadReport();
+  clearInterval(adminSyncTimer);
+  if (!liveAdminTabs.has(tab)) return;
+  adminSyncTimer = setInterval(() => {
+    if (!location.hash.startsWith('#admin')) {
+      clearInterval(adminSyncTimer);
+      return;
+    }
+    syncAdmin();
+  }, 15000);
+  if (refresh) syncAdmin();
 }
+
+async function syncAdmin(manual = false) {
+  const tab = adminTab;
+  const content = $('#admin-live-data');
+  if (adminSyncPending || !liveAdminTabs.has(tab) || !content || document.hidden
+      || $('#modal')?.open || !location.hash.startsWith('#admin')) return;
+  adminSyncPending = true;
+  const status = $('#admin-sync-status');
+  if (manual) status.textContent = 'Đang cập nhật…';
+  try {
+    if (!await refreshOperations({ includeBookings: true }) || !content.isConnected) return;
+    const next = adminLiveContent(tab);
+    if (adminRenderedContent !== next) {
+      const nextContent = document.createElement('template');
+      nextContent.innerHTML = next;
+      const currentRows = content.querySelector('tbody');
+      const nextRows = nextContent.content.querySelector('tbody');
+      if (tab !== 'overview' && currentRows && nextRows) {
+        currentRows.replaceChildren(...nextRows.children);
+        filterAdminRows();
+      } else {
+        content.replaceChildren(nextContent.content);
+      }
+      adminRenderedContent = next;
+    }
+    status.textContent = 'Đã cập nhật lúc ' + new Date().toLocaleTimeString('vi-VN');
+  } catch {
+    if (content.isConnected) status.textContent = 'Chưa đồng bộ được. Thử tải lại dữ liệu.';
+  } finally {
+    adminSyncPending = false;
+  }
+}
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden) syncAdmin(); });
 
 function adminContent() {
   if (adminTab === 'reports') return reportPanel();
   if (adminTab === 'tours') return tourManagement();
   if (adminTab === 'departures') return departureManagement();
-  if (adminTab === 'bookings') return bookingManagement(false);
-  if (adminTab === 'payments') return bookingManagement(true);
+  if (liveAdminTabs.has(adminTab)) return `<div class="toolbar">
+    <button type="button" class="outline" onclick="syncAdmin(true)">Tải lại dữ liệu</button>
+    <small id="admin-sync-status" class="muted" role="status"></small>
+    </div><div id="admin-live-data">${adminLiveContent(adminTab)}</div>`;
   if (adminTab === 'destinations') {
     return `<h2>Quản lý địa danh và đặc sản</h2><p class="muted">Thay đổi ở mục này lưu trên trình duyệt.</p>
       <label>Chọn tỉnh<select id="edit-province" onchange="destinationEditor(this.value)">
@@ -38,12 +91,37 @@ function adminContent() {
         ${PROVINCES.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}
       </select></label><div id="destination-editor"></div>`;
   }
+  return '';
+}
+
+function adminLiveContent(tab) {
+  if (tab !== 'overview') return bookingManagement(tab === 'payments');
+  const today = todayInVietnam();
+  const forSale = tours.flatMap(tour => {
+    if (tour.hidden) return [];
+    const next = tour.departures.find(item => item.day >= today && item.remaining > 0);
+    return next ? [{ tour, next }] : [];
+  });
+  const activeOrders = bookings.filter(b => b.date >= today && ['pending', 'confirmed'].includes(b.status));
   const revenue = bookings.filter(b => b.paid).reduce((sum, b) => sum + b.total, 0);
   return `<h2>Tổng quan</h2><div class="metrics">
-    <div class="metric"><small>Tour đang bán</small><b>${tours.filter(t => !t.hidden).length}</b></div>
-    <div class="metric"><small>Đơn chờ xác nhận</small><b>${bookings.filter(b => b.status === 'pending').length}</b></div>
+    <div class="metric"><small>Tour đang bán</small><b>${wholeNumber(forSale.length)}</b></div>
+    <div class="metric"><small>Đơn chờ xác nhận</small><b>${wholeNumber(activeOrders.filter(b => b.status === 'pending').length)}</b></div>
     <div class="metric"><small>Tiền đã thu</small><b>${money(revenue)}</b></div>
-  </div>`;
+  </div>
+  <section class="detail-section">
+    <div class="section-head"><h3>Đơn đang xử lý</h3><button class="outline" onclick="showAdminTab('bookings')">Xem tất cả đơn</button></div>
+    ${activeOrders.length ? `<div class="table-scroll"><table><thead><tr><th>Mã đơn</th><th>Tour</th><th>Khởi hành</th><th>Trạng thái</th></tr></thead>
+    <tbody>${activeOrders.slice(0, 5).map(b => `<tr><td><button class="outline" onclick="editBooking('${esc(b.id)}',false)">${esc(b.id)}</button></td>
+      <td>${esc(b.title)}</td><td>${date(b.date)}</td><td>${bookingStatusLabel(b, today)}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="muted">Chưa có đơn cho các chuyến sắp khởi hành.</p>'}
+  </section>
+  <section class="detail-section"><h3>Tour đang bán</h3>
+    ${forSale.length ? `<div class="table-scroll"><table><thead><tr><th>Tour</th><th>Đợt gần nhất còn chỗ</th><th class="number">Chỗ còn</th><th class="number">Giá / khách</th></tr></thead>
+    <tbody>${forSale.map(({tour, next}) => `<tr><td><a href="#tour/${encodeURIComponent(tour.id)}">${esc(tour.title)}</a></td>
+      <td>${date(next.day)}</td><td class="number">${wholeNumber(next.remaining)}</td><td class="number">${money(tour.price)}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="muted">Chưa có tour mở bán còn chỗ.</p>'}
+  </section>`;
 }
 
 function adminFilters(placeholder, options) {
@@ -197,7 +275,7 @@ async function setTourVisibility(id, hidden) {
 
 async function reloadAdmin(message) {
   await refreshOperations({ includeBookings: true });
-  if (location.hash.startsWith('#admin')) showAdminTab(adminTab);
+  if (location.hash.startsWith('#admin')) showAdminTab(adminTab, false);
   toast(message);
 }
 
