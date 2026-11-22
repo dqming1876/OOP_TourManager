@@ -360,8 +360,71 @@ async function submitBookingAction(event, id) {
     button.disabled = false;
   }
 }
-function destinationEditor(id){const p=PROVINCES.find(p=>String(p.id)===id);if(!p){$('#destination-editor').innerHTML='';return}$('#destination-editor').innerHTML=['attractions','specialties'].map(k=>`<h3>${k==='attractions'?'Địa danh':'Đặc sản'}</h3>${p[k].map((n,i)=>`<div class="destination-row"><span>${esc(n)}</span><button onclick="editDestination(${p.id},'${k}',${i})">Sửa</button><button class="outline" onclick="deleteDestination(${p.id},'${k}',${i})">Xóa</button></div>`).join('')}<button class="outline" onclick="editDestination(${p.id},'${k}',-1)">+ Thêm</button>`).join('')}
-function editDestination(id,k,i){const p=PROVINCES.find(p=>p.id===id),n=p[k][i]||'',m=IMAGE_MAP[n]||{};modal(`<h2>${i<0?'Thêm':'Sửa'} ${k==='attractions'?'địa danh':'đặc sản'}</h2><form id="frm009_dm_diem_den" class="form" onsubmit="saveDestination(event,${id},'${k}',${i})"><label>Tên<input name="name" required value="${esc(n)}"></label><label>Mô tả ngắn<textarea name="description" required>${esc(m.description||'')}</textarea></label><label>Địa chỉ ảnh HTTPS<input name="url" type="url" required value="${esc(m.url?.startsWith('/')?location.origin+m.url:m.url||'')}"></label><label>Nguồn ảnh<input name="source" required value="${esc(m.source||'')}"></label><button>Lưu</button></form>`)}
-function saveDestination(e,id,k,i){e.preventDefault();const f=new FormData(e.target),p=PROVINCES.find(p=>p.id===id),name=f.get('name').trim(),url=f.get('url');if(!url.startsWith('https://'))return toast('Dùng địa chỉ ảnh HTTPS.');if(p[k].some((x,j)=>x===name&&j!==i))return toast('Tên đã có trong danh sách.');if(i<0)p[k].push(name);else p[k][i]=name;IMAGE_MAP[name]={url,source:f.get('source'),description:f.get('description')};saveDestinations();$('#modal').close();destinationEditor(String(id))}
-function deleteDestination(id,k,i){const p=PROVINCES.find(p=>p.id===id);if(p[k].length<=1)return toast('Giữ ít nhất một mục cho mỗi danh sách.');if(!confirm('Xóa '+p[k][i]+' khỏi danh sách?'))return;p[k].splice(i,1);saveDestinations();destinationEditor(String(id))}
-function saveDestinations(){localStorage.setItem('mingo-destinations',JSON.stringify({provinces:PROVINCES,images:IMAGE_MAP}))}
+function destinationEditor(id) {
+  const p = PROVINCES.find((p) => String(p.id) === id);
+  if (!p) {
+    $('#destination-editor').innerHTML = '';
+    return;
+  }
+  $('#destination-editor').innerHTML = ['attractions', 'specialties']
+    .map(
+      (k) =>
+        `<h3>${k === 'attractions' ? 'Địa danh' : 'Đặc sản'}</h3>${p[k]
+          .map(
+            (
+              n,
+              i,
+            ) => `<div class="destination-row"><span>${esc(n)}</span><button onclick="editDestination(${p.id},'${k}',${i})">Sửa</button>
+          <button class="outline" onclick="deleteDestination(${p.id},'${k}',${i})">Xóa</button></div>`,
+          )
+          .join(
+            '',
+          )}<button class="outline" onclick="editDestination(${p.id},'${k}',-1)">+ Thêm</button>`,
+    )
+    .join('');
+}
+function editDestination(id, k, i) {
+  const p = PROVINCES.find((p) => p.id === id),
+    n = p[k][i] || '',
+    m = IMAGE_MAP[n] || {};
+  modal(
+    `<h2>${i < 0 ? 'Thêm' : 'Sửa'} ${k === 'attractions' ? 'địa danh' : 'đặc sản'}</h2>
+      <form id="frm009_dm_diem_den" class="form" onsubmit="saveDestination(event,${id},'${k}',${i})">
+        <label>Tên<input name="name" required value="${esc(n)}">
+      </label>
+      <label>Mô tả ngắn<textarea name="description" required>${esc(m.description || '')}</textarea>
+      </label>
+      <label>Địa chỉ ảnh HTTPS<input name="url" type="url" required value="${esc(m.url?.startsWith('/') ? location.origin + m.url : m.url || '')}">
+      </label>
+      <label>Nguồn ảnh<input name="source" required value="${esc(m.source || '')}"></label><button>Lưu</button></form>`,
+  );
+}
+function saveDestination(e, id, k, i) {
+  e.preventDefault();
+  const f = new FormData(e.target),
+    p = PROVINCES.find((p) => p.id === id),
+    name = f.get('name').trim(),
+    url = f.get('url');
+  if (!url.startsWith('https://')) return toast('Dùng địa chỉ ảnh HTTPS.');
+  if (p[k].some((x, j) => x === name && j !== i)) return toast('Tên đã có trong danh sách.');
+  if (i < 0) p[k].push(name);
+  else p[k][i] = name;
+  IMAGE_MAP[name] = { url, source: f.get('source'), description: f.get('description') };
+  saveDestinations();
+  $('#modal').close();
+  destinationEditor(String(id));
+}
+function deleteDestination(id, k, i) {
+  const p = PROVINCES.find((p) => p.id === id);
+  if (p[k].length <= 1) return toast('Giữ ít nhất một mục cho mỗi danh sách.');
+  if (!confirm('Xóa ' + p[k][i] + ' khỏi danh sách?')) return;
+  p[k].splice(i, 1);
+  saveDestinations();
+  destinationEditor(String(id));
+}
+function saveDestinations() {
+  localStorage.setItem(
+    'mingo-destinations',
+    JSON.stringify({ provinces: PROVINCES, images: IMAGE_MAP }),
+  );
+}
