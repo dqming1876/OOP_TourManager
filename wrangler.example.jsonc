@@ -1,22 +1,40 @@
 {
   "name": "mingo-local",
-  "main": "entry.py",
-  "compatibility_flags": ["python_workers"],
-  "compatibility_date": "2026-05-15",
+  "main": ".wrangler/python-src/entry.py",
+  "compatibility_flags": [
+    "python_workers"
+  ],
+  "compatibility_date": "2026-11-14",
   "workers_dev": true,
   "assets": {
     "directory": "dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/admin.js"]
+    "run_worker_first": [
+      "/api/*",
+      "/admin.js"
+    ]
   },
-  "d1_databases": [{
-    "binding": "DB",
-    "database_name": "mingo-local",
-    "database_id": "00000000-0000-4000-8000-000000000001",
-    "migrations_dir": "Database"
-  }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mingo-local",
+      "database_id": "00000000-0000-4000-8000-000000000001",
+      "migrations_dir": "Database"
+    }
+  ],
   "observability": {
     "enabled": true,
-    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  },
+  "build": {
+    "command": "uv run python -m scripts.prepare_worker",
+    "watch_dir": [
+      "backend",
+      "entry.py",
+      "scripts/prepare_worker.py"
+    ]
   }
 }

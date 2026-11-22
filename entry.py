@@ -27,16 +27,17 @@ class D1Database:
 
     async def all(self, sql, *values):
         result = await self.prepare(sql, values).all()
-        return result.results.to_py()
+        return result["results"]
 
     async def execute(self, sql, *values):
-        result = await self.prepare(sql, values).run()
-        return int(result.meta.changes)
+        # D1 meta.changes includes trigger writes; count only the target rows.
+        result = await self.prepare(sql.rstrip().rstrip(";") + " RETURNING 1 AS changed", values).all()
+        return len(result["results"])
 
     async def batch(self, statements):
         queries = [self.prepare(sql, values) for sql, values in statements]
-        result = await self.binding.batch(to_js(queries))
-        return [item["results"] for item in result.to_py()]
+        result = await self.binding.batch(queries)
+        return [item["results"] for item in result]
 
 
 class WorkerRequest(Request):

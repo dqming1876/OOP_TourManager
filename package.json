@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "python3 -m compileall -q backend entry.py scripts tests",
-    "dev": "wrangler dev",
+    "dev": "uv run pywrangler dev --config wrangler.local.jsonc",
     "demo": "python3 -m scripts.demo",
     "test": "python3 -m unittest discover && node --test tests/frontend/*.test.js",
     "test:unit": "python3 -m unittest tests.test_unit_axis5",
@@ -12,6 +12,6 @@
     "test:mutation": "python3 -m scripts.verify_axis5"
   },
   "devDependencies": {
-    "wrangler": "4.92.0"
+    "wrangler": "4.166.0"
   }
 }
