@@ -2,7 +2,7 @@
 
 ## Ca đã thực hiện
 
-Chạy `npm run test:mutation`. Script sao chép nguồn cần thiết vào thư mục tạm, thay đúng một toán tử trong điều kiện giữ chỗ và chạy lại **IT-01**. Repo làm việc và DB thật không bị sửa. Script đọc Call Stack và Watch bằng `sys.settrace` trong tiến trình kiểm thử.
+Chạy `python3 -m scripts.verify_axis5`. Script sao chép nguồn cần thiết vào thư mục tạm, thay đúng một toán tử trong điều kiện giữ chỗ và chạy lại **IT-01**. Repo làm việc và DB thật không bị sửa. Script đọc Call Stack và Watch bằng `sys.settrace` trong tiến trình kiểm thử.
 
 | Lượt | Điều kiện còn chỗ | Kết quả IT-01 |
 | --- | --- | --- |
@@ -18,6 +18,18 @@ Chạy `npm run test:mutation`. Script sao chép nguồn cần thiết vào thư
 
 ## Trình diễn trong IDE
 
-1. Chạy `npm test` để thấy toàn bộ bộ test xanh.
-2. Chạy `npm run test:mutation` để lặp lại PASS → FAIL đúng lý do → PASS trên bản sao.
+1. Chạy `python3 -m unittest discover` và `node --test tests/frontend/*.test.js` để kiểm tra backend và frontend.
+2. Chạy `python3 -m scripts.verify_axis5` để lặp lại PASS → FAIL đúng lý do → PASS trên bản sao.
 3. Khi giảng viên đưa lỗi khác, khoanh test bằng `python3 -m unittest tests.test_integration_axis5.IntegrationAxis5.test_it01_last_seats` và thay tên mẫu theo ca. Chạy fixture dưới debugger, dừng ở dòng chuẩn bị cập nhật SQL và xem đầu vào guard cùng trạng thái trước ghi. Nếu bộ test chưa bắt lỗi, thêm một tình huống nhỏ với expected tính tay, xác minh đỏ rồi sửa nguyên nhân và chạy toàn bộ.
+
+## Ba ca hồi quy bổ sung
+
+Chạy `python3 -m unittest tests.test_review_regressions` với SQLite tạm và thời gian kiểm soát trong test.
+
+| Ca | Kết quả kiểm chứng |
+| --- | --- |
+| IT-05 | Đợt ở trước ngày nghiệp vụ trả HTTP 409, không tạo đơn hay giữ chỗ. Fixture nhận `day_offset` theo cách đặt tên Python. |
+| IT-06 | Phiên đăng nhập hợp lệ trước mốc 8 giờ và hết hiệu lực sau mốc này. |
+| IT-07 | Sau 12 lần sai, yêu cầu tiếp theo bị khóa với HTTP 429. Đăng nhập lại được khi đủ 5 phút. Test dùng bộ đếm trong một Worker thử. |
+
+Ba ca trên kiểm tra hành vi hiện hành. Ca tiêm lỗi đã chạy là IT-01 ở phần trước.

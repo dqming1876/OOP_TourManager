@@ -18,8 +18,8 @@
 
 | UC | Nhánh | Người dùng | Form hoặc màn hình | Điểm xử lý |
 | --- | --- | --- | --- | --- |
-| UC01 Quản lý tour | 1 | Admin | Quản lý tour → biên tập tour | `TourCatalogService.save_tour/setVisibility` |
-| UC02 Quản lý lịch | 2 | Admin | Lịch khởi hành → chọn tour và lưu đợt | `TourCatalogService.save_departure/removeDeparture` |
+| UC01 Quản lý tour | 1 | Admin | Quản lý tour → biên tập tour | `TourCatalogService.save_tour/set_visibility` |
+| UC02 Quản lý lịch | 2 | Admin | Lịch khởi hành → chọn tour và lưu đợt | `TourCatalogService.save_departure/remove_departure` |
 | UC03 Đặt tour và giữ chỗ | 3 | Khách | Chi tiết tour → form đặt chuyến đi | `BookingService.place_booking` |
 | UC04 Xem đơn của mình | 3 | Khách | Hành trình của tôi | `BookingService.bookings` |
 | UC05 Xác nhận đơn | 3 | Admin | Xử lý đơn → phiếu xử lý đơn | `BookingService.update_booking('confirm')` |
@@ -31,7 +31,7 @@ Sáu form nghiệp vụ gồm biên tập tour, lịch khởi hành, đặt chuy
 
 ### Hai giao dịch phức hợp
 
-1. **Đặt tour và giữ chỗ (UC03).** Máy chủ kiểm vai trò, ngày, số khách, tour đang mở bán và số chỗ. Câu lệnh thêm đơn lấy giá hiện tại từ tour và ghi giá lịch sử vào đơn. Trigger tăng số chỗ đã giữ ở đợt tương ứng trong cùng câu lệnh. Khi chỗ đã hết, yêu cầu sau không tạo thêm đơn.
+1. **Đặt tour và giữ chỗ (UC03).** Máy chủ kiểm vai trò, ngày, số khách, tour đang mở bán và số chỗ. Repository lấy giá niêm yết, áp dụng chính sách giá và ghi giá chốt vào đơn. Câu INSERT kiểm tra lại giá niêm yết chưa đổi. Trigger tăng số chỗ đã giữ ở đợt tương ứng trong cùng câu lệnh. Khi chỗ đã hết, yêu cầu sau không tạo thêm đơn.
 2. **Hủy đơn và trả chỗ (UC06).** Câu lệnh kiểm tra trạng thái, thanh toán và chủ đơn khi người dùng là khách. Trigger trả chỗ về lịch khởi hành trong cùng câu lệnh. Hủy lại không trả chỗ lần thứ hai. Nếu cập nhật bị lỗi, thay đổi ở cả đơn và đợt đều được hoàn tác.
 
 ### Cách kiểm chứng
@@ -44,7 +44,7 @@ Sáu form nghiệp vụ gồm biên tập tour, lịch khởi hành, đặt chuy
 
 - **Quản lý tour → Sửa tour** tự nạp các điểm ghé và hoạt động theo ngày. Đổi số ngày cập nhật số dòng chi tiết. Lưu tour và các dòng chi tiết trong một batch D1. Mở lại để kiểm tra danh sách đã lưu.
 - **Xử lý đơn / Thu tiền → Mở phiếu** nạp lịch sử thu và hoàn của đúng đơn. Phiếu hiển thị số khách, giá lịch sử, thu ròng và phần còn phải thu. Ghi thu hoặc hoàn tạo sự kiện trong cùng giao dịch với cập nhật đơn.
-- **Báo cáo** có dòng tiền theo tháng, tình hình đặt tour theo trạng thái và sức chứa từng đợt. Có biểu đồ dòng tiền, ngày bắt đầu/kết thúc, lọc theo tour và nút xóa lọc. Chọn **Tải Excel** để lưu XLSX hoặc **In / Lưu PDF** và chọn **Lưu dưới dạng PDF** trong hộp thoại trình duyệt. Hai bản xuất dùng cùng dữ liệu với bảng đang xem.
+- **Báo cáo** có dòng tiền theo tháng, tình hình đặt tour theo trạng thái và sức chứa từng đợt. Có biểu đồ dòng tiền, ngày bắt đầu/kết thúc, lọc theo tour và nút xóa lọc. Chọn **Tải Excel** hoặc **Tải CSV** để lưu tệp. Dùng **In / Lưu PDF** và chọn **Lưu dưới dạng PDF** trong hộp thoại trình duyệt. Các định dạng dùng cùng dữ liệu với bảng đang xem.
 
 Dòng tiền lọc theo ngày ghi nhận. Hai báo cáo còn lại lọc theo ngày khởi hành. Đơn quá hạn là đơn còn chờ xác nhận sau ngày đi. Đơn hoàn thành là đơn đã xác nhận, đã thu và đã qua ngày đi. Đơn hủy hiện thành dòng trạng thái riêng để đối chiếu. Dòng tổng không cộng đơn hủy, và đơn hủy không giữ chỗ. Nếu áp migration vào dữ liệu 1.1 đã có thu tiền, số dư mở đầu mang ngày migration vì dữ liệu cũ không ghi ngày thu.
 
@@ -76,4 +76,4 @@ Khi lọc tour Hà Nội ở tháng thứ ba trước tháng hiện tại, có 1
 
 - Xem [README](../README.md) để chạy bản demo, đăng nhập, tạo lại dữ liệu mẫu và chạy kiểm thử.
 - `python3 -m scripts.package_demo mingo-demo.zip` đóng gói nguồn và tài nguyên. Giải nén rồi chạy `python3 -m scripts.demo` bằng Python 3.12. Máy chấm cần sẵn Python 3.12 và trình duyệt. Bản demo dùng dữ liệu tạm, dựng lại mỗi khi khởi động.
-- Dùng bộ slide và video demo đi kèm để trình bày luồng. Lịch sử Git được giữ nguyên. Tiêu chí ≥12 commit có nội dung qua ≥3 tuần cần đánh giá theo lịch sử làm việc thực tế.
+- Tiêu chí ≥12 commit có nội dung qua ≥3 tuần cần đánh giá theo lịch sử làm việc thực tế.

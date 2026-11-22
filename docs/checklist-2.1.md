@@ -6,12 +6,11 @@
 | Form nghiệp vụ | **Lịch khởi hành** có form lập đợt và chế độ đổi sức chứa riêng. **Đặt chuyến đi** nhập đợt, số khách và liên hệ. **Xử lý đơn** và **Thu tiền / hoàn tiền** có phiếu riêng. Xem [dist/admin.js](../dist/admin.js), [dist/app.js](../dist/app.js) và [dist/operations.js](../dist/operations.js). |
 | Hiển thị số, tiền và ngày | CSS chung căn phải cột số/tiền và ô nhập số. Tiền hiển thị theo nhóm ba chữ số, ví dụ `1.200.000 ₫`. Ngày trong danh sách và lựa chọn đợt hiển thị dạng `dd/MM/yyyy`. API dùng `yyyy-MM-dd`. Xem [dist/style.css](../dist/style.css), [dist/form-validation.js](../dist/form-validation.js) và [dist/app.js](../dist/app.js). |
 | Lớp 1 — Form | Hiển thị lỗi tiếng Việt cạnh từng ô, nối lỗi bằng `aria-describedby`, đặt `aria-invalid` và đưa tiêu điểm đến ô lỗi đầu tiên. Chặn trước khi gửi nếu tên trống, số vượt giới hạn, ngày đã qua, ngày trùng hoặc số khách vượt chỗ đang hiển thị. Xem [dist/form-validation.js](../dist/form-validation.js), [dist/admin.js](../dist/admin.js) và [dist/operations.js](../dist/operations.js). |
-| Lớp 2 — Domain/Service | Worker kiểm tra lại giá, ngày lịch, sức chứa, liên hệ và số khách. Khi thêm lịch trùng, câu lệnh INSERT giữ nguyên bản ghi cũ. Chế độ đổi sức chứa cập nhật đợt đã chọn và kiểm tra số chỗ đang giữ. API trả tên trường cho lỗi cụ thể. Xem [services.py](../backend/services.py) và [services.py](../backend/services.py), [repositories.py](../backend/repositories.py) và [repositories.py](../backend/repositories.py), [app.py](../backend/app.py) và [services.py](../backend/services.py). |
+| Lớp 2 — Domain/Service | Worker kiểm tra lại giá, ngày lịch, sức chứa, liên hệ và số khách. Khi thêm lịch trùng, câu lệnh INSERT giữ nguyên bản ghi cũ. Chế độ đổi sức chứa cập nhật đợt đã chọn và kiểm tra số chỗ đang giữ. API trả tên trường cho lỗi cụ thể. Xem [services.py](../backend/services.py), [repositories.py](../backend/repositories.py) và [app.py](../backend/app.py). |
 
 ## Kết quả kiểm tra
 
-- `npm test` trên Python 3.12, Worker với SQLite tạm: bài kiểm tra validation xác minh ngày, giá, sức chứa, điện thoại, hồ sơ và lịch trùng.
-- Kiểm tra tích hợp DOM mô phỏng với Worker cục bộ: mở chi tiết tour, định dạng tiền và ngày, hiển thị ô lỗi cho tên trống, giá âm, lịch quá khứ, lịch trùng, sức chứa ngoài biên, điện thoại sai, số khách vượt chỗ và email sai. Các form có lỗi không gửi POST. Lưu tour, lập lịch, đổi sức chứa và đặt đơn hợp lệ đều chạy thành công.
+- `python3 -m unittest discover` kiểm tra backend Python với SQLite tạm, gồm validation ngày, giá, sức chứa, điện thoại, hồ sơ và lịch trùng. `node --test tests/frontend/*.test.js` kiểm tra dữ liệu báo cáo và tệp xuất.
 
 ## Các bước demo
 
