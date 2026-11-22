@@ -8,6 +8,12 @@ Chạy `python3 -m unittest tests.test_integration_axis5`. Phần đối chiếu
 | IT-02 | R02 · Trigger thử nghiệm trên bước UPDATE `departures.reserved` | Lỗi ném sau khi đã vào trigger của INSERT đơn. API báo 500, số đơn = 0 và sức chứa giữ nguyên 3 với 0 chỗ đã giữ. Bỏ trigger thử nghiệm rồi chạy lại nhận 201. |
 | IT-03 | R09/R11 · ReportsService → ReportsRepository → Strategy hiển thị | Bao gồm hai biên ngày, bỏ ngày đứng ngoài và tour khác. Thu, hoàn, ròng khớp giá trị tính tay. Dòng tổng đơn bỏ đơn hủy, còn dòng chi tiết giữ đơn hủy để đối chiếu. |
 | IT-04 | R05–R07 · Gọi BookingService và ReportsService trực tiếp | Khách thu tiền hoặc đọc báo cáo nhận 403 và không mở câu SQL. Khách khác hủy đơn chờ nhận 409. Đơn, chỗ giữ và sổ tiền không thay đổi. |
+| IT-05 | Địa danh dùng chung · API → D1/SQLite | Admin sửa và lần đọc kế tiếp thấy dữ liệu mới. Khách nhận 403, phiên bản cũ nhận 409, URL sai nhận 400. |
+| IT-06 | Danh mục địa danh · Ràng buộc tồn tại | Tên trùng và xóa mục cuối của nhóm trả 409. Xóa mục khác với phiên bản hiện tại thành công. |
+| IT-07 | Tài khoản admin · DB → xác thực và phiên | Hash DB được dùng khi đăng nhập. Hạ vai trò trong DB làm mất quyền quản trị của phiên. |
+| IT-08 | Migration · Schema có dữ liệu → schema hiện tại | Cột tour mang đúng dữ liệu, vai trò khách và khóa ngoại hợp lệ. Bản sao JSON được giữ để đối chiếu. |
+
+Chạy các ca IT-05–IT-08 bằng `python3 -m unittest tests.test_domain_boundaries`.
 
 ## IT-03 — Đối chiếu tính tay
 
@@ -25,7 +31,3 @@ Tour báo cáo, kỳ **10–12/05/2028**. Dữ liệu cụ thể được dựng
 Tổng thu **2.500.000 ₫**, hoàn **1.000.000 ₫**, thu ròng **1.500.000 ₫**. Dòng tổng gồm **2 đơn, 5 khách**. Dòng hủy riêng có 1 đơn và 1 khách. Hai đợt có sức chứa 6, lần lượt còn **4** và **3** chỗ. Nếu lọc đúng ngày 12/05, thu bằng 0 và hoàn 1.000.000 ₫. Đây là dòng tiền theo ngày ghi nhận, nên khoản hoàn trong kỳ vẫn xuất hiện khi khoản thu gốc ở kỳ khác.
 
 Kết quả được đối chiếu trực tiếp cả tại SQL và qua [Strategy đang dùng để dựng bảng và tệp xuất](../dist/report-strategies.js).
-
-## Bổ sung sau rà soát
-
-Kiểm tra sửa/xóa danh mục với version cũ trả 409, khách không được sửa, không xóa mục cuối nhóm; tài khoản admin được đọc từ DB. Migration test chạy trên schema cũ có dữ liệu trước khi nâng cấp và kiểm FK, nội dung tour.

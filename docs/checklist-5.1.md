@@ -22,10 +22,17 @@ Mã R01–R07 đối chiếu với [quy tắc nghiệp vụ ở trục 3](checkl
 | UT-12 | R10 · EP lịch trình | Tour 2 ngày sinh hai dòng điểm ghé theo đúng thứ tự. Thiếu một hoạt động bị từ chối. | [Tour.request](../backend/domain.py) |
 | UT-13 | R11 · EP bút toán | Thu 1.000.000 ₫ có dấu dương, hoàn 400.000 ₫ có dấu âm, số tiền 0 bị từ chối. | [PaymentEvent](../backend/domain.py) |
 
+Các ca biên dưới đây gồm kiểm thử miền độc lập và ca đi qua API hoặc SQLite. Chạy `python3 -m unittest tests.test_domain_boundaries tests.test_login_limits`.
+
+| Ca | Quy tắc và kỹ thuật | Dữ liệu và kết quả mong đợi | Nhánh code |
+| --- | --- | --- | --- |
+| UT-14 | R05/R07 · Quyền trực tiếp | Khách nhận 403, người chưa đăng nhập nhận 401 ở cả bốn phương thức. Repository có 0 lần gọi. | [Service](../backend/services.py) → `save_tour`, `set_visibility`, `remove_departure`, `payment_history` |
+| UT-15 | R05 · Bất biến trạng thái | `pending` và `cancelled` từ chối `paid=True`. `confirmed` chấp nhận. | [Booking](../backend/domain.py) |
+| BV-01 | R03 · Sức chứa bằng chỗ giữ | Sức chứa bằng `reserved` được chấp nhận. Sức chứa thấp hơn trả 409. | [Repository lịch](../backend/repositories.py) |
+| BV-02 | Báo cáo · Ngày khởi hành bằng hôm nay | Đơn chờ chưa quá hạn. Đơn đã thu chưa hoàn thành. Cả hai đổi trạng thái báo cáo vào ngày kế tiếp. | [ReportsRepository](../backend/repositories.py) |
+| BV-03 | Đăng ký · Độ dài mật khẩu | Mật khẩu 5 ký tự trả 400, 6 ký tự được chấp nhận. | [AccountsService](../backend/services.py) |
+| BV-04 | Đăng nhập · Ngưỡng hạn mức | Lần sai thứ 12 trả 401. Lượt tiếp theo trả 429 đến khi cửa sổ 5 phút kết thúc. | [Test hạn mức](../tests/test_login_limits.py) |
+
 ## Đọc một ca theo AAA
 
 UT-08 **Arrange** tạo tài khoản khách, ngày cố định và stub `place_booking` trả thất bại. **Act** gửi yêu cầu đặt cho 2 người lớn và 1 trẻ em. **Assert** kiểm 409, trường ngày, đúng một lần gọi port, giá trị 3 khách và ID đã lấy từ phiên. Kết quả mong đợi là hằng từ tình huống và quy tắc, không gọi lại hàm sản phẩm để sinh expected. [Bộ Unit](../tests/test_unit_axis5.py)
-
-## Bổ sung sau rà soát
-
-Bổ sung `tests/test_review_completion.py`: quyền trực tiếp của 4 service method với khách và vô danh; pending/paid; sức chứa bằng reserved; ngày báo cáo bằng hôm nay; mật khẩu 5/6 ký tự; danh mục dùng chung và nâng cấp schema. Test ngưỡng 12/13 nằm trong `tests/test_login_limits.py`.

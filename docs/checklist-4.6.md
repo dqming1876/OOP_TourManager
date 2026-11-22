@@ -3,6 +3,8 @@
 | Mẫu GoF | Vấn đề và vai trò | Cách chọn lúc chạy |
 | --- | --- | --- |
 | **Strategy — Behavioral** | Báo cáo có ba công thức và cấu trúc bảng. `ReportPresenter` là Context; hợp đồng của Strategy là `title` và `summarize(data)`. `CashReport`, `BookingReport`, `CapacityReport` là Concrete Strategies. | Người dùng chọn loại báo cáo. `loadReport` chuyển mã vào Presenter, Presenter ủy quyền chiến lược đã đăng ký. Bảng, XLSX, CSV và phần in đọc chung kết quả. [Code](../dist/report-strategies.js) |
+| **Strategy — Behavioral (xuất báo cáo)** | `XlsxReportExporter` và `CsvReportExporter` nhận cùng tập dòng qua `export(rows)`. | Nút tải chọn exporter từ `reportExporters`. [Mã xuất](../dist/report-export.js) · [Kiểm thử](../tests/frontend/exporters.test.js) |
+| **Strategy — Behavioral (giá đặt tour)** | `PricingPolicy` cung cấp `StandardPrice` và `PercentageDiscount` cho repository danh mục và đặt tour. | `BOOKING_DISCOUNT_PERCENT` trên Worker hoặc `MINGO_DISCOUNT_PERCENT` trong demo chọn giá chuẩn (0) hoặc giảm theo phần trăm (1–99). Cùng policy báo giá và chốt `unit_price`. [Mã giá](../backend/pricing.py) · [Kiểm thử](../tests/test_pricing.py) |
 | **Object Adapter — Structural** | Repository dùng port `Database` gồm `first/all/execute/batch`. `D1Database` chuyển kiểu dữ liệu qua FFI và giữ batch D1. `SQLiteDatabase` bọc `sqlite3`, trả cùng hình dạng dữ liệu và thực thi batch trong BEGIN/COMMIT hoặc ROLLBACK. | Worker nhận binding D1 ở môi trường Cloudflare. Root demo/test cấp adapter SQLite. Các repository gọi cùng Target và tự chạy trên backend đang được lắp. [D1Database](../entry.py) · [SQLiteDatabase](../scripts/sqlite_worker.py) |
 
 ## Bài mở rộng tại chỗ
@@ -34,6 +36,5 @@ Test 4.6 lắp registry mở rộng và gọi cả báo cáo gốc và biến th
 ## Bài OCP cho định dạng xuất và chính sách giá
 
 - `XlsxReportExporter` và `CsvReportExporter` nhận cùng danh sách dòng. Tạo lớp có `export(rows)` và `extension`, đăng ký trong `reportExporters` rồi thêm nút chọn. Hàm `downloadReport` không cần sửa. [Bộ xuất](../dist/report-export.js) · [Test frontend](../tests/frontend/exporters.test.js)
-- `PricingPolicy` được lắp thống nhất tại Composition Root (`Application`, [entry.py](../entry.py) qua `BOOKING_DISCOUNT_PERCENT` và [scripts/demo.py](../scripts/demo.py) qua `MINGO_DISCOUNT_PERCENT`, dùng `pricing_from_percent`) và tiêm vào cả `TourCatalogRepository` (trả trường `bookingPrice` ra giao diện khách) lẫn `BookingRepository` (tính và khóa `unit_price` lúc đặt). Mặc định `0` dùng `StandardPrice`; đặt `1..99` dùng `PercentageDiscount` ở chính luồng chạy thật.
 - Repository lưu kết quả vào `unit_price` và đối chiếu lại `t.price = ?` cùng `expectedPrice` trong INSERT. Nếu giá niêm yết đổi giữa hai bước, API từ chối 409 và không giữ chỗ. `Booking.total` vẫn nhân số khách với đơn giá đã chốt. [Chính sách](../backend/pricing.py) · [Test giá](../tests/test_pricing.py)
 - Với bài trạng thái duyệt mới, tập liệt kê quyền, chuyển trạng thái, báo cáo và kiểm thử. Chỉ ra migration cần cập nhật ràng buộc `CHECK` của `bookings` và cách giữ dữ liệu cũ. Bản này chưa thêm trạng thái mới.

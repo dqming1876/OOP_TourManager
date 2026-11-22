@@ -11,6 +11,8 @@ flowchart LR
 
 **Đường chạy:** [Form và các nút](../dist/operations.js) → [operations_route](../backend/app.py) → [BookingService](../backend/services.py) → [lớp miền](../backend/domain.py) → [BookingRepository](../backend/repositories.py) → [trigger D1](../Database/0001_tour_operations.sql). Một thay đổi thanh toán ghi thêm sự kiện theo [migration 0003](../Database/0003_reporting_details.sql).
 
+Domain kiểm tra đầu vào và xác định luật chuyển trạng thái. Repository đặt điều kiện ngày, số chỗ và giá vào chính câu INSERT hoặc UPDATE để tránh thay đổi dữ liệu giữa lúc kiểm tra và lúc ghi (TOCTOU). Trigger cập nhật số chỗ và sổ thanh toán trong cùng giao dịch.
+
 | Quy tắc và điểm thực thi | Tiền điều kiện | Hậu điều kiện |
 | --- | --- | --- |
 | R01 Giá chốt — `Booking.total`, `BookingRepository.place_booking` | Tour đang mở bán, giá nguyên hợp lệ, ít nhất một người lớn | Ghi giá tại lúc đặt. Sửa giá danh mục sau đó không đổi giá trị phiếu cũ. |
@@ -42,7 +44,3 @@ npm test
 ```
 
 Bộ test đi qua Service trực tiếp, Worker và SQLite tạm mô phỏng D1. Các bài kiểm thử tiêm lỗi trên DB tạm xác minh đơn, chỗ giữ và sổ tiền giữ trạng thái trước giao dịch khi thao tác lỗi.
-
-## Bổ sung sau rà soát
-
-Guard ngày/chỗ/giá nằm trong cùng INSERT/UPDATE để tránh TOCTOU: dữ liệu có thể thay đổi sau khi đọc. Domain kiểm dữ liệu và quyết định quy tắc chuyển trạng thái; repository áp dụng quy tắc trên trạng thái DB hiện tại, trigger cập nhật chỗ và sổ thu/hoàn nguyên tử.

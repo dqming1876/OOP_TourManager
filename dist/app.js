@@ -365,43 +365,44 @@ function detail(id) {
       </div>
       <div class="eyebrow">${t.days} NGÀY ${t.days - 1} ĐÊM · ${esc(t.province)}</div>
       <h1 class="detail-title">${esc(t.title)}</h1>
-      <div class="detail-photo">${photo(t.place)}</div>
-      <div class="tour-gallery">${p.attractions
-        .filter((name) => IMAGE_MAP[name])
-        .map(
-          (n) =>
-            `<button type="button" onclick="selectTourPhoto(this)">${photo(n)}</button>`,
-        )
-        .join(
-          "",
-        )}</div><small class="source">Nguồn ảnh: ${esc(IMAGE_MAP?.[t.place]?.source || "Đang bổ sung")}</small>
-    <div class="tabs">
-      <a href="#" onclick="event.preventDefault();$('#itinerary').scrollIntoView()">Lịch trình</a>
-      <a href="#" onclick="event.preventDefault();$('#overview').scrollIntoView()">Tổng quan</a>
-      <a href="#" onclick="event.preventDefault();$('#attractions').scrollIntoView()">Địa danh</a>
-      <a href="#" onclick="event.preventDefault();$('#food').scrollIntoView()">Đặc sản</a>
-      </div>
-    <div class="detail-layout"><div>
-    ${tourItinerary(t)}
-    <section id="overview" class="detail-section">
-      <h2>Một chuyến đi vừa vặn</h2>
-      <p>${esc(t.desc)}</p>
-      <p class="notice">Đón tại điểm hẹn trong tỉnh. Giá và lịch trình mẫu phục vụ đồ án, chưa bao gồm vé máy bay đến điểm đón. Các địa danh giới thiệu bên dưới không mặc định đều nằm trong lịch trình.</p>
-      <p class="notice">Lịch trình và giá là dữ liệu mẫu phục vụ đồ án; chưa phải dịch vụ được mở bán thực tế.</p>
-      <h3>Bao gồm</h3>
-      <p>${esc(t.includes || "Di chuyển theo lịch trình, lưu trú và hướng dẫn viên tại điểm đến.")}</p>
-        <h3>Không bao gồm</h3>
-        <p>${esc(t.excludes || "Vé máy bay đến điểm đón, ăn uống tự túc và chi phí cá nhân.")}</p>
-        <h3>Điểm đón</h3>
-        <p>${esc(t.pickup || "Điểm hẹn tại trung tâm " + t.province + "; xác nhận địa chỉ cụ thể cùng nhân viên trước khi đặt.")}</p>
-      <h3>Chính sách hủy</h3>
-      <p>Đơn chờ xác nhận và chưa thanh toán có thể hủy tại Hành trình của tôi. Đơn đã xác nhận cần liên hệ quản trị viên; đơn đã thu tiền cần được ghi nhận hoàn tiền trước khi hủy.</p>
-      </section>
-      <section id="attractions" class="detail-section">
-      <h2>Địa danh nổi bật tại điểm đến</h2>${minis(p.attractions, p.id, "attractions")}</section>
-      <section id="food" class="detail-section">
-      <h2>Hương vị của ${esc(t.province)}</h2>
-      <p class="notice">Gợi ý thưởng thức · Chi phí ăn uống tự túc.</p>${minis(p.specialties, p.id, "specialties")}</section>
+    <div class="detail-layout">
+      <div class="detail-content">
+        <div class="detail-photo">${photo(t.place)}</div>
+        <div class="tour-gallery">${p.attractions
+          .filter((name) => IMAGE_MAP[name])
+          .map(
+            (n) =>
+              `<button type="button" onclick="selectTourPhoto(this)">${photo(n)}</button>`,
+          )
+          .join(
+            "",
+          )}</div><small class="source">Nguồn ảnh: ${esc(IMAGE_MAP?.[t.place]?.source || "Đang bổ sung")}</small>
+      <div class="tabs">
+        <a href="#" onclick="event.preventDefault();$('#itinerary').scrollIntoView()">Lịch trình</a>
+        <a href="#" onclick="event.preventDefault();$('#overview').scrollIntoView()">Tổng quan</a>
+        <a href="#" onclick="event.preventDefault();$('#attractions').scrollIntoView()">Địa danh</a>
+        <a href="#" onclick="event.preventDefault();$('#food').scrollIntoView()">Đặc sản</a>
+        </div>
+      ${tourItinerary(t)}
+      <section id="overview" class="detail-section">
+        <h2>Một chuyến đi vừa vặn</h2>
+        <p>${esc(t.desc)}</p>
+        <p class="notice">Đón tại điểm hẹn trong tỉnh. Giá và lịch trình mẫu phục vụ đồ án, chưa bao gồm vé máy bay đến điểm đón. Các địa danh giới thiệu bên dưới không mặc định đều nằm trong lịch trình.</p>
+        <p class="notice">Lịch trình và giá là dữ liệu mẫu phục vụ đồ án; chưa phải dịch vụ được mở bán thực tế.</p>
+        <h3>Bao gồm</h3>
+        <p>${esc(t.includes || "Di chuyển theo lịch trình, lưu trú và hướng dẫn viên tại điểm đến.")}</p>
+          <h3>Không bao gồm</h3>
+          <p>${esc(t.excludes || "Vé máy bay đến điểm đón, ăn uống tự túc và chi phí cá nhân.")}</p>
+          <h3>Điểm đón</h3>
+          <p>${esc(t.pickup || "Điểm hẹn tại trung tâm " + t.province + "; xác nhận địa chỉ cụ thể cùng nhân viên trước khi đặt.")}</p>
+        <h3>Chính sách hủy</h3>
+        <p>Đơn chờ xác nhận và chưa thanh toán có thể hủy tại Hành trình của tôi. Đơn đã xác nhận cần liên hệ quản trị viên; đơn đã thu tiền cần được ghi nhận hoàn tiền trước khi hủy.</p>
+        </section>
+        <section id="attractions" class="detail-section">
+        <h2>Địa danh nổi bật tại điểm đến</h2>${minis(p.attractions, p.id, "attractions")}</section>
+        <section id="food" class="detail-section">
+        <h2>Hương vị của ${esc(t.province)}</h2>
+        <p class="notice">Gợi ý thưởng thức · Chi phí ăn uống tự túc.</p>${minis(p.specialties, p.id, "specialties")}</section>
       </div>
     <aside class="booking-panel"><div class="eyebrow">ĐẶT CHUYẾN ĐI</div><span class="price">${money(t.bookingPrice ?? t.price)}</span><small> / khách</small>${t.bookingPrice && t.bookingPrice < t.price ? ` <small class="muted"><s>${money(t.price)}</s></small>` : ""}
     <form id="frm003_nv_dat_tour" data-price="${t.bookingPrice ?? t.price}" class="form operation-form" data-validated novalidate onsubmit="placeOrder(event,'${t.id}')"><label>Ngày khởi hành<select id="departure" name="day" required onchange="quote('${t.id}')">${t.dates.length ? "" : '<option value="">Chưa có lịch còn chỗ</option>'}${t.dates.map((d) => `<option value="${d}">${date(d)} — ${remaining(t, d)} chỗ</option>`).join("")}</select></label>${guestStepper(id, "people", "adults", "Người lớn", 1, 100)}
@@ -808,7 +809,7 @@ async function openAdmin() {
       if (!adminScriptPromise)
         adminScriptPromise = new Promise((resolve, reject) => {
           const script = document.createElement("script");
-          script.src = "/admin.js?v=review3";
+          script.src = "/admin.js?v=1";
           script.onload = resolve;
           script.onerror = () => {
             script.remove();

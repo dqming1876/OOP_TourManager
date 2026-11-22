@@ -14,7 +14,3 @@ Mảng không thể thêm/xóa phần tử (`tuple`) và bản ghi chi tiết ch
 `CustomerAccount` và `AdministratorAccount` đều kế thừa `Account`. Hợp đồng `booking_scope() -> str | None` trả ID khi giới hạn theo chủ đơn và `None` khi đọc toàn bộ. Hai lớp con cùng cung cấp `public()`, `manages_catalog`, `cancellation_owner()`; khách mở rộng `public()` với dữ liệu hồ sơ công khai. `AccessPolicy.booking_scope()` gọi phương thức trên `actor` lấy từ phiên; lớp cụ thể quyết định cách trả scope tại runtime. Bên gọi `BookingService.bookings` chuyển trực tiếp giá trị đúng hợp đồng xuống `BookingPort.list_bookings`, không `isinstance` hay ép kiểu.
 
 Đổi instance khách sang admin thay đổi phạm vi theo vai trò vẫn giữ kiểu trả về và các tiền/hậu điều kiện của API. Bài test `test_immutability_and_polymorphic_scope` chạy cùng `AccessPolicy(actor).booking_scope()` cho hai đối tượng và nhận ID khách hoặc `None`. Thử sửa `GUEST.actor.role = "admin"` bị chặn bằng `FrozenInstanceError` vì instance đã đóng băng. [domain.py](../backend/domain.py) · [services.py](../backend/services.py)
-
-## Bổ sung sau rà soát
-
-`Account.booking_scope()`, `cancellation_owner()` và `manages_catalog` được gọi qua cùng hợp đồng; AdministratorAccount ghi đè hành vi quản trị. Kiểm tra role tập trung tại AccessPolicy. Test bổ sung từ chối pending/cancelled có paid=True.

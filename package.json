@@ -10,7 +10,7 @@
     "test:unit": "python3 -m unittest tests.test_unit_axis5",
     "test:integration": "python3 -m unittest tests.test_integration_axis5",
     "test:mutation": "python3 -m scripts.verify_axis5",
-    "test:review": "python3 -m scripts.verify_review"
+    "test:mutations": "python3 -m scripts.verify_mutations"
   },
   "devDependencies": {
     "wrangler": "4.166.0"

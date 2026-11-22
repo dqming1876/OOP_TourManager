@@ -13,6 +13,9 @@ Website quản lý tour du lịch: quản lý tour, lịch khởi hành và đơ
 
 </details>
 
+<!-- Ảnh bổ sung: Quản trị – Xử lý đơn (docs/screenshots/admin-bookings.jpg). -->
+<!-- Ảnh bổ sung: Quản trị – Báo cáo (docs/screenshots/admin-reports.jpg). -->
+
 Dự án là bài tập lớn cuối kỳ học phần Lập trình hướng đối tượng (MI4090), đề tài Xây dựng Hệ thống Thông tin Quản lý. Phiếu đánh giá của học phần có 2 trục và 5 nhóm tiêu chí; bảng minh chứng nằm ở mục [Tài liệu & minh chứng](#tài-liệu--minh-chứng).
 
 ## Mục lục
@@ -27,6 +30,7 @@ Dự án là bài tập lớn cuối kỳ học phần Lập trình hướng đ�
 - [Triển khai lên Cloudflare](#triển-khai-lên-cloudflare)
 - [Hồ sơ bàn giao](#hồ-sơ-bàn-giao)
 - [Tài liệu & minh chứng](#tài-liệu--minh-chứng)
+- [Quy tắc đặt tour và đăng nhập](#quy-tắc-đặt-tour-và-đăng-nhập)
 - [Hạn chế](#hạn-chế)
 - [Giấy phép và tác giả](#giấy-phép-và-tác-giả)
 
@@ -36,7 +40,7 @@ Dự án là bài tập lớn cuối kỳ học phần Lập trình hướng đ�
 - Quản trị viên đăng nhập, xem và xử lý danh sách đơn ở mục **Xử lý đơn**.
 - Mục **Báo cáo** để đối chiếu số liệu với dữ liệu nguồn.
 - Xác thực quản trị bằng mật khẩu băm kèm salt; phiên đăng nhập ký bằng khóa bí mật riêng.
-- Dữ liệu địa danh và đặc sản dùng chung nằm trong `dist/Resource/`, có trình chỉnh sửa riêng (xem [Hạn chế](#hạn-chế)).
+- Địa danh và đặc sản lưu dùng chung trên D1 và có trình chỉnh sửa riêng cho quản trị viên.
 - Bản demo tự tạo **126 đơn đặt tour** trên SQLite trong bộ nhớ, chạy không cần Node.js hay Cloudflare.
 - **Khách:** Tìm tour theo miền, khoảng giá và thời lượng. Xem giá, lịch trình theo ngày, lịch khởi hành, số chỗ còn lại, địa danh và đặc sản. Đăng nhập để chọn ngày và số khách, đặt tour giữ chỗ, theo dõi đơn trong **Hành trình của tôi** và hủy đơn đang chờ xác nhận, chưa thanh toán.
 
@@ -191,11 +195,11 @@ Trên Windows thay `python3` bằng `py -3`.
 | Mục đích | Lệnh |
 | --- | --- |
 | Test backend | `python3 -m unittest discover` (hoặc `python3 -m pytest` nếu đã cài pytest) |
-| Test trình bày báo cáo (giao diện) | Bash: `node --test tests/frontend/*.test.js`. PowerShell: `node --test tests/frontend/reports.test.js` |
+| Test trình bày báo cáo (giao diện) | Bash: `node --test tests/frontend/*.test.js`. PowerShell: `node --test (Get-ChildItem tests/frontend/*.test.js).FullName` |
 | Chạy toàn bộ | `npm test` |
 | Unit test | `npm run test:unit` |
 | Integration test | `npm run test:integration` |
-| Kiểm tra tiêm lỗi (mutation) | `npm run test:mutation` |
+| Kiểm tra tiêm lỗi (mutation) | `npm run test:mutation` và `npm run test:mutations` (hoặc `python3 -m scripts.verify_mutations` cho 11 ca độc lập) |
 | Kiểm tra biên dịch cú pháp | `npm run build` |
 
 Các lệnh `python3 -m unittest ...` không cần cài Node.js. Các lệnh `npm test` và `npm run test:*` cần Node.js và lệnh `python3` trong PATH. Nếu Windows chỉ có `py`, hãy chạy trực tiếp các lệnh Python và Node.js ở trên.
@@ -205,19 +209,13 @@ Các lệnh `python3 -m unittest ...` không cần cài Node.js. Các lệnh `np
 Cài dependency bằng `npm ci` và `uv sync --locked`. Nếu triển khai vào tài khoản/Worker mới, sao chép `wrangler.example.jsonc` thành `wrangler.deploy.jsonc` (đã được gitignore), điền tên Worker, account và D1 của bạn. Các lệnh dưới đây luôn chỉ rõ tệp cấu hình đích. `wrangler.jsonc` và `wrangler.example.jsonc` dùng ID giả cho local. Cấu hình triển khai thật đặt trong `wrangler.deploy.jsonc` đã gitignore; giữ tên Worker và D1 của môi trường cần nâng cấp.
 
 1. **Tạo D1 riêng** nếu chưa có: `npx wrangler d1 create <tên-database> --config wrangler.deploy.jsonc`; điền ID vào cấu hình, giữ binding `DB`.
-2. **Migration**: `npx wrangler d1 migrations apply DB --remote --config wrangler.deploy.jsonc`. Bản này cần `0006_login_attempts.sql` để lưu giới hạn đăng nhập dùng chung giữa các Worker; migration không sửa dữ liệu khách hàng hay đơn.
+2. **Migration**: `npx wrangler d1 migrations apply DB --remote --config wrangler.deploy.jsonc`. Áp dụng các migration `0000`–`0009` để thiết lập schema và danh mục.
 3. **Secrets**: `npx wrangler secret put <TÊN> --config wrangler.deploy.jsonc` cho `ADMIN_USERNAME`, `ADMIN_PASSWORD_SALT`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`. Cách tạo hash xem mục trên. Giữ nguyên secrets khi nâng cấp môi trường hiện có.
 4. **Kiểm tra gói Worker**: `uv run pywrangler deploy --dry-run --outdir .wrangler/python-bundle --config wrangler.deploy.jsonc`.
 5. **Triển khai**: `uv run pywrangler deploy --config wrangler.deploy.jsonc`.
 6. **Kiểm tra runtime**: mở danh mục, đăng nhập, thử đặt/hủy một đơn mẫu trên môi trường thử. Dry-run chỉ xác nhận đóng gói, không chứng minh D1 hoặc đăng nhập hoạt động.
 
-> [!WARNING]
-> **Nâng cấp từ phiên bản cũ.** Phiên bản cũ là backend JavaScript trên Cloudflare Workers, trước [commit chuyển sang Python](https://github.com/dqming1876/OOP_TourManager/commit/888adb87f1ec2f87eb50947960050889b047efec). Khi nâng cấp, tiếp tục dùng ID D1, binding `DB` và cấu hình đăng nhập của cùng môi trường. Bản Python giữ định dạng cookie của backend JavaScript.
->
-> - Áp dụng đủ các migration còn thiếu cho D1 của môi trường đích.
-> - Nếu dự án từng tạo bảng `accounts` ngoài Wrangler, hãy đối chiếu lịch sử migration trước khi áp dụng.
-> - Nếu môi trường từng dùng secret `ADMIN_PASSWORD`, hãy tạo hash và salt từ mật khẩu quản trị và đặt hai giá trị đó làm Workers secrets **trước khi triển khai code mới**. Sau khi xác minh đăng nhập được, xóa secret mật khẩu cũ.
-> - Giữ nguyên `ADMIN_SESSION_SECRET` hiện tại nếu muốn các phiên đăng nhập đang có vẫn hợp lệ.
+Worker dùng cấu hình ở bước 3 để khởi tạo admin một lần. Sau đó, hash, salt và vai trò admin được đọc từ DB. Giữ `ADMIN_SESSION_SECRET` ổn định để duy trì hiệu lực của phiên đăng nhập.
 
 ## Hồ sơ bàn giao
 
@@ -232,6 +230,21 @@ Cài dependency bằng `npm ci` và `uv sync --locked`. Nếu triển khai vào 
 ## Tài liệu & minh chứng
 
 Phiếu đánh giá của học phần gồm **2 trục**: **Trục I** (hoàn thiện sản phẩm, 4 điểm, 40%) và **Trục II** (độ hiểu sâu phân tích, thiết kế, kiểm thử gắn với code, 6 điểm, 60%). Hai trục chia thành **5 nhóm tiêu chí** và 20 mục, được đối chiếu với các tệp minh chứng trong `docs/`.
+
+### Tự kê khai khối lượng — MI4090 (nhóm 1 người)
+
+| Hạng mục | Khối lượng |
+| --- | --- |
+| BFD cấp 2 | 5 nhánh (3 chung + 2 riêng) |
+| Use Case cốt lõi | 13 UC (3 giao dịch phức hợp đa bảng) |
+| Form nghiệp vụ | 8+ form (3 Master–Detail, tỷ lệ danh mục đơn ≤30%) |
+| Báo cáo | 3 báo cáo (1 biểu đồ), xuất XLSX / CSV / PDF |
+| Lớp Entity/Domain & UML | 9 lớp miền (+ 3 `StrEnum`) / 14 lớp thực chất + 2 interface trong UML chính |
+| CSDL 3NF | 10 bảng hoạt động (2 liên kết n–n có thuộc tính) |
+| Quy tắc nghiệp vụ | 7 quy tắc lõi (R01–R07) + 2 vai trò RBAC (admin, customer) |
+| Seed Data | 611 bản ghi trên 9 bảng (126 bookings trải dài 6 tháng) |
+| GoF Patterns | Strategy (Behavioral) và Object Adapter (Structural) |
+| Kiểm thử | 71 test tự động (61 Python + 10 JavaScript) + 12 ca mutation |
 
 | Mã | Tiêu chí | Minh chứng |
 | --- | --- | --- |
@@ -263,20 +276,10 @@ Phiếu đánh giá của học phần gồm **2 trục**: **Trục I** (hoàn t
 | 5.2 | Kiểm thử tích hợp đa bảng, rollback, báo cáo, RBAC | [checklist-5.2](docs/checklist-5.2.md) |
 | 5.3 | Tiêm lỗi trực tiếp, debug, hồi quy | [checklist-5.3](docs/checklist-5.3.md) |
 
-## Hạn chế
-
-- **Địa danh và đặc sản:** lưu dùng chung trong D1, tự tải lại khi mở trang hoặc quay lại cửa sổ. Bản localStorage cũ không tự ghi đè dữ liệu chung; cần đối chiếu và nhập lại các chỉnh sửa muốn giữ.
-- **Bản demo SQLite:** dữ liệu nằm trong bộ nhớ nên mất khi dừng máy chủ và được tạo lại (126 đơn) ở lần chạy sau.
-
-## Giấy phép và tác giả
-
-- **Tác giả** — Đỗ Quang Minh, MSSV 202418948, lớp MI1-01, nhóm 1 người.
-- **Giấy phép** — Repo chưa công bố giấy phép sử dụng mã nguồn. Dự án được thực hiện cho mục đích học tập.
-
 ## Quy tắc đặt tour và đăng nhập
 
 - Mỗi lần gửi đơn có `requestId` và `expectedPrice` (giá trên biểu mẫu). Khi mất kết nối rồi gửi lại cùng biểu mẫu, client giữ nguyên mã yêu cầu; server trả lại cùng mã đơn, không giữ chỗ lần nữa. Đổi nội dung tạo yêu cầu mới. Tải lại/đóng trang sẽ kết thúc biểu mẫu; nếu không chắc đơn đã tạo, kiểm tra **Hành trình của tôi** trước khi đặt tiếp.
-- Giá được đối chiếu ngay trong câu INSERT. Nếu giá thay đổi, khách tải lại trang để xem và xác nhận giá mới. Client cũ thiếu các trường này bị từ chối; cần tải lại trang sau nâng cấp.
+- Giá được đối chiếu ngay trong câu INSERT. Nếu giá thay đổi, khách tải lại trang để xem và xác nhận giá mới.
 - Bộ chọn ngày chỉ hiển thị lịch từ hôm nay theo múi giờ Việt Nam và còn chỗ. Backend vẫn kiểm tra lại ngày, giá và sức chứa khi ghi đơn.
 - Giới hạn 12 lượt đăng nhập/đăng ký trong cửa sổ 5 phút được lưu trong D1 theo mã HMAC của IP, dùng chung giữa các isolate. Đăng nhập thành công xóa cửa sổ hiện tại. Nhiều người dùng chung IP cũng dùng chung hạn mức; đây là lựa chọn đơn giản cho quy mô đồ án.
 
@@ -286,10 +289,11 @@ Sau khi áp dụng migration và chạy `npm run dev`, mở terminal khác, đ�
 
 `pywrangler` đóng gói SDK đã khóa phiên bản; build gọi `scripts.prepare_worker` để chỉ đưa `entry.py` và `backend/` vào `.wrangler/python-src`, tránh đưa môi trường ảo, test và script demo vào Worker.
 
-## Nâng cấp sau rà soát Python
+## Hạn chế
 
-- Áp dụng migration 0006–0009 trước khi chạy mã mới. Không sửa migration đã áp dụng; sao lưu/export D1 trước nâng cấp production.
-- Migration 0007 giữ nguyên khách cũ, thêm vai trò; admin được bootstrap một lần từ `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `ADMIN_PASSWORD_SALT`. Sau đó DB là nguồn xác thực: đổi secrets không tự ghi đè mật khẩu admin đã lưu. Muốn đổi mật khẩu, tạo hash/salt mới và cập nhật bản ghi admin qua công cụ quản trị DB được cấp quyền; không commit chúng.
-- Migration 0008 chuyển thuộc tính tour sang cột, giữ JSON gốc trong `legacy_tour_content` để đối chiếu. Migration 0009 nạp 204 mục địa danh/đặc sản từ tài nguyên đang có, không thay lịch trình hay đơn cũ.
-- Chạy `python3 -m scripts.verify_review` để kiểm tra 11 lỗi tiêm thử; `npm test` chạy cả Python và JavaScript. Trên PowerShell, chạy `node --test (Get-ChildItem tests/frontend/*.test.js).FullName` để bao gồm toàn bộ test frontend.
-- Minh chứng kiểm chứng và giới hạn môi trường: [Rà soát Python](docs/review-verification.md).
+- **Bản demo SQLite:** dữ liệu nằm trong bộ nhớ nên mất khi dừng máy chủ và được tạo lại (126 đơn) ở lần chạy sau.
+
+## Giấy phép và tác giả
+
+- **Tác giả** — Đỗ Quang Minh, MSSV 202418948, lớp MI1-01, nhóm 1 người.
+- **Giấy phép** — Repo chưa công bố giấy phép sử dụng mã nguồn. Dự án được thực hiện cho mục đích học tập.

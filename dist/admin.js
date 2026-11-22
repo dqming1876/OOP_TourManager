@@ -521,7 +521,6 @@ async function editBooking(id, payments) {
     return;
   }
   if (!location.hash.startsWith("#admin")) return;
-  // Older Worker versions did not include signedAmount in the payment payload.
   const net = history.reduce(
     (total, row) =>
       total +

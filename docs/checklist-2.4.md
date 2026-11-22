@@ -15,6 +15,6 @@
 - ID form theo nhóm chức năng, ví dụ `frm000_dang_nhap`, `frm001_dm_tour`, `frm002_nv_lich_khoi_hanh`, `frm003_nv_dat_tour` và `frm007_bc_don_dat`. Có thể kiểm tra ID trên DOM khi mở màn hình tương ứng.
 - Module Python, phương thức và biến dùng `snake_case`; lớp dùng `PascalCase` như `BookingService`. JavaScript giao diện giữ `camelCase`.
 - Điểm vào thực tế là [entry.py](../entry.py). Python Worker nạp các module của backend qua import.
-- Kiểm tra hai file [app.py](../backend/app.py) và [services.py](../backend/services.py) để thấy tách biệt HTTP, xác thực và nghiệp vụ. [app.js](../dist/app.js) lấy danh mục tour từ API `/api/ops/tours`, không còn mảng `seed` cứng hay lớp ghi đè cũ; `dist/` và `Database/` đã dọn sạch các tệp JSON/metadata thừa không dùng lúc chạy, còn [index.html](../dist/index.html) được định dạng rõ ràng nhiều dòng.
+- `app.js` tải danh mục từ `/api/ops/tours`, dùng một điểm render và một hàm lọc. `dist/` chứa tài nguyên ứng dụng, `Database/` chứa các migration theo thứ tự áp dụng. `index.html` và `style.css` thụt lề 2 khoảng trắng.
 
 Kiểm tra bằng `npm run build`, `npm test` và `node --check` cho mã frontend.

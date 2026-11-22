@@ -1,4 +1,4 @@
-"""Run independent review mutations in disposable copies; never edit the working tree."""
+"""Run independent mutations in disposable copies; never edit the working tree."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from shutil import copytree, ignore_patterns
@@ -38,7 +38,7 @@ def main():
     assert baseline.returncode == 0, baseline.stderr
     total = 0
     for name, file, content in mutations():
-        with TemporaryDirectory(prefix='mingo-review-') as temp:
+        with TemporaryDirectory(prefix='mingo-mutation-') as temp:
             target = Path(temp)
             for folder in ('backend', 'scripts', 'Database', 'tests'):
                 copytree(ROOT/folder, target/folder, ignore=ignore_patterns('__pycache__'))
@@ -50,7 +50,7 @@ def main():
             assert 'ImportError' not in result.stderr and 'SyntaxError' not in result.stderr, result.stderr
             total += 1
             print(f'{name}: DETECTED', flush=True)
-    print(f'{total}/{total} review mutations detected. Baseline PASS; working tree unchanged.')
+    print(f'{total}/{total} mutations detected. Baseline PASS; working tree unchanged.')
 
 
 if __name__ == '__main__':

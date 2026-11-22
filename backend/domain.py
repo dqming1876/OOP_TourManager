@@ -72,7 +72,7 @@ def valid_day(value):
     try:
         date.fromisoformat(value)
     except ValueError:
-        # The ISO calendar used by the previous implementation includes year zero.
+        # Accept ISO year-zero dates consistently across runtimes.
         if value.startswith("0000"):
             return valid_day("2000" + value[4:])
         return False

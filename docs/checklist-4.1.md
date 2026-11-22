@@ -174,7 +174,7 @@ Lớp cơ sở `Account` chứa constructor và mã chạy dùng chung. Hợp đ
 | `bookings` | `id` → người đặt, khóa đợt, liên hệ và giá chốt | FK khách và đợt, CHECK số người, giá, trạng thái/thu tiền |
 | `payment_events` | `id` → đơn, ngày ghi, loại và số tiền | FK đơn, CHECK loại và số tiền |
 
-Khóa ghép xác định thuộc tính liên kết theo toàn khóa. `tours` dùng các cột đơn thay cho JSON sau migration 0008. Tên tour và giá chốt trong đơn là dữ liệu lịch sử, không phụ thuộc tên/giá hiện tại. `reserved` và `paid` là trạng thái vận hành được bảo vệ bởi CHECK/trigger. Các bảng bổ sung: `roles` (danh mục vai trò), `login_attempts` (cửa sổ giới hạn đăng nhập), `destination_entries` (danh mục giới thiệu dùng chung). `legacy_tour_content` chỉ lưu bản JSON trước nâng cấp để đối chiếu, không được ứng dụng dùng khi đọc/ghi tour. [Migration](../Database)
+Bảng `tours` lưu tên, tỉnh, điểm đến, số ngày, mô tả và giá bằng các cột riêng. Đơn lưu tên tour và giá chốt tại lúc đặt. Ràng buộc CHECK và trigger bảo vệ `reserved` và `paid`. `legacy_tour_content` là bản sao dữ liệu JSON của migration 0008, dùng để đối chiếu. [Migration](../Database)
 
 `destination_entries`: `id` hoặc `(province_id,kind,name)` → mô tả, ảnh, nguồn, version. Đây là danh mục giới thiệu; `destinations` là điểm dùng trong lịch trình, giữ khóa và lịch sử riêng. Ba Enum chạy thật: `Role`, `BookingStatus`, `PaymentKind` trong [domain.py](../backend/domain.py).
 
