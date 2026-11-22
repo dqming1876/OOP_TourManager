@@ -3,7 +3,8 @@
 import re
 from dataclasses import replace
 from hashlib import sha256
-from time import monotonic
+from time import time
+import hmac
 from uuid import uuid4
 
 from .auth import ADMIN_COOKIE, CUSTOMER_COOKIE, Settings, derive_password, equal, session_identity
@@ -24,10 +25,9 @@ def credentials(body):
 
 
 class AccountsService:
-    def __init__(self, repository: AccountsPort | None, settings: Settings, attempts, derive=derive_password):
+    def __init__(self, repository: AccountsPort | None, settings: Settings, derive=derive_password):
         self.repository = repository
         self.settings = settings
-        self.attempts = attempts
         self.derive = derive
 
     def accounts(self):
@@ -42,35 +42,29 @@ class AccountsService:
         row = await self.repository.find_public(account_id) if account_id and self.repository else None
         return CustomerAccount(row) if row else None
 
-    def record_attempt(self, request):
-        key = request.header("CF-Connecting-IP") or "unknown"
-        now = monotonic()
-        while self.attempts:
-            oldest = next(iter(self.attempts))
-            if self.attempts[oldest][1] > now:
-                break
-            del self.attempts[oldest]
-        count, until = self.attempts.get(key, (0, now + 300))
-        if count >= 12:
+    async def record_attempt(self, request):
+        address = request.header("CF-Connecting-IP") or "local"
+        key = hmac.new((self.settings.secret or "local").encode(), address.encode(), "sha256").hexdigest()
+        ticket = await self.accounts().claim_attempt(key, int(time()))
+        if ticket is None:
             raise AppError(429, "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau 5 phút.")
-        self.attempts[key] = (count + 1, until)
-        return key
+        return key, ticket["expires_at"]
 
     async def login_account(self, request, body, admin_only=False):
         username, password = credentials(body)
-        key = self.record_attempt(request)
+        key, expires_at = await self.record_attempt(request)
         settings = self.settings
         if username == (settings.username or "").lower():
             if not (settings.salt and settings.password_hash and settings.secret):
                 raise AppError(503, "Tài khoản quản trị chưa được cấu hình.")
             if equal(await self.derive(password, settings.salt), settings.password_hash):
-                self.attempts.pop(key, None)
+                await self.accounts().clear_attempts(key, expires_at)
                 return AdministratorAccount(settings.username).public(), ADMIN_COOKIE
         elif not admin_only:
             row = await self.accounts().find_by_username(username)
             digest = await self.derive(password, row["salt"] if row else "dummy-login-salt")
             if row and equal(digest, row["password_hash"]):
-                self.attempts.pop(key, None)
+                await self.accounts().clear_attempts(key, expires_at)
                 return CustomerAccount(row).public(), CUSTOMER_COOKIE
         raise AccessError(401, "Tài khoản hoặc mật khẩu không đúng.")
 
@@ -80,7 +74,7 @@ class AccountsService:
         name = name.strip() if isinstance(name, str) else ""
         if not name or text_length(name) > 80 or not re.fullmatch(r"[a-z0-9_]{3,32}", username) or text_length(password) < 6:
             raise ValidationError("Nhập họ tên, tên đăng nhập 3–32 ký tự hợp lệ và mật khẩu tối thiểu 6 ký tự.")
-        key = self.record_attempt(request)
+        key, expires_at = await self.record_attempt(request)
         repository = self.accounts()
         if username == (self.settings.username or "").lower() or await repository.find_by_username(username):
             raise ConflictError("Tên đăng nhập đã được sử dụng.")
@@ -88,7 +82,7 @@ class AccountsService:
         digest = await self.derive(password, salt)
         if not await repository.create(str(uuid4()), username, name, digest, salt):
             raise ConflictError("Tên đăng nhập đã được sử dụng.")
-        self.attempts.pop(key, None)
+        await self.accounts().clear_attempts(key, expires_at)
 
     async def save_customer_profile(self, request, body):
         user = await self.current_account(request)

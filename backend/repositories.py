@@ -11,6 +11,18 @@ class AccountsRepository:
     def __init__(self, db):
         self.db = db
 
+    async def claim_attempt(self, key, now):
+        await self.db.execute("DELETE FROM login_attempts WHERE expires_at <= ?", now)
+        return await self.db.first("""
+            INSERT INTO login_attempts (key,count,expires_at) VALUES (?,1,?)
+            ON CONFLICT(key) DO UPDATE SET count = login_attempts.count + 1
+            WHERE login_attempts.count < 12
+            RETURNING expires_at
+        """, key, now + 300)
+
+    async def clear_attempts(self, key, expires_at):
+        await self.db.execute("DELETE FROM login_attempts WHERE key = ? AND expires_at = ?", key, expires_at)
+
     async def find_public(self, account_id):
         return await self.db.first(
             "SELECT id, username, name, email, phone, address, birthday FROM accounts WHERE id = ?", account_id

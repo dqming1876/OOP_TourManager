@@ -160,7 +160,6 @@ class Application:
     def __init__(self, repositories=None, today=local_day, derive=derive_password):
         self.repositories = repositories or Repositories()
         self.today = today
-        self.attempts = {}
         self.derive = derive
 
     async def fetch(self, request, db, settings, assets):
@@ -168,7 +167,7 @@ class Application:
         try:
             if url.path.startswith("/api/"):
                 repo = self.repositories
-                accounts = AccountsService(repo.accounts(db) if db is not None else None, settings, self.attempts, self.derive)
+                accounts = AccountsService(repo.accounts(db) if db is not None else None, settings, self.derive)
                 if not url.path.startswith("/api/ops/"):
                     return await accounts_route(request, url.path, accounts, settings)
                 access = AccessPolicy(await accounts.current_account(request))
