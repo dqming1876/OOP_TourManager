@@ -22,6 +22,14 @@ classDiagram
         +name: str
         +request(province, name, field)$
     }
+    class BookingAction {
+        <<enumeration>>
+        CONFIRM
+        COLLECT
+        REFUND
+        CANCEL
+    }
+    Booking ..> BookingAction : transition
     class Booking {
         +id: str
         +user_id: str
@@ -176,6 +184,6 @@ Lớp cơ sở `Account` chứa constructor và mã chạy dùng chung. Hợp đ
 
 Bảng `tours` lưu tên, tỉnh, điểm đến, số ngày, mô tả và giá bằng các cột riêng. Đơn lưu tên tour và giá chốt tại lúc đặt. Ràng buộc CHECK và trigger bảo vệ `reserved` và `paid`. `legacy_tour_content` là bản sao dữ liệu JSON của migration 0008, dùng để đối chiếu. [Migration](../Database)
 
-`destination_entries`: `id` hoặc `(province_id,kind,name)` → mô tả, ảnh, nguồn, version. Đây là danh mục giới thiệu; `destinations` là điểm dùng trong lịch trình, giữ khóa và lịch sử riêng. Ba Enum chạy thật: `Role`, `BookingStatus`, `PaymentKind` trong [domain.py](../backend/domain.py).
+`destination_entries`: `id` hoặc `(province_id,kind,name)` → mô tả, ảnh, nguồn, version. Đây là danh mục giới thiệu; `destinations` là điểm dùng trong lịch trình, giữ khóa và lịch sử riêng. Các kiểu miền gồm `Role`, `BookingStatus`, `BookingAction` và `PaymentKind`. Trong `Booking.transition()`, thao tác ngoài bốn giá trị của `BookingAction` gây `ValidationError`. [Mã miền](../backend/domain.py)
 
 **Thử hủy Whole.** Migration 0005 thêm `ON DELETE CASCADE` từ tour đến phần lịch trình. Xóa tour chưa có đợt/lịch sử chỉ xóa điểm ghé của tour đó, địa danh chung và điểm ghé của tour khác vẫn còn. Xóa tour có đợt bị FK chặn. Hai ca kiểm thử xác minh hành vi trên SQLite tạm và bảo toàn dữ liệu khi nâng schema. [Migration 0005](../Database/0005_tour_stop_ownership.sql) · [Kiểm thử](../tests/test_architecture.py)

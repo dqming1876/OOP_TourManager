@@ -3,7 +3,8 @@ from types import SimpleNamespace
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock
 
-from backend.domain import AppError, Booking, Departure, PaymentEvent, Tour
+from backend.domain import (AppError, Booking, BookingAction, Departure, PaymentEvent,
+                            Tour, TRANSITIONS, ValidationError)
 from backend.services import BookingService, ReportsService, TourCatalogService
 from tests.fixtures import ADMIN, GUEST, GUEST_ID, ORDER, TODAY, TOUR
 
@@ -11,6 +12,21 @@ from tests.fixtures import ADMIN, GUEST, GUEST_ID, ORDER, TODAY, TOUR
 class UnitAxis5(IsolatedAsyncioTestCase):
     def order(self, **changes):
         return Booking.request("order-1", GUEST_ID, {**ORDER, **changes})
+
+    def test_booking_action_rules(self):
+        self.assertEqual({action.value for action in BookingAction}, {"confirm", "collect", "refund", "cancel"})
+        self.assertEqual(set(TRANSITIONS), set(BookingAction))
+        for action in TRANSITIONS:
+            with self.subTest(action=action):
+                self.assertIsInstance(action, BookingAction)
+                self.assertIs(Booking.transition(action.value, False), TRANSITIONS[action])
+        self.assertEqual(Booking.transition(BookingAction.CANCEL, True).also_from, "pending")
+        self.assertEqual(Booking.transition("cancel", False).also_from, "confirmed")
+
+    def test_invalid_booking_action(self):
+        for value in ("delete", "", None, []):
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                Booking.transition(value, False)
 
     def test_ut01_adults(self):
         self.assertEqual([self.order(adults=n, children=0).people for n in (1, 100)], [1, 100])

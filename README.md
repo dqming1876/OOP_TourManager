@@ -244,7 +244,7 @@ Phiếu đánh giá của học phần gồm **2 trục**: **Trục I** (hoàn t
 | Quy tắc nghiệp vụ | 7 quy tắc lõi (R01–R07) + 2 vai trò RBAC (admin, customer) |
 | Seed Data | 611 bản ghi trên 9 bảng (126 bookings trải dài 6 tháng) |
 | GoF Patterns | Strategy (Behavioral) và Object Adapter (Structural) |
-| Kiểm thử | 71 test tự động (61 Python + 10 JavaScript) + 12 ca mutation |
+| Kiểm thử | 73 test tự động (63 Python + 10 JavaScript) + 12 ca mutation |
 
 | Mã | Tiêu chí | Minh chứng |
 | --- | --- | --- |

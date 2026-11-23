@@ -18,6 +18,13 @@ class BookingStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+class BookingAction(StrEnum):
+    CONFIRM = "confirm"
+    COLLECT = "collect"
+    REFUND = "refund"
+    CANCEL = "cancel"
+
+
 class PaymentKind(StrEnum):
     COLLECT = "collect"
     REFUND = "refund"
@@ -203,10 +210,10 @@ class Transition:
 
 
 TRANSITIONS = MappingProxyType({
-    "confirm": Transition(PENDING, CONFIRMED, check_day=True),
-    "collect": Transition(CONFIRMED, CONFIRMED, next_paid=True),
-    "refund": Transition(CONFIRMED, CONFIRMED, paid=True),
-    "cancel": Transition(PENDING, CANCELLED, also_from=CONFIRMED),
+    BookingAction.CONFIRM: Transition(PENDING, CONFIRMED, check_day=True),
+    BookingAction.COLLECT: Transition(CONFIRMED, CONFIRMED, next_paid=True),
+    BookingAction.REFUND: Transition(CONFIRMED, CONFIRMED, paid=True),
+    BookingAction.CANCEL: Transition(PENDING, CANCELLED, also_from=CONFIRMED),
 })
 
 
@@ -254,10 +261,12 @@ class Booking:
 
     @staticmethod
     def transition(action, own_booking_only):
-        if action not in TRANSITIONS:
-            raise ValidationError("Thao tác đơn không hợp lệ.")
+        try:
+            action = BookingAction(action)
+        except ValueError:
+            raise ValidationError("Thao tác đơn không hợp lệ.") from None
         rule = TRANSITIONS[action]
-        return replace(rule, also_from=PENDING) if action == "cancel" and own_booking_only else rule
+        return replace(rule, also_from=PENDING) if action is BookingAction.CANCEL and own_booking_only else rule
 
     @property
     def people(self):

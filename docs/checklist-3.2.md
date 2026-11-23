@@ -120,7 +120,16 @@ Một khách có thể đặt nhiều đợt, một đợt nhận nhiều khách
 | `CustomerAccount` | `accounts` | Kiểm dữ liệu cập nhật hồ sơ. `booking_scope()` trả ID chủ đơn để giới hạn phạm vi đọc. |
 | `AdministratorAccount` | Bảng `accounts` có FK `role` tới `roles`; cấu hình chỉ khởi tạo admin lần đầu | `booking_scope()` cho phạm vi quản trị toàn bộ đơn. `public()` chỉ đưa danh tính công khai ra HTTP. |
 
-`Account` là lớp cơ sở nội bộ cho hai loại tài khoản, không tính vào tám lớp cụ thể. Ba kiểu `StrEnum` là `Role` (admin, customer), `BookingStatus` (pending, confirmed, cancelled) và `PaymentKind` (collect, refund). Khi khởi tạo, `Booking` chuyển đổi và kiểm tra trạng thái, còn `PaymentEvent` chuyển đổi và kiểm tra loại giao dịch. Các giá trị JSON vẫn là chuỗi. Trạng thái báo cáo “quá hạn/hoàn thành” là giá trị suy ra từ ngày, trạng thái và thanh toán. [Mã miền](../backend/domain.py) · [Repository tour](../backend/repositories.py) · [Repository đơn](../backend/repositories.py)
+`Account` là lớp cơ sở nội bộ cho hai loại tài khoản, không tính vào tám lớp cụ thể. Trạng thái báo cáo “quá hạn/hoàn thành” được suy ra từ ngày, trạng thái đơn và thanh toán.
+
+| Kiểu `StrEnum` | Giá trị | Vai trò |
+| --- | --- | --- |
+| `Role` | `admin`, `customer` | Xác định vai trò tài khoản. |
+| `BookingStatus` | `pending`, `confirmed`, `cancelled` | Kiểm tra trạng thái khi tạo đối tượng `Booking`. |
+| `BookingAction` | `confirm`, `collect`, `refund`, `cancel` | `Booking.transition()` chuyển thao tác đầu vào thành khóa tra bảng `TRANSITIONS`. |
+| `PaymentKind` | `collect`, `refund` | Kiểm tra loại giao dịch khi tạo `PaymentEvent`. |
+
+[Mã miền](../backend/domain.py) · [Kiểm thử thao tác đơn](../tests/test_unit_axis5.py)
 
 ## Đọc ngược thuộc tính lịch sử
 
